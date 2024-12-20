@@ -4,12 +4,9 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::task::JoinHandle;
 
-fn modify_client_data(data: &mut [u8]) {
-}
+fn modify_client_data(_data: &mut Vec<u8>, _n: usize) {}
 
-fn modify_server_data(data: &mut [u8]) {
-
-}
+fn modify_server_data(_data: &mut Vec<u8>, _n: usize) {}
 
 async fn forward_data(
     mut reader: TcpStream,
@@ -29,10 +26,10 @@ async fn forward_data(
         };
 
         if is_client_to_server {
-            modify_client_data(&mut buffer[..n]);
+            modify_client_data(&mut buffer, n)
         } else {
-            modify_server_data(&mut buffer[..n]);
-        }
+            modify_server_data(&mut buffer, n)
+        };
 
         writer.write_all(&buffer[..n]).await?;
     }
@@ -42,10 +39,10 @@ fn get_server_address() -> String {
     "gommehd.net".to_string()
 }
 
-async fn client_loop(mut client: TcpStream, sockaddr: &SocketAddr) -> anyhow::Result<()>{
+async fn client_loop(client: TcpStream, sockaddr: &SocketAddr) -> anyhow::Result<()>{
     let server_url = get_server_address();
     let server_addr = (server_url.as_str(), 25565);
-    let mut server = TcpStream::connect(server_addr)
+    let server = TcpStream::connect(server_addr)
         .await
         .with_context(|| format!("Failed to connect to server at {:?}", server_addr))?;
 
