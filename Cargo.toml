@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = [
+    "kittymc_lib",
+    "kittymc_proxy",
+    "kittymc_server"
+]
