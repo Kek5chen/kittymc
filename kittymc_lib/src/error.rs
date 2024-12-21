@@ -8,5 +8,7 @@ pub enum KittyMCError {
     #[error("failed to decode packet")]
     DecodingError,
     #[error("failed to decode string in packet")]
-    StringDecodeError(#[from] FromUtf8Error)
+    StringDecodeError(#[from] FromUtf8Error),
+    #[error("not enough data collected for packet")]
+    NotEnoughData,
 }

@@ -16,12 +16,11 @@ fn test_00_handshake_serialize() {
     let serialized = handshake.serialize();
     check_serialized_packet(&serialized, 15, 0, |data| {
         assert_eq!(data[0], 47); // Protocol Version
-        assert_eq!(data[1] as usize, b"meowmc.de".len()); // Protocol Version
-        assert_eq!(&data[2..11], b"meowmc.de");
+        assert_eq!(data[1] as usize, b"meowmc.de".len()); // Server Address Length
+        assert_eq!(&data[2..11], b"meowmc.de"); // Server Address
     }).unwrap();
 
     let (len, deserialized_res) = HandshakePacket::deserialize(&serialized[2..]).unwrap();
     assert_eq!(len, serialized.len() - 2, "Length of deserialized size didn't match with serialized packet");
     assert_eq!(deserialized_res, Packet::Handshake(handshake));
-
 }

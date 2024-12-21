@@ -3,10 +3,41 @@ use anyhow::Context;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::task::JoinHandle;
+use kittymc_lib::packets::Packet;
+use kittymc_lib::packets::packet_serialization::SerializablePacket;
 
-fn modify_client_data(_data: &mut Vec<u8>, _n: usize) {}
+fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize> {
+    let result = Packet::deserialize_packet(&data);
 
-fn modify_server_data(_data: &mut Vec<u8>, _n: usize) {}
+    match result {
+        Ok((size, mut packet)) => {
+            match packet {
+                Packet::Handshake(ref mut handshake) => {
+                    handshake.server_address = "gommehd.net".to_string();
+                    let serialized = handshake.serialize();
+                    let serialized_len = serialized.len();
+                    data.splice(..n, serialized);
+                    n = serialized_len;
+                }
+            }
+            println!("Client -> Server: Packet of size {size}: {packet:?}");
+        },
+        Err(e) => println!("Couldn't parse packet: {e}")
+    };
+
+    Ok(n)
+}
+
+fn modify_server_data(data: &mut Vec<u8>, n: usize) -> anyhow::Result<usize> {
+    let result = Packet::deserialize_packet(&data);
+
+    match result {
+        Ok((size, packet)) => println!("Server -> Client: Packet of size {size}: {packet:?}"),
+        Err(e) => println!("Couldn't parse packet: {e}")
+    };
+
+    Ok(n)
+}
 
 async fn forward_data(
     mut reader: TcpStream,
@@ -16,7 +47,7 @@ async fn forward_data(
     let mut buffer = vec![0u8; 2048];
 
     loop {
-        let n = match reader.read(&mut buffer).await {
+        let mut n = match reader.read(&mut buffer).await {
             Ok(0) => {
                 // The other side closed the connection
                 return Ok(());
@@ -26,12 +57,20 @@ async fn forward_data(
         };
 
         if is_client_to_server {
-            modify_client_data(&mut buffer, n)
+            n = match modify_client_data(&mut buffer, n) {
+                Ok(new_size) => new_size,
+                Err(_) => continue,
+            }
         } else {
-            modify_server_data(&mut buffer, n)
+            n = match modify_server_data(&mut buffer, n) {
+                Ok(new_size) => new_size,
+                Err(_) => continue,
+            }
         };
 
         writer.write_all(&buffer[..n]).await?;
+
+        //buffer.drain(..n);
     }
 }
 
