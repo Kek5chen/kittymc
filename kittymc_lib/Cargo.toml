@@ -4,3 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+thiserror = "2.0.6"
+proc-macro2 = "1.0.92"
+kittymc-macros = { path = "../kittymc_macros" }
+integer-encoding = "4.0.2"
+
+[dev-dependencies]
+anyhow = "1.0.94"
