@@ -27,7 +27,7 @@ fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize>
 
     let result = Packet::deserialize_packet(State::Login, &data);
 
-    if let Ok((size, mut packet)) = result {
+    if let Ok((size, packet)) = result {
         match packet {
             _ => ()
         }
@@ -40,7 +40,7 @@ fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize>
     Err(format_err!("meow"))
 }
 
-fn modify_server_data(data: &mut Vec<u8>, n: usize) -> anyhow::Result<usize> {
+fn modify_server_data(data: &mut Vec<u8>, _n: usize) -> anyhow::Result<usize> {
     let result = Packet::deserialize_packet(State::Handshake, &data);
 
     if let Ok((size, packet)) = result {

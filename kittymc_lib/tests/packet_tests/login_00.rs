@@ -1,4 +1,3 @@
-use kittymc_lib::packets::handshake_00::HandshakePacket;
 use kittymc_lib::packets::login_00::LoginStartPacket;
 use kittymc_lib::packets::Packet;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
