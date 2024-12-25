@@ -21,7 +21,7 @@ pub fn read_varint_u32(data: &mut &[u8], total_size: &mut usize) -> Result<u32, 
     Ok(value)
 }
 
-pub fn read_varint_string(data: &mut &[u8], total_size: &mut usize) -> Result<String, KittyMCError> {
+pub fn read_length_prefixed_string(data: &mut &[u8], total_size: &mut usize) -> Result<String, KittyMCError> {
     let len = read_varint_u32(data, total_size)? as usize;
 
     if data.len() < len {

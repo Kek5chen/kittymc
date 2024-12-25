@@ -1,7 +1,7 @@
 use integer_encoding::VarInt;
 use crate::error::KittyMCError;
 use crate::packets::Packet;
-use crate::packets::packet_serialization::{read_state_varint, read_u16_be, read_varint_string, read_varint_u32, write_be_u16, write_length_prefixed_string, write_varint_u32, write_varint_u8, SerializablePacket};
+use crate::packets::packet_serialization::{read_state_varint, read_u16_be, read_length_prefixed_string, read_varint_u32, write_be_u16, write_length_prefixed_string, write_varint_u32, SerializablePacket};
 use crate::subtypes::state::State;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -32,7 +32,7 @@ impl SerializablePacket for HandshakePacket {
         let mut total_size = 0;
 
         let protocol_version = read_varint_u32(&mut data, &mut total_size)?;
-        let server_address = read_varint_string(&mut data, &mut total_size)?;
+        let server_address = read_length_prefixed_string(&mut data, &mut total_size)?;
         let server_port = read_u16_be(&mut data, &mut total_size)?;
         let next_state = read_state_varint(&mut data, &mut total_size)?;
 
