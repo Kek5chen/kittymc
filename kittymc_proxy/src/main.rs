@@ -1,42 +1,61 @@
 use std::net::SocketAddr;
-use anyhow::Context;
+use anyhow::{format_err, Context};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::task::JoinHandle;
 use kittymc_lib::packets::Packet;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
+use kittymc_lib::subtypes::state::State;
 
 fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize> {
-    let result = Packet::deserialize_packet(&data);
+    let result = Packet::deserialize_packet(State::Handshake, &data);
 
-    match result {
-        Ok((size, mut packet)) => {
-            match packet {
-                Packet::Handshake(ref mut handshake) => {
-                    handshake.server_address = "gommehd.net".to_string();
-                    let serialized = handshake.serialize();
-                    let serialized_len = serialized.len();
-                    data.splice(..n, serialized);
-                    n = serialized_len;
-                }
+    if let Ok((size, mut packet)) = result {
+        match packet {
+            Packet::Handshake(ref mut handshake) => {
+                handshake.server_address = "gommehd.net".to_string();
+                let serialized = handshake.serialize();
+                let serialized_len = serialized.len();
+                data.splice(..n, serialized);
+                n = serialized_len;
             }
-            println!("Client -> Server: Packet of size {size}: {packet:?}");
-        },
-        Err(e) => println!("Couldn't parse packet: {e}")
-    };
+            _ => ()
+        }
+        println!("Client -> Server: Packet of size {size}: {packet:?}");
+        return Ok(n);
+    }
 
-    Ok(n)
+    let result = Packet::deserialize_packet(State::Login, &data);
+
+    if let Ok((size, mut packet)) = result {
+        match packet {
+            _ => ()
+        }
+        println!("Client -> Server: Packet of size {size}: {packet:?}");
+        return Ok(n);
+    }
+
+    println!("Couldn't parse packet");
+
+    Err(format_err!("meow"))
 }
 
 fn modify_server_data(data: &mut Vec<u8>, n: usize) -> anyhow::Result<usize> {
-    let result = Packet::deserialize_packet(&data);
+    let result = Packet::deserialize_packet(State::Handshake, &data);
 
-    match result {
-        Ok((size, packet)) => println!("Server -> Client: Packet of size {size}: {packet:?}"),
-        Err(e) => println!("Couldn't parse packet: {e}")
-    };
+    if let Ok((size, packet)) = result {
+        println!("Server -> Client: Packet of size {size}: {packet:?}");
+    }
 
-    Ok(n)
+    let result = Packet::deserialize_packet(State::Login, &data);
+
+    if let Ok((size, packet)) = result {
+        println!("Server -> Client: Packet of size {size}: {packet:?}");
+    }
+
+    println!("Couldn't parse packet");
+
+    Err(format_err!("meow"))
 }
 
 async fn forward_data(
@@ -70,7 +89,7 @@ async fn forward_data(
 
         writer.write_all(&buffer[..n]).await?;
 
-        //buffer.drain(..n);
+        buffer.drain(..n);
     }
 }
 
