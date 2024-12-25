@@ -1,5 +1,5 @@
 # KittyMC
----
+
 This is a minecraft protocol implementation in Rust.
 
 *Currently implementing: MC 1.8 (Protocol Version 47)*
