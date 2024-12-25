@@ -1,6 +1,5 @@
-use integer_encoding::VarInt;
 use crate::error::KittyMCError;
-use crate::packets::Packet;
+use crate::packets::{wrap_packet, Packet};
 use crate::packets::packet_serialization::{read_state_varint, read_u16_be, read_length_prefixed_string, read_varint_u32, write_be_u16, write_length_prefixed_string, write_varint_u32, SerializablePacket};
 use crate::subtypes::state::State;
 
@@ -14,18 +13,16 @@ pub struct HandshakePacket {
 
 impl SerializablePacket for HandshakePacket {
     fn serialize(&self) -> Vec<u8> {
-        let mut buffer = vec![];
+        let mut packet = vec![];
 
-        write_varint_u8(&mut buffer, 0);
-        write_varint_u32(&mut buffer, self.protocol_version);
-        write_length_prefixed_string(&mut buffer, &self.server_address);
-        write_be_u16(&mut buffer, self.server_port);
-        write_varint_u32(&mut buffer, self.next_state as u32);
+        write_varint_u32(&mut packet, self.protocol_version);
+        write_length_prefixed_string(&mut packet, &self.server_address);
+        write_be_u16(&mut packet, self.server_port);
+        write_varint_u32(&mut packet, self.next_state as u32);
 
-        let total_len = buffer.len().encode_var_vec();
-        buffer.splice(0..0, total_len);
+        wrap_packet(&mut packet, 0);
 
-        buffer
+        packet
     }
 
     fn deserialize(mut data: &[u8]) -> Result<(usize, Packet), KittyMCError> {

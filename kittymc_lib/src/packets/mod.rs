@@ -41,3 +41,12 @@ impl Packet {
         Ok((total_size + size, packet))
     }
 }
+
+pub fn wrap_packet(packet: &mut Vec<u8>, id: u32) {
+    // add packet id
+    packet.splice(0..0, id.encode_var_vec());
+
+    // set total length
+    let total_len = packet.len().encode_var_vec();
+    packet.splice(0..0, total_len);
+}
