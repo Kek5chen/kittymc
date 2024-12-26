@@ -1,6 +1,6 @@
 use kittymc_lib::packets::Packet;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
-use kittymc_lib::packets::server::login::login_00::LoginStartPacket;
+use kittymc_lib::packets::server::login::login_start_00::LoginStartPacket;
 use crate::packet_tests::utils::check_serialized_packet;
 
 #[test]

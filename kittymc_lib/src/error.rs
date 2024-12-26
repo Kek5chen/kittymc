@@ -14,4 +14,6 @@ pub enum KittyMCError {
     NotEnoughData,
     #[error("{0}")]
     IoError(#[from] io::Error),
+    #[error("{0}")]
+    JsonError(#[from] serde_json::Error)
 }
