@@ -14,10 +14,10 @@ async fn main() {
     };
 
     match server.run().await {
-        Ok(server) => server,
         Err(e) => {
             eprintln!("Error occurred while server was running: {e}");
             return;
         }
+        _ => (),
     };
 }
