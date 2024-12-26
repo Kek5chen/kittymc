@@ -1,3 +1,4 @@
+use std::mem::size_of;
 use integer_encoding::VarInt;
 use crate::error::KittyMCError;
 use crate::packets::Packet;
