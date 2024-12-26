@@ -28,7 +28,7 @@ impl Client {
         });
     }
 
-    async fn client_loop(&self) -> anyhow::Result<()> {
+    async fn client_loop(&self) -> Result<(), KittyMCError> {
         loop {
         }
     }
