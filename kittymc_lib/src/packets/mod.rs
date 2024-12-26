@@ -1,26 +1,46 @@
 use integer_encoding::VarInt;
-use kittymc_macros::SerializePacketFunc;
 use crate::error::KittyMCError;
+use crate::packets::client::status::response_00::StatusResponsePacket;
 use crate::packets::packet_serialization::{read_varint_u32, SerializablePacket};
 use crate::packets::server::handshake::HandshakePacket;
-use crate::packets::server::login::login_00::LoginStartPacket;
+use crate::packets::server::login::login_start_00::LoginStartPacket;
+use crate::packets::server::status::ping_01::StatusPingPongPacket;
 use crate::subtypes::state::State;
 
 pub mod server;
 pub mod client;
 pub mod packet_serialization;
 
-#[derive(SerializePacketFunc, PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum Packet {
     Handshake(HandshakePacket),
     LoginStart(LoginStartPacket),
+    StatusRequest,
+    StatusResponse(StatusResponsePacket),
+    StatusPing(StatusPingPongPacket),
+    StatusPong(StatusPingPongPacket),
 }
 
 impl Packet {
     pub fn packet_id(&self) -> u32 {
         match self {
-            Packet::Handshake(_) => 0,
-            Packet::LoginStart(_) => 0,
+            Packet::Handshake(_) |
+            Packet::LoginStart(_) |
+            Packet::StatusRequest |
+            Packet::StatusResponse(_) => 0,
+
+            Packet::StatusPing(_) |
+            Packet::StatusPong(_) => 1,
+        }
+    }
+    pub fn serialize(&self) -> Vec<u8> {
+        match self {
+            Self::StatusRequest => vec![1, 0],
+            Self::Handshake(inner) => inner.serialize(),
+            Self::LoginStart(inner) => inner.serialize(),
+            Self::StatusResponse(inner) => inner.serialize(),
+            Self::StatusPing(inner) => inner.serialize(),
+            Self::StatusPong(inner) => inner.serialize(),
         }
     }
 
@@ -35,12 +55,25 @@ impl Packet {
             return Err(KittyMCError::NotEnoughData);
         }
 
-        let (size, packet) = match packet_id {
-            0 if state == State::Handshake => {
-                HandshakePacket::deserialize(&data[..packet_len])?
-            },
-            0 if state == State::Login => {
-                LoginStartPacket::deserialize(&data[..packet_len])?
+        let (size, packet) = match state {
+            State::Handshake => {
+                match packet_id {
+                    0 => HandshakePacket::deserialize(&data[..packet_len])?,
+                    _ => return Err(KittyMCError::NotImplemented),
+                }
+            }
+            State::Status => {
+                match packet_id {
+                    0 => (0, Packet::StatusRequest),
+                    1 => StatusPingPongPacket::deserialize(&data[..packet_len])?,
+                    _ => return Err(KittyMCError::NotImplemented),
+                }
+            }
+            State::Login => {
+                match packet_id {
+                    0 => LoginStartPacket::deserialize(&data[..packet_len])?,
+                    _ => return Err(KittyMCError::NotImplemented),
+                }
             }
             _ => return Err(KittyMCError::NotImplemented),
         };

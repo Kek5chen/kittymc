@@ -1,9 +1,11 @@
 use std::io::ErrorKind;
 use std::net::SocketAddr;
-use tokio::io::AsyncReadExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use kittymc_lib::error::KittyMCError;
+use kittymc_lib::packets::client::status::response_00::StatusResponsePacket;
 use kittymc_lib::packets::Packet;
+use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use kittymc_lib::subtypes::state::State;
 
 pub struct Client {
@@ -59,7 +61,13 @@ impl Client {
                         }
                         self.current_state = handshake.next_state;
                     }
-                    Packet::LoginStart(_) => {}
+                    Packet::StatusRequest => {
+                        self.socket.write_all(&StatusResponsePacket::default().serialize()).await?;
+                    }
+                    Packet::StatusPing(ping) => {
+                        self.socket.write_all(&ping.serialize()).await?;
+                    }
+                    _ => {}
                 }
                 Err(e) => continue,
             }
