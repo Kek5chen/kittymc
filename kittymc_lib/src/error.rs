@@ -1,3 +1,4 @@
+use std::io;
 use std::string::FromUtf8Error;
 use thiserror::Error;
 
@@ -11,4 +12,6 @@ pub enum KittyMCError {
     StringDecodeError(#[from] FromUtf8Error),
     #[error("not enough data collected for packet")]
     NotEnoughData,
+    #[error("{0}")]
+    IoError(#[from] io::Error),
 }
