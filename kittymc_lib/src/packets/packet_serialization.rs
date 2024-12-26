@@ -40,7 +40,9 @@ pub fn read_u16_be(data: &mut &[u8], total_size: &mut usize) -> Result<u16, Kitt
     if data.len() < 2 {
         return Err(KittyMCError::DecodingError);
     }
-    let value = u16::from_be_bytes(data[..2].try_into().unwrap());
+    let value = u16::from_be_bytes(data[..2]
+        .try_into()
+        .map_err(|_| KittyMCError::DecodingError)?);
     *data = &data[2..];
     *total_size += size_of::<u16>();
     Ok(value)
