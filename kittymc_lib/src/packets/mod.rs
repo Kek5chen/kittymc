@@ -2,13 +2,13 @@ use integer_encoding::VarInt;
 use kittymc_macros::SerializePacketFunc;
 use crate::error::KittyMCError;
 use crate::packets::packet_serialization::{read_varint_u32, SerializablePacket};
-use crate::packets::handshake_00::HandshakePacket;
-use crate::packets::login_00::LoginStartPacket;
+use crate::packets::server::handshake::HandshakePacket;
+use crate::packets::server::login::login_00::LoginStartPacket;
 use crate::subtypes::state::State;
 
-pub mod handshake_00;
+pub mod server;
+pub mod client;
 pub mod packet_serialization;
-pub mod login_00;
 
 #[derive(SerializePacketFunc, PartialEq, Debug, Clone)]
 pub enum Packet {

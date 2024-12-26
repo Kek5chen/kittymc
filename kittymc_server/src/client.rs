@@ -42,7 +42,7 @@ impl Client {
                 Err(e) => Err(e)?,
             }
             let mut buffer = vec![0u8; 2048];
-            let mut n = match self.socket.read(&mut buffer).await {
+            let n = match self.socket.read(&mut buffer).await {
                 Ok(0) => {
                     // The other side closed the connection
                     return Ok(());
