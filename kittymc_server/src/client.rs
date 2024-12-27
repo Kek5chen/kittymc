@@ -37,7 +37,7 @@ impl Client {
     }
 
     async fn client_loop(&mut self) -> Result<(), KittyMCError> {
-        loop {
+        'main_loop: loop {
             match self.socket.readable().await {
                 Ok(_) => {}
                 Err(ref e) if e.kind() == ErrorKind::WouldBlock => continue,
@@ -52,9 +52,19 @@ impl Client {
                 Ok(n) => n,
                 Err(e) => Err(e)?,
             };
-            let packet = Packet::deserialize_packet(self.current_state, &buffer);
-            match &packet {
-                Ok((n, packet)) => match packet {
+            println!("socket read, {n}");
+            let mut read_packets = 0;
+            while read_packets < n {
+                println!("packet state: {:?}", self.current_state);
+                println!("data: {:?}", &buffer[read_packets..n]);
+                let (packet_len, packet) = match Packet::deserialize_packet(self.current_state, &buffer[read_packets..n]) {
+                    Ok(packet) => packet,
+                    Err(e) => {
+                        eprintln!("Error when deserializing packet: {e}");
+                        continue 'main_loop
+                    }
+                };
+                match &packet {
                     Packet::Handshake(handshake) => {
                         if handshake.protocol_version != 47 {
                             return Ok(());
@@ -69,9 +79,11 @@ impl Client {
                     }
                     _ => {}
                 }
-                Err(e) => continue,
+                read_packets += packet_len;
+                println!("buffer: {:?}", packet);
+                println!("packet_len: {packet_len}");
+                println!("read_packets: {read_packets}");
             }
-            println!("buffer: {:?}", packet);
         }
     }
 }
