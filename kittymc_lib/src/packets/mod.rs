@@ -47,6 +47,7 @@ impl Packet {
     pub fn deserialize_packet(state: State, mut data: &[u8]) -> Result<(usize, Packet), KittyMCError> {
         let mut packet_len_len = 0;
         let packet_len = read_varint_u32(&mut data, &mut packet_len_len)? as usize;
+        let packet_len = packet_len - packet_len_len;
         let mut packet_id_len = 0;
         let packet_id = read_varint_u32(&mut data, &mut packet_id_len)? as usize;
         let total_size = packet_len_len + packet_id_len;
