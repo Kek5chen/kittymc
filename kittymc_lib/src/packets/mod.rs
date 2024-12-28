@@ -1,5 +1,6 @@
 use integer_encoding::VarInt;
 use crate::error::KittyMCError;
+use crate::packets::client::login::success_02::LoginSuccessPacket;
 use crate::packets::client::status::response_00::StatusResponsePacket;
 use crate::packets::packet_serialization::{read_varint_u32, SerializablePacket};
 use crate::packets::server::handshake::HandshakePacket;
@@ -15,6 +16,7 @@ pub mod packet_serialization;
 pub enum Packet {
     Handshake(HandshakePacket),
     LoginStart(LoginStartPacket),
+    LoginSuccess(LoginSuccessPacket),
     StatusRequest,
     StatusResponse(StatusResponsePacket),
     StatusPing(StatusPingPongPacket),
@@ -31,6 +33,8 @@ impl Packet {
 
             Packet::StatusPing(_) |
             Packet::StatusPong(_) => 1,
+
+            Packet::LoginSuccess(_) => 2,
         }
     }
     pub fn serialize(&self) -> Vec<u8> {
@@ -38,6 +42,7 @@ impl Packet {
             Self::StatusRequest => vec![1, 0],
             Self::Handshake(inner) => inner.serialize(),
             Self::LoginStart(inner) => inner.serialize(),
+            Self::LoginSuccess(inner) => inner.serialize(),
             Self::StatusResponse(inner) => inner.serialize(),
             Self::StatusPing(inner) => inner.serialize(),
             Self::StatusPong(inner) => inner.serialize(),

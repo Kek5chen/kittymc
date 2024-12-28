@@ -4,6 +4,7 @@ pub enum State {
     Status = 1,
     Login = 2,
     Transfer = 3,
+    Play = 4,
     Undefined = 255,
 }
 
@@ -13,6 +14,7 @@ impl From<u8> for State {
             1 => State::Status,
             2 => State::Login,
             3 => State::Transfer,
+            4 => State::Play,
             _ => State::Undefined
         }
     }

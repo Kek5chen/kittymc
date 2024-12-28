@@ -1,3 +1,4 @@
+use std::array::TryFromSliceError;
 use std::io;
 use std::string::FromUtf8Error;
 use thiserror::Error;
@@ -15,5 +16,7 @@ pub enum KittyMCError {
     #[error("{0}")]
     IoError(#[from] io::Error),
     #[error("{0}")]
-    JsonError(#[from] serde_json::Error)
+    JsonError(#[from] serde_json::Error),
+    #[error("{0}")]
+    ByteConversionError(#[from] TryFromSliceError),
 }

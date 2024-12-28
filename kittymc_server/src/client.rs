@@ -2,7 +2,9 @@ use std::io::ErrorKind;
 use std::net::SocketAddr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
+use uuid::Builder;
 use kittymc_lib::error::KittyMCError;
+use kittymc_lib::packets::client::login::success_02::LoginSuccessPacket;
 use kittymc_lib::packets::client::status::response_00::StatusResponsePacket;
 use kittymc_lib::packets::Packet;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
@@ -77,10 +79,22 @@ impl Client {
                     Packet::StatusPing(ping) => {
                         self.socket.write_all(&ping.serialize()).await?;
                     }
+                    Packet::LoginStart(login) => {
+                        let mut uuid_seed: [u8; 16] = [0; 16];
+                        let name_as_bytes = login.name.as_bytes();
+                        uuid_seed[..name_as_bytes.len()].copy_from_slice(name_as_bytes);
+                        let uuid = Builder::from_bytes(uuid_seed).as_uuid().hyphenated().to_string();
+                        let success = LoginSuccessPacket{
+                            uuid,
+                            username: login.name.clone(),
+                        };
+                        self.socket.write_all(&success.serialize()).await?;
+                        self.current_state = State::Play;
+                    }
                     _ => {}
                 }
                 read_packets += packet_len;
-                println!("buffer: {:?}", packet);
+                println!("packet: {:?}", packet);
                 println!("packet_len: {packet_len}");
                 println!("read_packets: {read_packets}");
             }
