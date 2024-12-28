@@ -1,3 +1,4 @@
+use uuid::Builder;
 use crate::error::KittyMCError;
 use crate::packets::packet_serialization::{read_length_prefixed_string, write_length_prefixed_string, SerializablePacket};
 use crate::packets::{wrap_packet, Packet};
@@ -6,6 +7,25 @@ use crate::packets::{wrap_packet, Packet};
 pub struct LoginSuccessPacket {
     pub uuid: String,
     pub username: String,
+}
+
+impl LoginSuccessPacket {
+    pub fn from_name_cracked(name: &str) -> Result<Self, KittyMCError> {
+        if name.len() > 16 {
+            return Err(KittyMCError::TooMuchData(name.len(), 16));
+        }
+
+        let mut uuid_seed: [u8; 16] = [0; 16];
+        let name_as_bytes = name.as_bytes();
+        uuid_seed[..name_as_bytes.len()].copy_from_slice(name_as_bytes);
+
+        let uuid = Builder::from_bytes(uuid_seed).as_uuid().hyphenated().to_string();
+
+        Ok(LoginSuccessPacket{
+            uuid,
+            username: name.to_string(),
+        })
+    }
 }
 
 impl SerializablePacket for LoginSuccessPacket {

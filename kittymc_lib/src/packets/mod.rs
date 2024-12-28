@@ -58,7 +58,7 @@ impl Packet {
         let total_size = packet_len_len + packet_id_len;
 
         if packet_len > data.len() {
-            return Err(KittyMCError::NotEnoughData);
+            return Err(KittyMCError::NotEnoughData(data.len(), packet_len));
         }
 
         let (size, packet) = match state {
