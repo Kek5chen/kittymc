@@ -11,8 +11,10 @@ pub enum KittyMCError {
     DecodingError,
     #[error("failed to decode string in packet")]
     StringDecodeError(#[from] FromUtf8Error),
-    #[error("not enough data collected for packet")]
-    NotEnoughData,
+    #[error("not enough data: {0}<{1}")]
+    NotEnoughData(usize,usize),
+    #[error("more data than was expected: {0}>{1}")]
+    TooMuchData(usize,usize),
     #[error("{0}")]
     IoError(#[from] io::Error),
     #[error("{0}")]
