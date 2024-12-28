@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 kittymc-lib = { path = "../kittymc_lib" }
 tokio = { version = "1.42.0", features = ["rt", "rt-multi-thread", "macros", "net", "io-util"] }
+uuid = { version = "1.11.0", features = ["v3"] }
