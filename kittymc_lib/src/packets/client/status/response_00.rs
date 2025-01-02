@@ -61,7 +61,7 @@ impl Default for StatusResponsePacket {
                     }
                 ],
             },
-            description: StatusResponseText { text: "A kittyful MC Server".to_string() },
+            description: StatusResponseText { text: "§4K§6I§eT§aT§bY §dM§4C §5!!!!! §d[ TOTALLY SCENE! ]\n§d~ xXx M3W M3W SHREDZ xXx ~".to_string() },
             favicon: "".to_string(),
             enforces_secure_chat: false,
         }

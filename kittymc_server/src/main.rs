@@ -1,11 +1,23 @@
 mod server;
 mod client;
+mod packet_routing;
+mod player;
 
+use tracing_subscriber::EnvFilter;
 use crate::server::KittyMCServer;
 
-#[tokio::main]
-async fn main() {
-    let server = match KittyMCServer::new(25565).await {
+fn main() {
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env())
+        .pretty()
+        .compact()
+        .with_target(false)
+        .with_line_number(false)
+        .with_file(false)
+        .without_time()
+        .init();
+
+    let mut server = match KittyMCServer::new(25565) {
         Ok(server) => server,
         Err(e) => {
             eprintln!("Error while trying to start the server: {e}");
@@ -13,7 +25,7 @@ async fn main() {
         }
     };
 
-    match server.run().await {
+    match server.run() {
         Err(e) => {
             eprintln!("Error occurred while server was running: {e}");
             return;

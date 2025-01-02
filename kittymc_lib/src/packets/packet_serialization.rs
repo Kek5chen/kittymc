@@ -19,7 +19,7 @@ pub fn read_length_prefixed_string(data: &mut &[u8], total_size: &mut usize) -> 
     let len = read_varint_u32(data, total_size)? as usize;
 
     if data.len() < len {
-        return Err(KittyMCError::DecodingError);
+        return Err(KittyMCError::DeserializationError);
     }
 
     let raw_bytes = &data[..len];
@@ -32,12 +32,12 @@ pub fn read_length_prefixed_string(data: &mut &[u8], total_size: &mut usize) -> 
 
 pub fn read_i64(data: &mut &[u8], total_size: &mut usize) -> Result<i64, KittyMCError> {
     if data.len() < 8 {
-        return Err(KittyMCError::DecodingError);
+        return Err(KittyMCError::DeserializationError);
     }
 
     let value = i64::from_be_bytes(data[..8]
         .try_into()
-        .map_err(|_| KittyMCError::DecodingError)?);
+        .map_err(|_| KittyMCError::DeserializationError)?);
     *data = &data[8..];
     *total_size += 8;
     Ok(value)
@@ -45,25 +45,25 @@ pub fn read_i64(data: &mut &[u8], total_size: &mut usize) -> Result<i64, KittyMC
 
 pub fn read_u16_be(data: &mut &[u8], total_size: &mut usize) -> Result<u16, KittyMCError> {
     if data.len() < 2 {
-        return Err(KittyMCError::DecodingError);
+        return Err(KittyMCError::DeserializationError);
     }
     let value = u16::from_be_bytes(data[..2]
         .try_into()
-        .map_err(|_| KittyMCError::DecodingError)?);
+        .map_err(|_| KittyMCError::DeserializationError)?);
     *data = &data[2..];
     *total_size += size_of::<u16>();
     Ok(value)
 }
 
 pub fn read_varint_u32(data: &mut &[u8], total_size: &mut usize) -> Result<u32, KittyMCError> {
-    let (value, size) = VarInt::decode_var(*data).ok_or(KittyMCError::DecodingError)?;
+    let (value, size) = VarInt::decode_var(*data).ok_or(KittyMCError::DeserializationError)?;
     *data = &data[size..];
     *total_size += size;
     Ok(value)
 }
 
 pub fn read_state_varint(data: &mut &[u8], total_size: &mut usize) -> Result<State, KittyMCError> {
-    let (raw_state, size) = u8::decode_var(*data).ok_or(KittyMCError::DecodingError)?;
+    let (raw_state, size) = u8::decode_var(*data).ok_or(KittyMCError::DeserializationError)?;
     *data = &data[size..];
     *total_size += size;
     Ok(State::from(raw_state))

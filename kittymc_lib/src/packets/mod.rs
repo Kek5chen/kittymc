@@ -1,6 +1,7 @@
 use integer_encoding::VarInt;
 use crate::error::KittyMCError;
 use crate::packets::client::login::success_02::LoginSuccessPacket;
+use crate::packets::client::play::keep_alive_00::KeepAlivePacket;
 use crate::packets::client::status::response_00::StatusResponsePacket;
 use crate::packets::packet_serialization::{read_varint_u32, SerializablePacket};
 use crate::packets::server::handshake::HandshakePacket;
@@ -21,6 +22,7 @@ pub enum Packet {
     StatusResponse(StatusResponsePacket),
     StatusPing(StatusPingPongPacket),
     StatusPong(StatusPingPongPacket),
+    KeepAlive(KeepAlivePacket),
 }
 
 impl Packet {
@@ -29,7 +31,8 @@ impl Packet {
             Packet::Handshake(_) |
             Packet::LoginStart(_) |
             Packet::StatusRequest |
-            Packet::StatusResponse(_) => 0,
+            Packet::StatusResponse(_) |
+            Packet::KeepAlive(_) => 0,
 
             Packet::StatusPing(_) |
             Packet::StatusPong(_) => 1,
@@ -46,6 +49,7 @@ impl Packet {
             Self::StatusResponse(inner) => inner.serialize(),
             Self::StatusPing(inner) => inner.serialize(),
             Self::StatusPong(inner) => inner.serialize(),
+            Self::KeepAlive(inner) => inner.serialize(),
         }
     }
 
@@ -78,6 +82,12 @@ impl Packet {
             State::Login => {
                 match packet_id {
                     0 => LoginStartPacket::deserialize(&data[..packet_len])?,
+                    _ => return Err(KittyMCError::NotImplemented),
+                }
+            }
+            State::Play => {
+                match packet_id {
+                    0 => KeepAlivePacket::deserialize(&data[..packet_len])?,
                     _ => return Err(KittyMCError::NotImplemented),
                 }
             }
