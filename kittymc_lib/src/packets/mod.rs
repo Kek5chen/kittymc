@@ -1,9 +1,10 @@
 use integer_encoding::VarInt;
 use crate::error::KittyMCError;
+use crate::packets::client::login::set_compression_03::SetCompressionPacket;
 use crate::packets::client::login::success_02::LoginSuccessPacket;
 use crate::packets::client::play::keep_alive_00::KeepAlivePacket;
 use crate::packets::client::status::response_00::StatusResponsePacket;
-use crate::packets::packet_serialization::{read_varint_u32, SerializablePacket};
+use crate::packets::packet_serialization::{decompress_packet, read_varint_u32, SerializablePacket};
 use crate::packets::server::handshake::HandshakePacket;
 use crate::packets::server::login::login_start_00::LoginStartPacket;
 use crate::packets::server::status::ping_01::StatusPingPongPacket;
@@ -23,6 +24,7 @@ pub enum Packet {
     StatusPing(StatusPingPongPacket),
     StatusPong(StatusPingPongPacket),
     KeepAlive(KeepAlivePacket),
+    SetCompression(SetCompressionPacket),
 }
 
 impl Packet {
@@ -38,6 +40,8 @@ impl Packet {
             Packet::StatusPong(_) => 1,
 
             Packet::LoginSuccess(_) => 2,
+
+            Packet::SetCompression(_) => 3,
         }
     }
     pub fn serialize(&self) -> Vec<u8> {
@@ -50,10 +54,20 @@ impl Packet {
             Self::StatusPing(inner) => inner.serialize(),
             Self::StatusPong(inner) => inner.serialize(),
             Self::KeepAlive(inner) => inner.serialize(),
+            Self::SetCompression(inner) => inner.serialize(),
         }
     }
 
-    pub fn deserialize_packet(state: State, mut data: &[u8]) -> Result<(usize, Packet), KittyMCError> {
+    pub fn deserialize_packet(state: State, raw_data: &[u8], compressed: bool) -> Result<(usize, Packet), KittyMCError> {
+        let decompressed;
+        let mut data: &[u8];
+        if compressed {
+            decompressed = decompress_packet(&raw_data)?;
+            data = &decompressed[..];
+        } else {
+            data = raw_data;
+        }
+
         let mut packet_len_len = 0;
         let packet_len = read_varint_u32(&mut data, &mut packet_len_len)? as usize;
         let packet_len = packet_len - packet_len_len;

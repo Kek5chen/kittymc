@@ -9,6 +9,7 @@ use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::state::State;
 use log::debug;
 use uuid::Uuid;
+use kittymc_lib::packets::client::login::set_compression_03::SetCompressionPacket;
 use crate::client::{Client, ClientInfo};
 use crate::player::Player;
 
@@ -76,6 +77,9 @@ impl KittyMCServer {
                     let player = Player::from_client_info(client_info);
                     let uuid = player.uuid().clone();
                     self.players.insert(uuid.clone(), player);
+
+                    client.send_packet(&SetCompressionPacket::default())?;
+                    client.set_compression(true);
 
                     client.send_packet(&success)?;
                     client.set_state(State::Play);

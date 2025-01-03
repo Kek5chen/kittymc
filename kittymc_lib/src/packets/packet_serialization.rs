@@ -1,5 +1,8 @@
 use std::mem::size_of;
+use std::ops::RangeBounds;
 use integer_encoding::VarInt;
+use miniz_oxide::deflate::compress_to_vec_zlib;
+use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;
 use crate::error::KittyMCError;
 use crate::packets::Packet;
 use crate::subtypes::state::State;
@@ -77,6 +80,10 @@ pub fn write_varint_u32(buffer: &mut Vec<u8>, value: u32) {
     buffer.extend_from_slice(&value.encode_var_vec());
 }
 
+pub fn write_varint_u32_splice<R: RangeBounds<usize>>(buffer: &mut Vec<u8>, value: u32, at: R) {
+    buffer.splice(at, value.encode_var_vec());
+}
+
 pub fn write_varint_u8(buffer: &mut Vec<u8>, value: u8) {
     buffer.extend_from_slice(&value.encode_var_vec());
 }
@@ -89,4 +96,28 @@ pub fn write_length_prefixed_string(buffer: &mut Vec<u8>, s: &str) {
     let bytes = s.as_bytes();
     write_varint_u32(buffer, bytes.len() as u32);
     buffer.extend_from_slice(bytes);
+}
+
+pub fn compress_packet(mut packet: &[u8]) -> Result<Vec<u8>, KittyMCError> {
+    let mut total_size = 0;
+    let raw_packet_length = read_varint_u32(&mut packet, &mut total_size)?;
+
+    let mut new_packet = compress_to_vec_zlib(packet, 5);
+    let new_packet_len = new_packet.len() as u32;
+    write_varint_u32_splice(&mut new_packet, raw_packet_length, ..0);
+    write_varint_u32_splice(&mut new_packet, new_packet_len, ..0);
+
+    Ok(new_packet)
+}
+
+pub fn decompress_packet(mut compressed_packet: &[u8]) -> Result<Vec<u8>, KittyMCError> {
+    let mut total_size = 0;
+    let compressed_packet_length = read_varint_u32(&mut compressed_packet, &mut total_size)? as usize;
+    total_size = 0;
+    let uncompressed_data_length = read_varint_u32(&mut compressed_packet, &mut total_size)?;
+
+    let uncompressed_packet = decompress_to_vec_zlib_with_limit(&compressed_packet[..(compressed_packet_length - total_size)], uncompressed_data_length as usize)
+        .map_err(|_| KittyMCError::DecompressionError)?;
+
+    Ok(uncompressed_packet)
 }

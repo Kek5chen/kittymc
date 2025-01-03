@@ -33,4 +33,6 @@ pub enum KittyMCError {
     Disconnected,
     #[error("The client version mismatched the server version")]
     VersionMissmatch,
+    #[error("Data couldn't be decompressed properly")]
+    DecompressionError // No #[from] because DecompressError is stupip
 }

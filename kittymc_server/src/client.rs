@@ -1,21 +1,17 @@
 use std::fmt::Debug;
-use std::future::poll_fn;
 use std::io::{ErrorKind, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
-use std::task::Poll;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
-use tracing::{debug, error, info, instrument, trace, warn};
+use tracing::{error, info, instrument, trace, warn};
 
 use kittymc_lib::error::KittyMCError;
-use kittymc_lib::packets::client::login::success_02::LoginSuccessPacket;
-use kittymc_lib::packets::client::status::response_00::StatusResponsePacket;
 use kittymc_lib::packets::{Packet, packet_serialization::SerializablePacket};
+use kittymc_lib::packets::client::login::set_compression_03::SetCompressionPacket;
 use kittymc_lib::packets::client::play::keep_alive_00::KeepAlivePacket;
+use kittymc_lib::packets::packet_serialization::compress_packet;
 use kittymc_lib::subtypes::state::State;
-use crate::packet_routing::PacketSendInfo;
-use crate::server::KittyMCServer;
 
 #[derive(Eq, Hash, PartialEq, Debug, Clone)]
 pub struct ClientInfo {
@@ -33,6 +29,7 @@ pub struct Client {
     last_heartbeat_response: Instant,
     buffer: Vec<u8>,
     buffer_size: usize,
+    compression: bool,
 }
 
 impl Client {
@@ -63,6 +60,7 @@ impl Client {
                 last_heartbeat_response: Instant::now(),
                 buffer: vec![0; 2048],
                 buffer_size: 0,
+                compression: false,
             },
         )
     }
@@ -80,11 +78,21 @@ impl Client {
         self.current_state = state;
     }
 
+    pub fn set_compression(&mut self, compress: bool) {
+        self.compression = compress;
+    }
+
     #[instrument(skip(self, b_packet))]
     pub fn send_packet_raw(&mut self, b_packet: &[u8]) -> Result<(), KittyMCError> {
-        self.socket.write_all(b_packet)?;
-
-        trace!("Sent : {b_packet:?}");
+        if self.compression {
+            let compressed = compress_packet(b_packet)?;
+            self.socket.write_all(&compressed)?;
+            trace!("[{}] Sent (C) : {compressed:?}", self.addr);
+            trace!("[{}] Uncompressed : {b_packet:?}", self.addr);
+        } else {
+            self.socket.write_all(&b_packet)?;
+            trace!("[{}] Sent (UC) : {b_packet:?}", self.addr);
+        }
 
         Ok(())
     }
@@ -138,7 +146,7 @@ impl Client {
             }
 
             let (packet_len, packet) =
-                match Packet::deserialize_packet(self.current_state, &self.buffer[..n]) {
+                match Packet::deserialize_packet(self.current_state, &self.buffer[..n], self.compression) {
                     Ok(packet) => {
                         trace!("[{}] Received : {:?}", self.addr, &self.buffer[..packet.0]);
                         trace!("[{}] Parsed : {:?}", self.addr, packet.1);
@@ -161,7 +169,6 @@ impl Client {
             if self.buffer_size < 2048 {
                 self.buffer.resize(2048, 0); // shouldn't be able to become smaller than 2048
             }
-
 
             return Ok(Some(packet));
         }

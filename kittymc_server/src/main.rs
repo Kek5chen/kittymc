@@ -1,6 +1,5 @@
 mod server;
 mod client;
-mod packet_routing;
 mod player;
 
 use tracing_subscriber::EnvFilter;
