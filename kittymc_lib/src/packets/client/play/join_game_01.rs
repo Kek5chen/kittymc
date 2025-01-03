@@ -16,7 +16,7 @@ pub struct JoinGamePacket {
 impl Default for JoinGamePacket {
     fn default() -> Self {
         Self {
-            entity_id: 0,
+            entity_id: 129,
             gamemode: GameMode::Survival,
             dimension: Dimension::Nether,
             difficulty: Difficulty::Peaceful,

@@ -9,6 +9,8 @@ pub mod server_difficulty_41;
 pub mod player_abilities_39;
 pub mod player_position_and_look;
 pub mod map_chunk_bulk_26;
+pub mod window_items_14;
+pub mod chunk_data_20;
 
 #[derive(Copy, Clone, Debug)]
 pub enum GameMode {

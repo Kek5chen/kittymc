@@ -73,6 +73,13 @@ pub fn read_u16_be(data: &mut &[u8], total_size: &mut usize) -> Result<u16, Kitt
     Ok(value)
 }
 
+pub fn read_varint_i32(data: &mut &[u8], total_size: &mut usize) -> Result<i32, KittyMCError> {
+    let (value, size) = VarInt::decode_var(*data).ok_or(KittyMCError::DeserializationError)?;
+    *data = &data[size..];
+    *total_size += size;
+    Ok(value)
+}
+
 pub fn read_varint_u32(data: &mut &[u8], total_size: &mut usize) -> Result<u32, KittyMCError> {
     let (value, size) = VarInt::decode_var(*data).ok_or(KittyMCError::DeserializationError)?;
     *data = &data[size..];
@@ -132,9 +139,14 @@ pub fn write_bool(buffer: &mut Vec<u8>, value: bool) {
     write_u8(buffer, value);
 }
 
+pub fn write_varint_i32(buffer: &mut Vec<u8>, value: i32) {
+    buffer.extend_from_slice(&value.encode_var_vec());
+}
+
 pub fn write_varint_u32(buffer: &mut Vec<u8>, value: u32) {
     buffer.extend_from_slice(&value.encode_var_vec());
 }
+
 
 pub fn write_varint_u32_splice<R: RangeBounds<usize>>(buffer: &mut Vec<u8>, value: u32, at: R) {
     buffer.splice(at, value.encode_var_vec());
@@ -187,6 +199,7 @@ pub fn compress_packet(mut packet: &[u8]) -> Result<Vec<u8>, KittyMCError> {
 pub fn decompress_packet(mut compressed_packet: &[u8]) -> Result<Vec<u8>, KittyMCError> {
     let mut total_size = 0;
     let compressed_packet_length = read_varint_u32(&mut compressed_packet, &mut total_size)? as usize;
+
     total_size = 0;
     let uncompressed_data_length = read_varint_u32(&mut compressed_packet, &mut total_size)?;
 

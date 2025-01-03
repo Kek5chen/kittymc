@@ -16,9 +16,11 @@ use kittymc_lib::packets::client::play::player_abilities_39::PlayerAbilitiesPack
 use kittymc_lib::packets::client::play::plugin_message_3f::PluginMessagePacket;
 use kittymc_lib::packets::client::play::server_difficulty_41::ServerDifficultyPacket;
 use kittymc_lib::packets::client::login::set_compression_03::SetCompressionPacket;
+use kittymc_lib::packets::client::play::chunk_data_20::ChunkDataPacket;
 use kittymc_lib::packets::client::play::spawn_position_05::SpawnPositionPacket;
 use kittymc_lib::packets::client::play::join_game_01::JoinGamePacket;
 use kittymc_lib::packets::client::play::player_position_and_look::PlayerPositionAndLookPacket;
+use kittymc_lib::packets::client::play::window_items_14::WindowItemsPacket;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use crate::client::{Client, ClientInfo};
 use crate::player::Player;
@@ -92,7 +94,7 @@ impl KittyMCServer {
             match &packet {
                 Packet::Handshake(handshake) => {
                     if handshake.protocol_version != 340 && handshake.next_state != State::Status {
-                        warn!("[{}] Client tried to connect with protocol version {} != 340. Disconnecting.", client.addr(), handshake.protocol_version);
+                        info!("[{}] Client tried to connect with protocol version {} != 340. Disconnecting.", client.addr(), handshake.protocol_version);
                         client.send_packet(&DisconnectLoginPacket::wrong_version())?;
                         return Err(KittyMCError::VersionMissmatch);
                     }
@@ -115,8 +117,9 @@ impl KittyMCServer {
                     let uuid = player.uuid().clone();
                     self.players.insert(uuid.clone(), player);
 
-                    client.send_packet(&SetCompressionPacket::default())?;
-                    client.set_compression(true);
+                    let compression = SetCompressionPacket::default();
+                    client.send_packet(&compression)?;
+                    client.set_compression(true, compression.threshold);
 
                     client.send_packet(&success)?;
                     client.set_state(State::Play);
@@ -126,8 +129,10 @@ impl KittyMCServer {
 
                     client.send_packet(&PluginMessagePacket::default_brand())?;
                     client.send_packet(&ServerDifficultyPacket::default())?;
-                    client.send_packet(&SpawnPositionPacket::default())?;
                     client.send_packet(&PlayerAbilitiesPacket::default())?;
+                    client.send_packet(&WindowItemsPacket::default())?;
+                    client.send_packet(&ChunkDataPacket::default())?;
+                    client.send_packet(&SpawnPositionPacket::default())?;
                     client.send_packet(&PlayerPositionAndLookPacket::default())?;
 
                     return Ok(Some(uuid))

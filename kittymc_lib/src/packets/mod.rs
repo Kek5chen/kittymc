@@ -15,6 +15,12 @@ pub mod server;
 pub mod client;
 pub mod packet_serialization;
 
+#[derive(Debug, Default)]
+pub struct CompressionInfo {
+    pub enabled: bool,
+    pub compression_threshold: u32,
+}
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum Packet {
     Handshake(HandshakePacket),
@@ -63,28 +69,33 @@ impl Packet {
         }
     }
 
-    pub fn deserialize_packet(state: State, raw_data: &[u8], compressed: bool) -> Result<(usize, Packet), KittyMCError> {
+    pub fn deserialize_packet(state: State, raw_data: &[u8], compression: &CompressionInfo) -> Result<(usize, Packet), KittyMCError> {
+        let threshold_hit = {
+            let mut raw_data = raw_data;
+            let mut size = 0;
+            let data_len = read_varint_u32(&mut raw_data, &mut size)?;
+            data_len >= compression.compression_threshold
+        };
+
         let decompressed;
         let mut data: &[u8];
-        if compressed {
+        if compression.enabled && threshold_hit {
             decompressed = decompress_packet(&raw_data)?;
             data = &decompressed[..];
         } else {
             data = raw_data;
         }
 
-        let mut packet_len_len = 0;
-        let packet_len = read_varint_u32(&mut data, &mut packet_len_len)? as usize;
-        let packet_len = packet_len - packet_len_len;
-        let mut packet_id_len = 0;
-        let packet_id = read_varint_u32(&mut data, &mut packet_id_len)? as usize;
-        let total_size = packet_len_len + packet_id_len;
+        let mut header_size = 0;
+        let packet_len = read_varint_u32(&mut data, &mut header_size)? as usize;
+        let packet_len = packet_len - header_size;
+        let packet_id = read_varint_u32(&mut data, &mut header_size)? as usize;
 
         if packet_len > data.len() {
             return Err(KittyMCError::NotEnoughData(data.len(), packet_len));
         }
 
-        let (size, packet) = match state {
+        let (packet_size, packet) = match state {
             State::Handshake => {
                 match packet_id {
                     0 => HandshakePacket::deserialize(&data[..packet_len])?,
@@ -114,7 +125,7 @@ impl Packet {
             _ => return Err(KittyMCError::NotImplemented),
         };
 
-        Ok((total_size + size, packet))
+        Ok((header_size + packet_size, packet))
     }
 }
 

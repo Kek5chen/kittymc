@@ -4,7 +4,7 @@ use crate::packets::{wrap_packet, Packet};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct SetCompressionPacket {
-    threshold: u32,
+    pub threshold: u32,
 }
 
 impl Default for SetCompressionPacket {

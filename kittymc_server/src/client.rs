@@ -7,7 +7,7 @@ use uuid::Uuid;
 use tracing::{debug, info, instrument, trace, warn};
 
 use kittymc_lib::error::KittyMCError;
-use kittymc_lib::packets::{Packet, packet_serialization::SerializablePacket};
+use kittymc_lib::packets::{Packet, packet_serialization::SerializablePacket, CompressionInfo};
 use kittymc_lib::packets::client::play::keep_alive_00::KeepAlivePacket;
 use kittymc_lib::packets::packet_serialization::compress_packet;
 use kittymc_lib::subtypes::state::State;
@@ -29,7 +29,8 @@ pub struct Client {
     last_backbeat: Instant,
     buffer: Vec<u8>,
     buffer_size: usize,
-    compression: bool,
+    fragmented: bool,
+    compression: CompressionInfo,
     brand: Option<String>,
 }
 
@@ -62,7 +63,8 @@ impl Client {
                 last_backbeat: Instant::now(),
                 buffer: vec![0; 2048],
                 buffer_size: 0,
-                compression: false,
+                fragmented: false,
+                compression: CompressionInfo::default(),
                 brand: None,
             },
         )
@@ -81,8 +83,9 @@ impl Client {
         self.current_state = state;
     }
 
-    pub fn set_compression(&mut self, compress: bool) {
-        self.compression = compress;
+    pub fn set_compression(&mut self, compress: bool, threshold: u32) {
+        self.compression.enabled = compress;
+        self.compression.compression_threshold = threshold;
     }
 
     pub fn set_brand(&mut self, brand: String) {
@@ -92,7 +95,7 @@ impl Client {
     #[instrument(skip(self, b_packet))]
     pub fn send_packet_raw(&mut self, b_packet: &[u8]) -> Result<(), KittyMCError> {
         trace!("================= SEND Packet Start ==================");
-        if self.compression {
+        if self.compression.enabled {
             let compressed = compress_packet(b_packet)?;
             self.socket.write_all(&compressed)?;
             trace!("[{}] Sent (C) : {compressed:?}", self.addr);
@@ -136,60 +139,61 @@ impl Client {
 
     #[instrument(skip(self))]
     pub fn fetch_packet(&mut self) -> Result<Option<Packet>, KittyMCError> {
-        let mut fetch_more = false;
-        loop {
-            let mut n = self.buffer_size;
-            if n == 0 || fetch_more {
-                if n == self.buffer.len() {
-                    self.buffer.resize(n + 2048, 0);
-                }
-                let max_len = self.buffer.len();
-                match self.socket.read(&mut self.buffer[n..max_len]) {
-                    Ok(0) => {
-                        // The other side closed the connection
-                        return Err(KittyMCError::Disconnected);
-                    }
-                    Ok(new_n) => n += new_n,
-                    Err(e) if e.kind() == ErrorKind::WouldBlock => return Ok(None),
-                    Err(e) => return Err(e.into()),
-                }
-                trace!("================= RECV Packet Start ==================");
-
-                trace!("[{}] Complete Received Packet : {:?}", self.addr, &self.buffer[..n]);
-            } else {
-                trace!("================= RECV Packet Start ==================");
-            }
-
-            let (packet_len, packet) =
-                match Packet::deserialize_packet(self.current_state, &self.buffer[..n], self.compression) {
-                    Ok(packet) => {
-                        trace!("[{}] Parsed Range : {:?}", self.addr, &self.buffer[..packet.0]);
-                        trace!("[{}] Parsed Value : {:?}", self.addr, packet.1);
-                        debug!("[{}] <<< {:?}", self.addr, packet.1);
-                        trace!("================= RECV Packet End ==================");
-                        packet
-                    },
-                    Err(KittyMCError::NotEnoughData(_, _)) => {
-                        trace!("[{}] Not enough data. Taking more...", self.addr);
-                        fetch_more = true;
-                        continue;
-                    }
-                    Err(e) => {
-                        warn!("[{}] Error when deserializing packet: {}", self.addr, e);
-                        warn!("[{}] Packet started with : {:?}", self.addr, & self.buffer[..n]);
-                        trace!("================= RECV Packet End ==================");
-                        return Err(KittyMCError::DeserializationError);
-                    }
-                };
-
-            self.buffer_size = n - packet_len;
-            self.buffer.drain(0..packet_len);
-
-            if self.buffer_size < 2048 {
-                self.buffer.resize(2048, 0); // shouldn't be able to become smaller than 2048
-            }
-
-            return Ok(Some(packet));
+        let mut n = self.buffer_size;
+        if n == self.buffer.len() {
+            // buffer has not enough space to fit packet. so extend it.
+            self.buffer.resize(n + 2048, 0);
         }
+        let max_len = self.buffer.len();
+        match self.socket.read(&mut self.buffer[n..max_len]) {
+            Ok(0) => {
+                // The other side closed the connection
+                return Err(KittyMCError::Disconnected);
+            }
+            Ok(new_n) => {
+                self.fragmented = false;
+                n += new_n;
+            },
+            Err(e) if e.kind() == ErrorKind::WouldBlock => {
+                if n == 0 || self.fragmented {
+                    return Ok(None);
+                }
+            },
+            Err(e) => return Err(e.into()),
+        }
+        trace!("================= RECV Packet Start ==================");
+
+        trace!("[{}] Complete Received Packet : {:?}", self.addr, &self.buffer[..n]);
+
+        let (packet_len, packet) =
+            match Packet::deserialize_packet(self.current_state, &self.buffer[..n], &self.compression) {
+                Ok(packet) => {
+                    trace!("[{}] Parsed Range : {:?}", self.addr, &self.buffer[..packet.0]);
+                    trace!("[{}] Parsed Value : {:?}", self.addr, packet.1);
+                    debug!("[{}] <<< {:?}", self.addr, packet.1);
+                    trace!("================= RECV Packet End ==================");
+                    packet
+                },
+                Err(KittyMCError::NotEnoughData(_, _)) => {
+                    trace!("[{}] Not enough data. Waiting for more", self.addr);
+                    self.fragmented = true;
+                    return Ok(None);
+                }
+                Err(e) => {
+                    warn!("[{}] Error when deserializing packet: {}", self.addr, e);
+                    warn!("[{}] Packet started with : {:?}", self.addr, & self.buffer[..n]);
+                    trace!("================= RECV Packet End ==================");
+                    return Err(KittyMCError::DeserializationError);
+                }
+            };
+
+        self.buffer_size = n - packet_len;
+        self.buffer.drain(0..packet_len);
+
+        if self.buffer_size < 2048 {
+            self.buffer.resize(2048, 0); // shouldn't be able to become smaller than 2048
+        }
+
+        Ok(Some(packet))
     }
 }
