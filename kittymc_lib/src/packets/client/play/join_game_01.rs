@@ -20,7 +20,7 @@ impl Default for JoinGamePacket {
             gamemode: GameMode::Survival,
             dimension: Dimension::Nether,
             difficulty: Difficulty::Peaceful,
-            max_players: 0,
+            max_players: 5,
             level_type: LevelType::Default,
             reduced_debug_info: false,
         }
@@ -35,7 +35,7 @@ impl SerializablePacket for JoinGamePacket {
         write_u8(&mut packet, self.gamemode as u8);
         write_i8(&mut packet, self.dimension as i8);
         write_u8(&mut packet, self.difficulty as u8);
-        write_u8(&mut packet, 5); // TODO: Actual max players
+        write_u8(&mut packet, self.max_players); // TODO: Actual max players
         write_length_prefixed_string(&mut packet, self.level_type.as_str());
         write_bool(&mut packet, self.reduced_debug_info);
 

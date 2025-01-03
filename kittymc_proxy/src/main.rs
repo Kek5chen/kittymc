@@ -8,7 +8,7 @@ use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use kittymc_lib::subtypes::state::State;
 
 fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize> {
-    let result = Packet::deserialize_packet(State::Handshake, &data);
+    let result = Packet::deserialize_packet(State::Handshake, &data, false);
 
     if let Ok((size, mut packet)) = result {
         match packet {
@@ -25,7 +25,7 @@ fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize>
         return Ok(n);
     }
 
-    let result = Packet::deserialize_packet(State::Login, &data);
+    let result = Packet::deserialize_packet(State::Login, &data, false);
 
     if let Ok((size, packet)) = result {
         match packet {
@@ -41,13 +41,13 @@ fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize>
 }
 
 fn modify_server_data(data: &mut Vec<u8>, _n: usize) -> anyhow::Result<usize> {
-    let result = Packet::deserialize_packet(State::Handshake, &data);
+    let result = Packet::deserialize_packet(State::Handshake, &data, false);
 
     if let Ok((size, packet)) = result {
         println!("Server -> Client: Packet of size {size}: {packet:?}");
     }
 
-    let result = Packet::deserialize_packet(State::Login, &data);
+    let result = Packet::deserialize_packet(State::Login, &data, false);
 
     if let Ok((size, packet)) = result {
         println!("Server -> Client: Packet of size {size}: {packet:?}");

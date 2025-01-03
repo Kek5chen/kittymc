@@ -125,7 +125,7 @@ impl Client {
         Ok(self.last_backbeat.elapsed() <= Duration::from_secs(30))
     }
 
-    pub fn register_backbeat(&mut self, id: u32) {
+    pub fn register_backbeat(&mut self, _id: u32) {
         // TODO: Should probably store four heartbeat ids and then see if any matches
         //if self.last_heartbeat_id == id {
             self.last_backbeat = Instant::now();
@@ -138,7 +138,6 @@ impl Client {
         loop {
             let mut n = self.buffer_size;
             if n == 0 || fetch_more {
-                fetch_more = false;
                 if n == self.buffer.len() {
                     self.buffer.resize(n + 2048, 0);
                 }
