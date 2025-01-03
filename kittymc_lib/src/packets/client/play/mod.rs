@@ -8,6 +8,7 @@ pub mod plugin_message_3f;
 pub mod server_difficulty_41;
 pub mod player_abilities_39;
 pub mod player_position_and_look;
+pub mod map_chunk_bulk_26;
 
 #[derive(Copy, Clone, Debug)]
 pub enum GameMode {

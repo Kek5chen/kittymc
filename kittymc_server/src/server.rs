@@ -10,6 +10,7 @@ use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::state::State;
 use log::debug;
 use uuid::Uuid;
+use kittymc_lib::packets::client::login::disconnect_login_00::DisconnectLoginPacket;
 use kittymc_lib::packets::client::play::chat_message_02::ChatMessagePacket;
 use kittymc_lib::packets::client::play::player_abilities_39::PlayerAbilitiesPacket;
 use kittymc_lib::packets::client::play::plugin_message_3f::PluginMessagePacket;
@@ -90,8 +91,9 @@ impl KittyMCServer {
 
             match &packet {
                 Packet::Handshake(handshake) => {
-                    if handshake.protocol_version != 47 {
-                        warn!("[{}] Client tried to connect with protocol version {} != 47. Disconnecting.", client.addr(), handshake.protocol_version);
+                    if handshake.protocol_version != 340 && handshake.next_state != State::Status {
+                        warn!("[{}] Client tried to connect with protocol version {} != 340. Disconnecting.", client.addr(), handshake.protocol_version);
+                        client.send_packet(&DisconnectLoginPacket::wrong_version())?;
                         return Err(KittyMCError::VersionMissmatch);
                     }
                     client.set_state(handshake.next_state);

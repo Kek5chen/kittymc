@@ -16,6 +16,7 @@ miniz_oxide = "0.8.0"
 num-traits = "0.2.19"
 nalgebra = "0.33.2"
 bitflags = "2.6.0"
+derive_builder = "0.20.2"
 
 [dev-dependencies]
 anyhow = "1.0.94"

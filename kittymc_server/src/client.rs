@@ -20,6 +20,7 @@ pub struct ClientInfo {
 
 #[derive(Debug)]
 pub struct Client {
+    connected_at: Instant,
     socket: TcpStream,
     addr: SocketAddr,
     current_state: State,
@@ -52,6 +53,7 @@ impl Client {
 
         Ok(
             Client {
+                connected_at: Instant::now(),
                 socket,
                 addr,
                 current_state: State::Handshake,

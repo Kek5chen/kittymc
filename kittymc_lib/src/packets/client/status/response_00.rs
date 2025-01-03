@@ -44,8 +44,8 @@ impl Default for StatusResponsePacket {
 
         StatusResponsePacket {
             version: StatusResponseVersion {
-                name: "1.8.8".to_string(), // TODO: Replace this with global versioned consts
-                protocol: 47,
+                name: "KittyMC".to_string(),
+                protocol: 340, // TODO: Replace this with global versioned consts
             },
             players: StatusResponsePlayers {
                 max: 69,
@@ -61,7 +61,7 @@ impl Default for StatusResponsePacket {
                     }
                 ],
             },
-            description: StatusResponseText { text: "§4K§6I§eT§aT§bY §dM§4C §5!!!!! §d[ TOTALLY SCENE! ]\n§d~ xXx M3W M3W SHREDZ xXx ~".to_string() },
+            description: StatusResponseText { text: "§4K§6I§eT§aT§bY §dMC §5!!!!! §d[ TOTALLY SCENE! ]\n§d~ xXx M3W M3W SHREDZ xXx ~".to_string() },
             favicon: "".to_string(),
             enforces_secure_chat: false,
         }

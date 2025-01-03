@@ -2,7 +2,7 @@
 
 This is a minecraft protocol implementation in Rust.
 
-*Currently implementing: MC 1.8 (Protocol Version 47)*
+*Currently implementing: MC 1.12.2 (Protocol Version 340)*
 
 ## Based on
-https://minecraft.wiki/w/Protocol?oldid=2772100
+https://minecraft.wiki/w/Protocol?oldid=2772350
