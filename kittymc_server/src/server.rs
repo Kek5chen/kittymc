@@ -1,4 +1,5 @@
 use std::collections::{HashMap, VecDeque};
+use std::fmt::Debug;
 use std::net::TcpListener;
 use std::sync::RwLock;
 use tracing::{info, instrument, warn};
@@ -9,7 +10,15 @@ use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::state::State;
 use log::debug;
 use uuid::Uuid;
+use kittymc_lib::packets::client::play::chat_message_02::ChatMessagePacket;
+use kittymc_lib::packets::client::play::player_abilities_39::PlayerAbilitiesPacket;
+use kittymc_lib::packets::client::play::plugin_message_3f::PluginMessagePacket;
+use kittymc_lib::packets::client::play::server_difficulty_41::ServerDifficultyPacket;
 use kittymc_lib::packets::client::login::set_compression_03::SetCompressionPacket;
+use kittymc_lib::packets::client::play::spawn_position_05::SpawnPositionPacket;
+use kittymc_lib::packets::client::play::join_game_01::JoinGamePacket;
+use kittymc_lib::packets::client::play::player_position_and_look::PlayerPositionAndLookPacket;
+use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use crate::client::{Client, ClientInfo};
 use crate::player::Player;
 
@@ -44,7 +53,33 @@ impl KittyMCServer {
            return Ok(false);
         }
 
-        Ok(true)
+        loop {
+            let Some(packet) = client.fetch_packet()? else {
+                return Ok(true);
+            };
+
+            match &packet {
+                Packet::KeepAlive(packet) => {
+                    client.register_backbeat(packet.id);
+                }
+                Packet::PluginMessage(msg) if msg.channel == "MC|Brand" => {
+                    client.set_brand(String::from_utf8_lossy(&msg.data).to_string())
+                }
+                _ => ()
+            }
+        }
+    }
+
+    fn get_name_from_uuid(&self, uuid: &Uuid) -> Option<&str> {
+        self.players.get(uuid).map(|p| p.name())
+    }
+
+    fn send_to_all<P: SerializablePacket + Debug>(&mut self, packet: &P) -> Result<(), KittyMCError> {
+        for client in self.clients.write().unwrap().iter_mut() {
+            client.1.send_packet(packet)?;
+        }
+
+        Ok(())
     }
 
     fn handle_client_pre_play(&mut self, client: &mut Client) -> Result<Option<Uuid>, KittyMCError> {
@@ -83,6 +118,15 @@ impl KittyMCServer {
 
                     client.send_packet(&success)?;
                     client.set_state(State::Play);
+
+                    client.send_packet(&JoinGamePacket::default())?;
+                    self.send_to_all(&ChatMessagePacket::new_join_message(self.get_name_from_uuid(&uuid).unwrap()))?;
+
+                    client.send_packet(&PluginMessagePacket::default_brand())?;
+                    client.send_packet(&ServerDifficultyPacket::default())?;
+                    client.send_packet(&SpawnPositionPacket::default())?;
+                    client.send_packet(&PlayerAbilitiesPacket::default())?;
+                    client.send_packet(&PlayerPositionAndLookPacket::default())?;
 
                     return Ok(Some(uuid))
                 }
@@ -123,6 +167,7 @@ impl KittyMCServer {
             match self.handle_client(client.1) {
                 Ok(keep_alive) => {
                     if !keep_alive {
+                        info!("Forced Client disconnect");
                         disconnect_uuids.push(client.0.clone());
                     }
                 }

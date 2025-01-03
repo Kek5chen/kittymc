@@ -1,6 +1,6 @@
 use crate::error::KittyMCError;
 use crate::packets::{wrap_packet, Packet};
-use crate::packets::packet_serialization::{read_state_varint, read_u16_be, read_length_prefixed_string, read_varint_u32, write_be_u16, write_length_prefixed_string, write_varint_u32, SerializablePacket};
+use crate::packets::packet_serialization::{read_state_varint, read_u16_be, read_length_prefixed_string, read_varint_u32, write_length_prefixed_string, write_varint_u32, SerializablePacket, write_u16};
 use crate::subtypes::state::State;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -17,7 +17,7 @@ impl SerializablePacket for HandshakePacket {
 
         write_varint_u32(&mut packet, self.protocol_version);
         write_length_prefixed_string(&mut packet, &self.server_address);
-        write_be_u16(&mut packet, self.server_port);
+        write_u16(&mut packet, self.server_port);
         write_varint_u32(&mut packet, self.next_state as u32);
 
         wrap_packet(&mut packet, 0);

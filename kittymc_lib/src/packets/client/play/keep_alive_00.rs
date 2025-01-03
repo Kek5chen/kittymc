@@ -4,7 +4,7 @@ use crate::packets::{wrap_packet, Packet};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct KeepAlivePacket {
-    id: u32,
+    pub id: u32,
 }
 
 impl KeepAlivePacket {

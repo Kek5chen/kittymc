@@ -4,11 +4,10 @@ use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
-use tracing::{error, info, instrument, trace, warn};
+use tracing::{debug, info, instrument, trace, warn};
 
 use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::{Packet, packet_serialization::SerializablePacket};
-use kittymc_lib::packets::client::login::set_compression_03::SetCompressionPacket;
 use kittymc_lib::packets::client::play::keep_alive_00::KeepAlivePacket;
 use kittymc_lib::packets::packet_serialization::compress_packet;
 use kittymc_lib::subtypes::state::State;
@@ -26,10 +25,11 @@ pub struct Client {
     current_state: State,
     last_heartbeat: Instant,
     last_heartbeat_id: u32,
-    last_heartbeat_response: Instant,
+    last_backbeat: Instant,
     buffer: Vec<u8>,
     buffer_size: usize,
     compression: bool,
+    brand: Option<String>,
 }
 
 impl Client {
@@ -57,10 +57,11 @@ impl Client {
                 current_state: State::Handshake,
                 last_heartbeat: Instant::now(),
                 last_heartbeat_id: 0,
-                last_heartbeat_response: Instant::now(),
+                last_backbeat: Instant::now(),
                 buffer: vec![0; 2048],
                 buffer_size: 0,
                 compression: false,
+                brand: None,
             },
         )
     }
@@ -72,7 +73,7 @@ impl Client {
     pub fn set_state(&mut self, state: State) {
         if state == State::Play {
             self.last_heartbeat = Instant::now();
-            self.last_heartbeat_response = Instant::now();
+            self.last_backbeat = Instant::now();
         }
 
         self.current_state = state;
@@ -82,8 +83,13 @@ impl Client {
         self.compression = compress;
     }
 
+    pub fn set_brand(&mut self, brand: String) {
+        self.brand = Some(brand);
+    }
+
     #[instrument(skip(self, b_packet))]
     pub fn send_packet_raw(&mut self, b_packet: &[u8]) -> Result<(), KittyMCError> {
+        trace!("================= SEND Packet Start ==================");
         if self.compression {
             let compressed = compress_packet(b_packet)?;
             self.socket.write_all(&compressed)?;
@@ -93,12 +99,14 @@ impl Client {
             self.socket.write_all(&b_packet)?;
             trace!("[{}] Sent (UC) : {b_packet:?}", self.addr);
         }
+        trace!("================= SEND Packet End ==================");
 
         Ok(())
     }
 
     #[instrument(skip(self))]
     pub fn send_packet<P: SerializablePacket + Debug>(&mut self, packet: &P) -> Result<(), KittyMCError> {
+        debug!("[{}] >>>", self.addr);
         self.send_packet_raw(&packet.serialize())?;
         Ok(())
     }
@@ -108,17 +116,20 @@ impl Client {
             return Ok(true);
         }
 
-        if self.last_heartbeat_response < self.last_heartbeat {
-            return Ok(self.last_heartbeat.elapsed() <= Duration::from_secs(30));
-        }
-
         if self.last_heartbeat.elapsed() >= Duration::from_secs(5) {
             self.last_heartbeat_id = rand::random();
             self.send_packet(&KeepAlivePacket::new(self.last_heartbeat_id))?;
             self.last_heartbeat = Instant::now();
         }
 
-        Ok(true)
+        Ok(self.last_backbeat.elapsed() <= Duration::from_secs(30))
+    }
+
+    pub fn register_backbeat(&mut self, id: u32) {
+        // TODO: Should probably store four heartbeat ids and then see if any matches
+        //if self.last_heartbeat_id == id {
+            self.last_backbeat = Instant::now();
+        //}
     }
 
     #[instrument(skip(self))]
@@ -141,24 +152,31 @@ impl Client {
                     Err(e) if e.kind() == ErrorKind::WouldBlock => return Ok(None),
                     Err(e) => return Err(e.into()),
                 }
+                trace!("================= RECV Packet Start ==================");
 
                 trace!("[{}] Complete Received Packet : {:?}", self.addr, &self.buffer[..n]);
+            } else {
+                trace!("================= RECV Packet Start ==================");
             }
 
             let (packet_len, packet) =
                 match Packet::deserialize_packet(self.current_state, &self.buffer[..n], self.compression) {
                     Ok(packet) => {
-                        trace!("[{}] Received : {:?}", self.addr, &self.buffer[..packet.0]);
-                        trace!("[{}] Parsed : {:?}", self.addr, packet.1);
+                        trace!("[{}] Parsed Range : {:?}", self.addr, &self.buffer[..packet.0]);
+                        trace!("[{}] Parsed Value : {:?}", self.addr, packet.1);
+                        debug!("[{}] <<< {:?}", self.addr, packet.1);
+                        trace!("================= RECV Packet End ==================");
                         packet
                     },
                     Err(KittyMCError::NotEnoughData(_, _)) => {
+                        trace!("[{}] Not enough data. Taking more...", self.addr);
                         fetch_more = true;
                         continue;
                     }
                     Err(e) => {
-                        error ! ("[{}] Error when deserializing packet: {}", self.addr, e);
-                        error ! ("[{}] Packet started with : {:?}", self.addr, & self.buffer[..n]);
+                        warn!("[{}] Error when deserializing packet: {}", self.addr, e);
+                        warn!("[{}] Packet started with : {:?}", self.addr, & self.buffer[..n]);
+                        trace!("================= RECV Packet End ==================");
                         return Err(KittyMCError::DeserializationError);
                     }
                 };

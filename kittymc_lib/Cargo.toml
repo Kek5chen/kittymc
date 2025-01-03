@@ -13,6 +13,9 @@ serde_json = "1.0.133"
 uuid = { version = "1.11.0", features = ["serde"] }
 md5 = "0.7.0"
 miniz_oxide = "0.8.0"
+num-traits = "0.2.19"
+nalgebra = "0.33.2"
+bitflags = "2.6.0"
 
 [dev-dependencies]
 anyhow = "1.0.94"

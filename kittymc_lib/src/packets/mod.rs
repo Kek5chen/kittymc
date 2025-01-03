@@ -3,6 +3,7 @@ use crate::error::KittyMCError;
 use crate::packets::client::login::set_compression_03::SetCompressionPacket;
 use crate::packets::client::login::success_02::LoginSuccessPacket;
 use crate::packets::client::play::keep_alive_00::KeepAlivePacket;
+use crate::packets::client::play::plugin_message_3f::PluginMessagePacket;
 use crate::packets::client::status::response_00::StatusResponsePacket;
 use crate::packets::packet_serialization::{decompress_packet, read_varint_u32, SerializablePacket};
 use crate::packets::server::handshake::HandshakePacket;
@@ -25,6 +26,7 @@ pub enum Packet {
     StatusPong(StatusPingPongPacket),
     KeepAlive(KeepAlivePacket),
     SetCompression(SetCompressionPacket),
+    PluginMessage(PluginMessagePacket),
 }
 
 impl Packet {
@@ -42,6 +44,8 @@ impl Packet {
             Packet::LoginSuccess(_) => 2,
 
             Packet::SetCompression(_) => 3,
+
+            Packet::PluginMessage(_) => 0x17,
         }
     }
     pub fn serialize(&self) -> Vec<u8> {
@@ -55,6 +59,7 @@ impl Packet {
             Self::StatusPong(inner) => inner.serialize(),
             Self::KeepAlive(inner) => inner.serialize(),
             Self::SetCompression(inner) => inner.serialize(),
+            Self::PluginMessage(inner) => inner.serialize(),
         }
     }
 
@@ -102,6 +107,7 @@ impl Packet {
             State::Play => {
                 match packet_id {
                     0 => KeepAlivePacket::deserialize(&data[..packet_len])?,
+                    0x17 => PluginMessagePacket::deserialize(&data[..packet_len])?,
                     _ => return Err(KittyMCError::NotImplemented),
                 }
             }
