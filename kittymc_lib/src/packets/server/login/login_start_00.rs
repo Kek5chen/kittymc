@@ -1,8 +1,9 @@
+use kittymc_macros::Packet;
 use crate::error::KittyMCError;
 use crate::packets::{wrap_packet, Packet};
 use crate::packets::packet_serialization::{read_length_prefixed_string, write_length_prefixed_string, SerializablePacket};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Packet)]
 pub struct LoginStartPacket {
     pub name: String,
 }

@@ -8,9 +8,15 @@ use crate::packets::client::play::{Direction, Location, Location2};
 use crate::packets::Packet;
 use crate::subtypes::state::State;
 
+pub trait NamedPacket {
+    fn name() -> &'static str {
+        todo!("Define a name for this packet or just derive Packet")
+    }
+}
+
 pub trait SerializablePacket {
     fn serialize(&self) -> Vec<u8> {
-        vec![]
+        vec![ 0 ]
     }
 
     // not including length or packet id

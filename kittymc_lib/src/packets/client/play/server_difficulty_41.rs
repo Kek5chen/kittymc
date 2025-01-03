@@ -1,8 +1,9 @@
+use kittymc_macros::Packet;
 use crate::packets::client::play::Difficulty;
 use crate::packets::packet_serialization::{write_u8, SerializablePacket};
 use crate::packets::wrap_packet;
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Packet)]
 pub struct ServerDifficultyPacket {
     difficulty: Difficulty
 }

@@ -1,9 +1,10 @@
+use kittymc_macros::Packet;
 use crate::error::KittyMCError;
 use crate::packets::{wrap_packet, Packet};
 use crate::packets::packet_serialization::{read_state_varint, read_u16_be, read_length_prefixed_string, read_varint_u32, write_length_prefixed_string, write_varint_u32, SerializablePacket, write_u16};
 use crate::subtypes::state::State;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Packet)]
 pub struct HandshakePacket {
     pub protocol_version: u32,
     pub server_address: String,

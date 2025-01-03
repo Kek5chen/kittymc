@@ -1,3 +1,4 @@
+use kittymc_macros::Packet;
 use crate::packets::packet_serialization::{write_i16, write_u16, write_u8, SerializablePacket};
 use crate::packets::wrap_packet;
 
@@ -30,7 +31,7 @@ impl SlotData {
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Packet)]
 pub struct WindowItemsPacket {
     window_id: u8,
     slot_data: Vec<SlotData>

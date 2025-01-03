@@ -1,8 +1,9 @@
+use kittymc_macros::Packet;
 use crate::packets::client::play::Location;
 use crate::packets::packet_serialization::{write_location, SerializablePacket};
 use crate::packets::wrap_packet;
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Packet)]
 pub struct SpawnPositionPacket {
     position: Location
 }

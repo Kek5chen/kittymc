@@ -292,6 +292,8 @@ dependencies = [
 name = "kittymc-macros"
 version = "0.1.0"
 dependencies = [
+ "log",
+ "proc-macro2",
  "quote",
  "syn",
 ]

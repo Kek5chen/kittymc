@@ -1,10 +1,11 @@
 use std::str::FromStr;
 use uuid::{Builder, Uuid};
+use kittymc_macros::Packet;
 use crate::error::KittyMCError;
 use crate::packets::packet_serialization::{read_length_prefixed_string, write_length_prefixed_string, SerializablePacket};
 use crate::packets::{wrap_packet, Packet};
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Packet)]
 pub struct LoginSuccessPacket {
     pub uuid: Uuid,
     pub username: String,

@@ -1,8 +1,9 @@
+use kittymc_macros::Packet;
 use crate::packets::packet_serialization::{write_length_prefixed_string, SerializablePacket};
 use crate::packets::wrap_packet;
 use crate::subtypes::{Chat, ChatBuilder};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Packet)]
 pub struct DisconnectLoginPacket {
     reason: Chat
 }

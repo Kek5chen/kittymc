@@ -1,4 +1,5 @@
 use integer_encoding::VarInt;
+use kittymc_macros::PacketHelperFuncs;
 use crate::error::KittyMCError;
 use crate::packets::client::login::set_compression_03::SetCompressionPacket;
 use crate::packets::client::login::success_02::LoginSuccessPacket;
@@ -9,7 +10,9 @@ use crate::packets::packet_serialization::{decompress_packet, read_varint_u32, S
 use crate::packets::server::handshake::HandshakePacket;
 use crate::packets::server::login::login_start_00::LoginStartPacket;
 use crate::packets::server::status::ping_01::StatusPingPongPacket;
+use crate::packets::server::status::request_00::StatusRequestPacket;
 use crate::subtypes::state::State;
+use crate::packets::packet_serialization::NamedPacket;
 
 pub mod server;
 pub mod client;
@@ -21,12 +24,12 @@ pub struct CompressionInfo {
     pub compression_threshold: u32,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, PacketHelperFuncs)]
 pub enum Packet {
     Handshake(HandshakePacket),
     LoginStart(LoginStartPacket),
     LoginSuccess(LoginSuccessPacket),
-    StatusRequest,
+    StatusRequest(StatusRequestPacket),
     StatusResponse(StatusResponsePacket),
     StatusPing(StatusPingPongPacket),
     StatusPong(StatusPingPongPacket),
@@ -40,7 +43,7 @@ impl Packet {
         match self {
             Packet::Handshake(_) |
             Packet::LoginStart(_) |
-            Packet::StatusRequest |
+            Packet::StatusRequest(_) |
             Packet::StatusResponse(_) |
             Packet::KeepAlive(_) => 0,
 
@@ -52,20 +55,6 @@ impl Packet {
             Packet::SetCompression(_) => 3,
 
             Packet::PluginMessage(_) => 0x17,
-        }
-    }
-    pub fn serialize(&self) -> Vec<u8> {
-        match self {
-            Self::StatusRequest => vec![1, 0],
-            Self::Handshake(inner) => inner.serialize(),
-            Self::LoginStart(inner) => inner.serialize(),
-            Self::LoginSuccess(inner) => inner.serialize(),
-            Self::StatusResponse(inner) => inner.serialize(),
-            Self::StatusPing(inner) => inner.serialize(),
-            Self::StatusPong(inner) => inner.serialize(),
-            Self::KeepAlive(inner) => inner.serialize(),
-            Self::SetCompression(inner) => inner.serialize(),
-            Self::PluginMessage(inner) => inner.serialize(),
         }
     }
 
@@ -104,7 +93,7 @@ impl Packet {
             }
             State::Status => {
                 match packet_id {
-                    0 => (0, Packet::StatusRequest),
+                    0 => StatusRequestPacket::deserialize(&data[..packet_len])?,
                     1 => StatusPingPongPacket::deserialize(&data[..packet_len])?,
                     _ => return Err(KittyMCError::NotImplemented),
                 }

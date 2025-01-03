@@ -1,3 +1,4 @@
+use kittymc_lib::packets::packet_serialization::NamedPacket;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::net::TcpListener;
@@ -5,7 +6,6 @@ use std::sync::RwLock;
 use tracing::{info, instrument, warn};
 use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::client::login::success_02::LoginSuccessPacket;
-use kittymc_lib::packets::client::status::response_00::StatusResponsePacket;
 use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::state::State;
 use log::debug;
@@ -77,7 +77,7 @@ impl KittyMCServer {
         self.players.get(uuid).map(|p| p.name())
     }
 
-    fn send_to_all<P: SerializablePacket + Debug>(&mut self, packet: &P) -> Result<(), KittyMCError> {
+    fn send_to_all<P: SerializablePacket + Debug + NamedPacket>(&mut self, packet: &P) -> Result<(), KittyMCError> {
         for client in self.clients.write().unwrap().iter_mut() {
             client.1.send_packet(packet)?;
         }
@@ -100,8 +100,8 @@ impl KittyMCServer {
                     }
                     client.set_state(handshake.next_state);
                 }
-                Packet::StatusRequest => {
-                    client.send_packet(&StatusResponsePacket::default())?;
+                Packet::StatusRequest(request) => {
+                    client.send_packet(request)?;
                 }
                 Packet::StatusPing(ping) => {
                     client.send_packet(ping)?;

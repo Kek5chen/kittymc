@@ -1,8 +1,9 @@
+use kittymc_macros::Packet;
 use crate::packets::client::play::{Difficulty, Dimension, GameMode, LevelType};
 use crate::packets::packet_serialization::{write_bool, write_i32, write_i8, write_length_prefixed_string, write_u8, SerializablePacket};
 use crate::packets::wrap_packet;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Packet)]
 pub struct JoinGamePacket {
     entity_id: i32,
     gamemode: GameMode,

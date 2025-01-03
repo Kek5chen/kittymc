@@ -1,4 +1,5 @@
 use bitflags::bitflags;
+use kittymc_macros::Packet;
 use crate::packets::packet_serialization::{write_f32, write_u8, SerializablePacket};
 use crate::packets::wrap_packet;
 
@@ -14,7 +15,7 @@ bitflags! {
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Packet)]
 pub struct PlayerAbilitiesPacket {
     flags: PlayerAbilitiesFlags,
     flying_speed: f32,

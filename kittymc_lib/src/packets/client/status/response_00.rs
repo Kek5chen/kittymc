@@ -2,6 +2,7 @@ use std::fmt::{Debug, Formatter};
 use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use kittymc_macros::Packet;
 use crate::error::KittyMCError;
 use crate::packets::{wrap_packet, Packet};
 use crate::packets::packet_serialization::{read_length_prefixed_string, write_length_prefixed_string, SerializablePacket};
@@ -32,7 +33,7 @@ pub struct StatusResponseText {
     text: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Packet)]
 pub struct StatusResponsePacket {
     version: StatusResponseVersion,
     players: StatusResponsePlayers,

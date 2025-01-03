@@ -1,4 +1,6 @@
-use crate::packets::packet_serialization::{write_bool, write_i32, write_u32, write_u64, write_u8, write_varint_u32, write_varint_u32_splice, SerializablePacket};
+use std::sync::Arc;
+use kittymc_macros::Packet;
+use crate::packets::packet_serialization::{write_bool, write_i32, write_u64, write_u8, write_varint_u32, write_varint_u32_splice, SerializablePacket};
 use crate::packets::wrap_packet;
 
 pub type BlockStateId = u32;
@@ -171,13 +173,13 @@ impl Chunk {
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
-pub struct ChunkDataPacket <'a> {
+#[derive(PartialEq, Debug, Clone, Packet)]
+pub struct ChunkDataPacket {
     x: i32,
     z: i32,
     ground_up_continuous: bool,
     primary_bit_mask: u32,
-    data: &'a Chunk,
+    data: Arc<Chunk>,
     block_entities: Vec<()>,
 }
 
@@ -186,20 +188,22 @@ static DEFAULT_CHUNK: Chunk = Chunk {
     biomes: [0; 16 * 16],
 };
 
-impl Default for ChunkDataPacket<'_> {
+impl Default for ChunkDataPacket {
     fn default() -> Self {
-        ChunkDataPacket {
-            x: 0,
-            z: 0,
-            ground_up_continuous: false,
-            primary_bit_mask: 0,
-            data: &DEFAULT_CHUNK,
-            block_entities: vec![],
+        unsafe {
+            ChunkDataPacket {
+                x: 0,
+                z: 0,
+                ground_up_continuous: false,
+                primary_bit_mask: 0,
+                data: Arc::from_raw(&DEFAULT_CHUNK as *const Chunk),
+                block_entities: vec![],
+            }
         }
     }
 }
 
-impl SerializablePacket for ChunkDataPacket<'_> {
+impl SerializablePacket for ChunkDataPacket {
     fn serialize(&self) -> Vec<u8> {
         let mut packet = vec![];
 

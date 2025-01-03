@@ -1,3 +1,4 @@
+use kittymc_macros::Packet;
 use crate::packets::packet_serialization::SerializablePacket;
 use crate::packets::wrap_packet;
 
@@ -7,7 +8,7 @@ pub struct ChunkMeta {
     primary_bit_mask: u16,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Packet)]
 pub struct MapChunkBulkPacket {
     sky_light_sent: bool,
 }

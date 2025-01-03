@@ -1,9 +1,10 @@
 use nalgebra::Vector2;
+use kittymc_macros::Packet;
 use crate::packets::packet_serialization::{write_bool, write_direction, write_location2, SerializablePacket};
 use crate::packets::wrap_packet;
 use crate::packets::client::play::Location2;
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Packet)]
 pub struct PlayerPositionAndLookPacket {
     location: Location2, // Feet
     direction: Vector2<f32>,
