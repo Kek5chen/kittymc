@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Formatter};
 use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -31,7 +32,7 @@ pub struct StatusResponseText {
     text: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct StatusResponsePacket {
     version: StatusResponseVersion,
     players: StatusResponsePlayers,
@@ -39,6 +40,18 @@ pub struct StatusResponsePacket {
     favicon: String,
     #[serde(rename = "enforcesSecureChat")]
     enforces_secure_chat: bool,
+}
+
+impl Debug for StatusResponsePacket {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("StatusResponsePacket")
+            .field("version", &self.version)
+            .field("players", &self.players)
+            .field("description", &self.description)
+            .field("favicon", &"...")
+            .field("enforces_secure_chat", &self.enforces_secure_chat)
+            .finish()
+    }
 }
 
 impl Default for StatusResponsePacket {
