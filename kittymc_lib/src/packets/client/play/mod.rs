@@ -12,7 +12,7 @@ pub mod map_chunk_bulk_26;
 pub mod window_items_14;
 pub mod chunk_data_20;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum GameMode {
     Survival = 0,
     Creative = 1,
@@ -24,14 +24,14 @@ pub enum GameMode {
     SpectatorH = 3 | 8,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Dimension {
     Nether = -1,
     Overworld = 0,
     End = 1,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Difficulty {
     Peaceful = 0,
     Easy = 1,
@@ -39,7 +39,7 @@ pub enum Difficulty {
     Hard = 3,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum LevelType {
     Default,
     Flat,
