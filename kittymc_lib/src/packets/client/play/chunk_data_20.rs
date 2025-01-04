@@ -332,11 +332,11 @@ lazy_static! {
 
         for x in 0..SECTION_WIDTH {
             for z in 0..SECTION_WIDTH {
-                for y in 0..3 {
+                chunk.set_block(x, 0, z, 0b0111_0000);
+                for y in 1..4 {
                     chunk.set_block(x, y, z, 0b0001_0000);
                 }
                 chunk.set_block(x, 4, z, 0b0010_0000);
-
             }
         }
 
