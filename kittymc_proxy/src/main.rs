@@ -3,12 +3,17 @@ use anyhow::{format_err, Context};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::task::JoinHandle;
-use kittymc_lib::packets::Packet;
+use kittymc_lib::packets::{CompressionInfo, Packet};
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use kittymc_lib::subtypes::state::State;
 
+const NO_COMPRESSION: CompressionInfo = CompressionInfo {
+    enabled: false,
+    compression_threshold: 0,
+};
+
 fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize> {
-    let result = Packet::deserialize_packet(State::Handshake, &data, false);
+    let result = Packet::deserialize_packet(State::Handshake, &data, &NO_COMPRESSION);
 
     if let Ok((size, mut packet)) = result {
         match packet {
@@ -25,7 +30,7 @@ fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize>
         return Ok(n);
     }
 
-    let result = Packet::deserialize_packet(State::Login, &data, false);
+    let result = Packet::deserialize_packet(State::Login, &data, &NO_COMPRESSION);
 
     if let Ok((size, packet)) = result {
         match packet {
@@ -41,13 +46,13 @@ fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize>
 }
 
 fn modify_server_data(data: &mut Vec<u8>, _n: usize) -> anyhow::Result<usize> {
-    let result = Packet::deserialize_packet(State::Handshake, &data, false);
+    let result = Packet::deserialize_packet(State::Handshake, &data, &NO_COMPRESSION);
 
     if let Ok((size, packet)) = result {
         println!("Server -> Client: Packet of size {size}: {packet:?}");
     }
 
-    let result = Packet::deserialize_packet(State::Login, &data, false);
+    let result = Packet::deserialize_packet(State::Login, &data, &NO_COMPRESSION);
 
     if let Ok((size, packet)) = result {
         println!("Server -> Client: Packet of size {size}: {packet:?}");
