@@ -89,10 +89,10 @@ pub fn derive_packet(input: TokenStream) -> TokenStream {
     let input: DeriveInput = parse_macro_input!(input);
 
     let name = input.ident;
-    let generics = input.generics;
+    let generics = input.generics.params;
 
     let expanded = quote! {
-        impl crate::packets::packet_serialization::NamedPacket for #name {
+        impl<#generics> crate::packets::packet_serialization::NamedPacket for #name<#generics> {
             fn name() -> &'static str {
                 stringify!(#name)
             }
