@@ -43,9 +43,12 @@ impl SerializablePacket for ChatMessagePacket {
         })).unwrap());
         write_i8(&mut packet, self.position as i8);
 
-        wrap_packet(&mut packet, 2);
+        wrap_packet(&mut packet, Self::id());
 
         packet
     }
 
+    fn id() -> u32 {
+        0x0F
+    }
 }

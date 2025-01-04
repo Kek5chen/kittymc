@@ -22,8 +22,12 @@ impl SerializablePacket for ServerDifficultyPacket {
 
         write_u8(&mut packet, self.difficulty as u8);
 
-        wrap_packet(&mut packet, 0x41);
+        wrap_packet(&mut packet, Self::id());
 
         packet
+    }
+
+    fn id() -> u32 {
+        0x0D
     }
 }

@@ -47,7 +47,7 @@ impl SerializablePacket for LoginSuccessPacket {
         write_length_prefixed_string(&mut packet, &self.uuid.hyphenated().to_string());
         write_length_prefixed_string(&mut packet, &self.username);
 
-        wrap_packet(&mut packet, 2);
+        wrap_packet(&mut packet, Self::id());
 
         packet
     }
@@ -64,5 +64,9 @@ impl SerializablePacket for LoginSuccessPacket {
             uuid,
             username,
         })))
+    }
+
+    fn id() -> u32 {
+        2
     }
 }

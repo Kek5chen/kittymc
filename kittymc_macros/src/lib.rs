@@ -37,10 +37,13 @@ pub fn derive_packet_helper_funcs(input: TokenStream) -> TokenStream {
         },
         quote! {
             Self::#vname(_) => #inner_field_ty::name(),
+        },
+        quote! {
+            Self::#vname(inner) => #inner_field_ty::id(),
         }))
     });
 
-    let results: Vec<Result<(proc_macro2::TokenStream, proc_macro2::TokenStream), proc_macro2::TokenStream>> = variant_arms.clone().collect();
+    let results: Vec<Result<(proc_macro2::TokenStream, proc_macro2::TokenStream, proc_macro2::TokenStream), proc_macro2::TokenStream>> = variant_arms.clone().collect();
 
     if results.iter().any(|v| v.is_err()) {
         let mut error_collector = proc_macro2::TokenStream::new();
@@ -59,10 +62,12 @@ pub fn derive_packet_helper_funcs(input: TokenStream) -> TokenStream {
 
     let mut serializers = vec![];
     let mut names = vec![];
+    let mut ids = vec![];
 
-    for (s, n) in results {
+    for (s, n, i) in results {
         serializers.push(s);
         names.push(n);
+        ids.push(i);
     }
 
     let expanded = quote! {
@@ -76,6 +81,12 @@ pub fn derive_packet_helper_funcs(input: TokenStream) -> TokenStream {
             pub fn name(&self) -> &'static str {
                 match self {
                     #(#names)*
+                }
+            }
+
+            pub fn id(&self) -> u32 {
+                match self {
+                    #(#ids)*
                 }
             }
         }

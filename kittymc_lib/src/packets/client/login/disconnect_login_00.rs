@@ -37,8 +37,12 @@ impl SerializablePacket for DisconnectLoginPacket {
         write_length_prefixed_string(&mut packet, &serde_json::to_string(&self.reason)
             .unwrap_or_else(|_| "INVALID".to_string()));
 
-        wrap_packet(&mut packet, 0);
+        wrap_packet(&mut packet, Self::id());
 
         packet
+    }
+
+    fn id() -> u32 {
+        0
     }
 }

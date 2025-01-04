@@ -211,8 +211,12 @@ impl SerializablePacket for ChunkDataPacket<'_> {
         self.data.write(&mut packet, self.ground_up_continuous);
         write_varint_u32(&mut packet, self.block_entities.len() as u32);
 
-        wrap_packet(&mut packet, 0x20);
+        wrap_packet(&mut packet, Self::id());
 
         packet
+    }
+
+    fn id() -> u32 {
+        0x20
     }
 }

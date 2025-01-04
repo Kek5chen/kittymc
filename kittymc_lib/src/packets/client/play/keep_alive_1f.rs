@@ -22,7 +22,7 @@ impl SerializablePacket for KeepAlivePacket {
 
         write_varint_u32(&mut packet, self.id);
 
-        wrap_packet(&mut packet, 2);
+        wrap_packet(&mut packet, Self::id());
 
         packet
     }
@@ -35,5 +35,9 @@ impl SerializablePacket for KeepAlivePacket {
         Ok((size, Packet::KeepAlive(KeepAlivePacket{
             id
         })))
+    }
+
+    fn id() -> u32 {
+        0x1F
     }
 }

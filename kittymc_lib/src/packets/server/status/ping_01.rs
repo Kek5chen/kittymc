@@ -15,7 +15,7 @@ impl SerializablePacket for StatusPingPongPacket {
 
         write_i64(&mut packet, self.payload);
 
-        wrap_packet(&mut packet, 1);
+        wrap_packet(&mut packet, Self::id());
 
         packet
     }
@@ -26,5 +26,9 @@ impl SerializablePacket for StatusPingPongPacket {
         Ok((size, Packet::StatusPing(StatusPingPongPacket {
             payload
         })))
+    }
+
+    fn id() -> u32 {
+        1
     }
 }

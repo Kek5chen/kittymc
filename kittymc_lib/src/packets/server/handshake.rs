@@ -21,7 +21,7 @@ impl SerializablePacket for HandshakePacket {
         write_u16(&mut packet, self.server_port);
         write_varint_u32(&mut packet, self.next_state as u32);
 
-        wrap_packet(&mut packet, 0);
+        wrap_packet(&mut packet, Self::id());
 
         packet
     }
@@ -40,6 +40,10 @@ impl SerializablePacket for HandshakePacket {
             server_port,
             next_state,
         })))
+    }
+
+    fn id() -> u32 {
+        0
     }
 }
 

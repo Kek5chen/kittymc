@@ -22,7 +22,7 @@ impl SerializablePacket for SetCompressionPacket {
 
         write_varint_u32(&mut packet, self.threshold);
 
-        wrap_packet(&mut packet, 3);
+        wrap_packet(&mut packet, Self::id());
 
         packet
     }
@@ -37,4 +37,7 @@ impl SerializablePacket for SetCompressionPacket {
         })))
     }
 
+    fn id() -> u32 {
+        3
+    }
 }

@@ -13,7 +13,8 @@ impl SerializablePacket for LoginStartPacket {
         let mut packet = vec![];
 
         write_length_prefixed_string(&mut packet, &self.name);
-        wrap_packet(&mut packet, 0);
+
+        wrap_packet(&mut packet, Self::id());
 
         packet
     }
@@ -26,5 +27,9 @@ impl SerializablePacket for LoginStartPacket {
         Ok((size, Packet::LoginStart(LoginStartPacket {
             name,
         })))
+    }
+
+    fn id() -> u32 {
+        0
     }
 }

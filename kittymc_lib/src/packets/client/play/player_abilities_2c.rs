@@ -40,8 +40,12 @@ impl SerializablePacket for PlayerAbilitiesPacket {
         write_f32(&mut packet, self.flying_speed);
         write_f32(&mut packet, self.field_of_view_modifier);
 
-        wrap_packet(&mut packet, 0x39);
+        wrap_packet(&mut packet, Self::id());
 
         packet
+    }
+
+    fn id() -> u32 {
+        0x2C
     }
 }

@@ -25,7 +25,7 @@ impl SerializablePacket for PluginMessagePacket {
         write_length_prefixed_string(&mut packet, &self.channel);
         write_length_prefixed_bytes(&mut packet, &self.data);
 
-        wrap_packet(&mut packet, 0x3F);
+        wrap_packet(&mut packet, Self::id());
 
         packet
     }
@@ -39,5 +39,9 @@ impl SerializablePacket for PluginMessagePacket {
             channel,
             data
         })))
+    }
+
+    fn id() -> u32 {
+        0x18
     }
 }

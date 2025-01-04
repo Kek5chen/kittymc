@@ -14,4 +14,8 @@ impl SerializablePacket for StatusRequestPacket {
     fn deserialize(_data: &[u8]) -> Result<(usize, Packet), KittyMCError> {
         Ok((0, Packet::StatusRequest(StatusRequestPacket)))
     }
+
+    fn id() -> u32 {
+        0
+    }
 }

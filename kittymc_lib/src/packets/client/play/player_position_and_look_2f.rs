@@ -29,8 +29,12 @@ impl SerializablePacket for PlayerPositionAndLookPacket {
         write_direction(&mut packet, &self.direction);
         write_bool(&mut packet, self.on_ground);
 
-        wrap_packet(&mut packet, 0x06);
+        wrap_packet(&mut packet, Self::id());
 
         packet
+    }
+
+    fn id() -> u32 {
+        0x2F
     }
 }

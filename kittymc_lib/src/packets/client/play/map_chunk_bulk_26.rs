@@ -25,9 +25,12 @@ impl SerializablePacket for MapChunkBulkPacket {
     fn serialize(&self) -> Vec<u8> {
         let mut packet = vec![];
 
-
-        wrap_packet(&mut packet, 0x26);
+        wrap_packet(&mut packet, Self::id());
 
         packet
+    }
+
+    fn id() -> u32 {
+        0x26
     }
 }

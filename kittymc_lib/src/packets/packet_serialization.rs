@@ -23,6 +23,8 @@ pub trait SerializablePacket {
     fn deserialize(_data: &[u8]) -> Result<(usize, Packet), KittyMCError> {
         Err(KittyMCError::NotImplemented)
     }
+
+    fn id() -> u32;
 }
 
 pub fn read_length_prefixed_string(data: &mut &[u8], total_size: &mut usize) -> Result<String, KittyMCError> {

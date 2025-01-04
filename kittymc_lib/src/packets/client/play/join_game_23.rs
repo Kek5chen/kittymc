@@ -36,12 +36,16 @@ impl SerializablePacket for JoinGamePacket {
         write_u8(&mut packet, self.gamemode as u8);
         write_i8(&mut packet, self.dimension as i8);
         write_u8(&mut packet, self.difficulty as u8);
-        write_u8(&mut packet, self.max_players); // TODO: Actual max players
+        write_u8(&mut packet, 69); // TODO: Actual max players
         write_length_prefixed_string(&mut packet, self.level_type.as_str());
         write_bool(&mut packet, self.reduced_debug_info);
 
-        wrap_packet(&mut packet, 1);
+        wrap_packet(&mut packet, Self::id());
 
         packet
+    }
+
+    fn id() -> u32 {
+        0x23
     }
 }

@@ -91,7 +91,7 @@ impl SerializablePacket for StatusResponsePacket {
 
         write_length_prefixed_string(&mut packet, json_response.as_str());
 
-        wrap_packet(&mut packet, 0);
+        wrap_packet(&mut packet, Self::id());
 
         packet
     }
@@ -104,5 +104,9 @@ impl SerializablePacket for StatusResponsePacket {
         let response = serde_json::from_str::<StatusResponsePacket>(string.as_str())?;
 
         Ok((size, Packet::StatusResponse(response)))
+    }
+
+    fn id() -> u32 {
+        0
     }
 }

@@ -22,8 +22,12 @@ impl SerializablePacket for SpawnPositionPacket {
 
         write_location(&mut packet, &self.position);
 
-        wrap_packet(&mut packet, 5);
+        wrap_packet(&mut packet, Self::id());
 
         packet
+    }
+
+    fn id() -> u32 {
+        0x46
     }
 }

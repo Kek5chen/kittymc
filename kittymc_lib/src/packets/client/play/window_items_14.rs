@@ -56,8 +56,12 @@ impl SerializablePacket for WindowItemsPacket {
             slot.write(&mut packet);
         }
 
-        wrap_packet(&mut packet, 0x14);
+        wrap_packet(&mut packet, Self::id());
 
         packet
+    }
+
+    fn id() -> u32 {
+        0x14
     }
 }

@@ -9,7 +9,7 @@ use tracing::{debug, info, instrument, trace, warn};
 
 use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::{Packet, packet_serialization::SerializablePacket, CompressionInfo};
-use kittymc_lib::packets::client::play::keep_alive_00::KeepAlivePacket;
+use kittymc_lib::packets::client::play::keep_alive_1f::KeepAlivePacket;
 use kittymc_lib::packets::packet_serialization::compress_packet;
 use kittymc_lib::subtypes::state::State;
 
@@ -107,7 +107,7 @@ impl Client {
 
     #[instrument(skip(self, packet))]
     pub fn send_packet<P: SerializablePacket + Debug + NamedPacket>(&mut self, packet: &P) -> Result<(), KittyMCError> {
-        debug!("[{}] OUT >>> {}", self.addr, P::name());
+        debug!("[{}] OUT >>> {}(0x{:x?})({})", self.addr, P::name(), P::id(), P::id());
         self.send_packet_raw(&packet.serialize())?;
         Ok(())
     }
@@ -163,7 +163,7 @@ impl Client {
             match Packet::deserialize_packet(self.current_state, &self.buffer[..n], &self.compression) {
                 Ok(packet) => {
                     trace!("[{}] Parsed Range : {:?}", self.addr, &self.buffer[..packet.0]);
-                    debug!("[{}] IN <<< {}", self.addr, packet.1.name());
+                    debug!("[{}] IN <<< {}(0x{:x?})({})", self.addr, packet.1.name(), packet.1.id(), packet.1.id());
                     packet
                 },
                 Err(KittyMCError::NotEnoughData(_, _)) => {
