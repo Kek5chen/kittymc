@@ -12,6 +12,7 @@ use crate::packets::server::status::ping_01::StatusPingPongPacket;
 use crate::packets::server::status::request_00::StatusRequestPacket;
 use crate::subtypes::state::State;
 use crate::packets::packet_serialization::NamedPacket;
+use crate::packets::server::play::client_held_item_change_a1::ClientHeldItemChangePacket;
 use crate::packets::server::play::client_keep_alive_0b::ClientKeepAlivePacket;
 use crate::packets::server::play::client_player_position_and_look_0e::ClientPlayerPositionAndLookPacket;
 use crate::packets::server::play::client_settings_04::ClientSettingsPacket;
@@ -43,6 +44,7 @@ pub enum Packet {
     ClientSettings(ClientSettingsPacket),
     TeleportConfirm(TeleportConfirmPacket),
     PlayerPositionAndLook(ClientPlayerPositionAndLookPacket),
+    ClientHeldItemChange(ClientHeldItemChangePacket),
 }
 
 impl Packet {
@@ -112,6 +114,7 @@ impl Packet {
                     9 => ClientPluginMessagePacket::deserialize(&data[..packet_data_len])?,
                     0xB => ClientKeepAlivePacket::deserialize(&data[..packet_data_len])?,
                     0xE => ClientPlayerPositionAndLookPacket::deserialize(&data[..packet_data_len])?,
+                    0x1A => ClientHeldItemChangePacket::deserialize(&data[..packet_data_len])?,
                     _ => return Err(KittyMCError::NotImplemented(packet_id, full_packet_len)),
                 }
             }

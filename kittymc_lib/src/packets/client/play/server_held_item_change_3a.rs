@@ -3,11 +3,11 @@ use crate::packets::packet_serialization::{write_u8, SerializablePacket};
 use crate::packets::wrap_packet;
 
 #[derive(PartialEq, Debug, Clone, Default, Packet)]
-pub struct HeldItemChangePacket {
+pub struct ServerHeldItemChangePacket {
     slot: u8
 }
 
-impl SerializablePacket for HeldItemChangePacket {
+impl SerializablePacket for ServerHeldItemChangePacket {
     fn serialize(&self) -> Vec<u8> {
         let mut packet = vec![];
 

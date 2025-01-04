@@ -11,7 +11,7 @@ pub mod player_position_and_look_2f;
 pub mod map_chunk_bulk_26;
 pub mod window_items_14;
 pub mod chunk_data_20;
-pub mod held_item_change_3a;
+pub mod server_held_item_change_3a;
 pub mod entity_status_1b;
 pub mod unlock_recipes_31;
 pub mod time_update_47;

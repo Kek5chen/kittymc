@@ -16,7 +16,7 @@ use kittymc_lib::packets::client::play::server_plugin_message_18::ServerPluginMe
 use kittymc_lib::packets::client::play::server_difficulty_0d::ServerDifficultyPacket;
 use kittymc_lib::packets::client::play::chunk_data_20::ChunkDataPacket;
 use kittymc_lib::packets::client::play::entity_status_1b::EntityStatusPacket;
-use kittymc_lib::packets::client::play::held_item_change_3a::HeldItemChangePacket;
+use kittymc_lib::packets::client::play::server_held_item_change_3a::ServerHeldItemChangePacket;
 use kittymc_lib::packets::client::play::spawn_position_46::SpawnPositionPacket;
 use kittymc_lib::packets::client::play::join_game_23::JoinGamePacket;
 use kittymc_lib::packets::client::play::player_list_item_2e::PlayerListItemPacket;
@@ -134,7 +134,7 @@ impl KittyMCServer {
                     client.send_packet(&ServerPluginMessagePacket::default_brand())?;
                     client.send_packet(&ServerDifficultyPacket::default())?;
                     client.send_packet(&PlayerAbilitiesPacket::default())?;
-                    client.send_packet(&HeldItemChangePacket::default())?;
+                    client.send_packet(&ServerHeldItemChangePacket::default())?;
                     client.send_packet(&EntityStatusPacket::default())?;
                     client.send_packet(&UnlockRecipesPacket::default())?;
                     client.send_packet(&PlayerListItemPacket::default())?;
