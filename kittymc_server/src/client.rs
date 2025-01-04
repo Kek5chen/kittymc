@@ -142,6 +142,7 @@ impl Client {
         if n == self.buffer.len() {
             // buffer has not enough space to fit packet. so extend it.
             self.buffer.resize(n + 2048, 0);
+            trace!("[{}] Increased buffer size to fit bigger packet", self.addr);
         }
         let max_len = self.buffer.len();
         match self.socket.read(&mut self.buffer[n..max_len]) {
@@ -160,6 +161,8 @@ impl Client {
             },
             Err(e) => return Err(e.into()),
         }
+        self.buffer_size = n;
+
         trace!("[{}] Complete Received Data : {:?}", self.addr, &self.buffer[..n]);
 
         let (packet_len, packet) =
