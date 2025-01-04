@@ -308,12 +308,19 @@ pub fn write_direction(buffer: &mut Vec<u8>, loc: &Direction) {
     write_f32(buffer, loc.y);
 }
 
-pub fn compress_packet(mut packet: &[u8]) -> Result<Vec<u8>, KittyMCError> {
+pub fn compress_packet(mut packet: &[u8], threshold: u32) -> Result<Vec<u8>, KittyMCError> {
     let mut total_size = 0;
     let raw_packet_length = read_varint_u32(&mut packet, &mut total_size)?;
 
-    let mut new_packet = compress_to_vec_zlib(packet, 5);
-    write_varint_u32_splice(&mut new_packet, raw_packet_length, ..0);
+    let mut new_packet;
+    if raw_packet_length >= threshold {
+        new_packet = compress_to_vec_zlib(packet, 5);
+        write_varint_u32_splice(&mut new_packet, raw_packet_length, ..0);
+    } else {
+        new_packet = packet.to_vec();
+        write_varint_u32_splice(&mut new_packet, 0, ..0);
+    }
+
     let new_packet_len = new_packet.len() as u32;
     write_varint_u32_splice(&mut new_packet, new_packet_len, ..0);
 

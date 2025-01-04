@@ -11,7 +11,7 @@ pub struct SetCompressionPacket {
 impl Default for SetCompressionPacket {
     fn default() -> Self {
         SetCompressionPacket {
-            threshold: 0
+            threshold: 256
         }
     }
 }

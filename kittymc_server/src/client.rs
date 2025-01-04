@@ -98,8 +98,8 @@ impl Client {
     // TODO: Something is broken with compression
     #[instrument(skip(self, b_packet))]
     pub fn send_packet_raw(&mut self, b_packet: &[u8]) -> Result<(), KittyMCError> {
-        if self.compression.enabled && b_packet.len() >= self.compression.compression_threshold as usize {
-            let compressed = compress_packet(b_packet)?;
+        if self.compression.enabled {
+            let compressed = compress_packet(b_packet, self.compression.compression_threshold)?;
             self.socket.write_all(&compressed)?;
         } else {
             self.socket.write_all(&b_packet)?;

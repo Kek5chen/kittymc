@@ -45,6 +45,6 @@ pub enum KittyMCError {
     InvalidPacketLength,
     #[error("Zlib Decompression failed with error: {0}")]
     ZlibDecompressionError(miniz_oxide::inflate::DecompressError),
-    #[error("The decompressed packet size was different than previously announced. Assuming corruption.")]
-    InvalidDecompressedPacketLength,
+    #[error("The decompressed packet size was different than previously announced. Assuming corruption. {0} != {1}")]
+    InvalidDecompressedPacketLength(usize, usize), // Announced, Actual
 }
