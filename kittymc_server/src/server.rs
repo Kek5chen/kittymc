@@ -11,16 +11,19 @@ use kittymc_lib::subtypes::state::State;
 use log::debug;
 use uuid::Uuid;
 use kittymc_lib::packets::client::login::disconnect_login_00::DisconnectLoginPacket;
-use kittymc_lib::packets::client::play::chat_message_0f::ChatMessagePacket;
 use kittymc_lib::packets::client::play::player_abilities_2c::PlayerAbilitiesPacket;
 use kittymc_lib::packets::client::play::plugin_message_18::PluginMessagePacket;
 use kittymc_lib::packets::client::play::server_difficulty_0d::ServerDifficultyPacket;
 use kittymc_lib::packets::client::login::set_compression_03::SetCompressionPacket;
 use kittymc_lib::packets::client::play::chunk_data_20::ChunkDataPacket;
+use kittymc_lib::packets::client::play::entity_status_1b::EntityStatusPacket;
+use kittymc_lib::packets::client::play::held_item_change_3a::HeldItemChangePacket;
 use kittymc_lib::packets::client::play::spawn_position_46::SpawnPositionPacket;
 use kittymc_lib::packets::client::play::join_game_23::JoinGamePacket;
+use kittymc_lib::packets::client::play::player_list_item_2e::PlayerListItemPacket;
 use kittymc_lib::packets::client::play::player_position_and_look_2f::PlayerPositionAndLookPacket;
-use kittymc_lib::packets::client::play::window_items_14::WindowItemsPacket;
+use kittymc_lib::packets::client::play::time_update_47::TimeUpdatePacket;
+use kittymc_lib::packets::client::play::unlock_recipes_31::UnlockRecipesPacket;
 use kittymc_lib::packets::client::status::response_00::StatusResponsePacket;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use crate::client::{Client, ClientInfo};
@@ -131,10 +134,20 @@ impl KittyMCServer {
                     client.send_packet(&PluginMessagePacket::default_brand())?;
                     client.send_packet(&ServerDifficultyPacket::default())?;
                     client.send_packet(&PlayerAbilitiesPacket::default())?;
-                    client.send_packet(&WindowItemsPacket::default())?;
-                    client.send_packet(&ChunkDataPacket::default())?;
-                    client.send_packet(&SpawnPositionPacket::default())?;
+                    client.send_packet(&HeldItemChangePacket::default())?;
+                    client.send_packet(&EntityStatusPacket::default())?;
+                    client.send_packet(&UnlockRecipesPacket::default())?;
+                    client.send_packet(&PlayerListItemPacket::default())?;
+                    // Another Player List Item
                     client.send_packet(&PlayerPositionAndLookPacket::default())?;
+                    // World Border
+                    client.send_packet(&TimeUpdatePacket::default())?;
+                    client.send_packet(&SpawnPositionPacket::default())?;
+                    // Player Digging ???
+                    // Steer Vehicle ???
+
+                    // after client answers send chunks
+                    client.send_packet(&ChunkDataPacket::default())?;
 
                     return Ok(Some(uuid))
                 }
