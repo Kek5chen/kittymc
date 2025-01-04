@@ -1,5 +1,5 @@
 use kittymc_macros::Packet;
-use crate::packets::packet_serialization::{write_length_prefixed_string, SerializablePacket};
+use crate::packets::packet_serialization::SerializablePacket;
 use crate::packets::wrap_packet;
 use crate::subtypes::{Chat, ChatBuilder};
 
@@ -34,8 +34,7 @@ impl SerializablePacket for DisconnectLoginPacket {
     fn serialize(&self) -> Vec<u8> {
         let mut packet = vec![];
 
-        write_length_prefixed_string(&mut packet, &serde_json::to_string(&self.reason)
-            .unwrap_or_else(|_| "INVALID".to_string()));
+        self.reason.write(&mut packet);
 
         wrap_packet(&mut packet, Self::id());
 

@@ -1,9 +1,10 @@
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
+use crate::packets::packet_serialization::write_length_prefixed_string;
 
 pub mod state;
 
-#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Copy, Debug)]
 pub enum Color {
     Black,
     DarkBlue,
@@ -67,7 +68,7 @@ impl Color {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Builder)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder)]
 pub struct Chat {
     text: String,
     #[builder(setter(into, strip_option), default)]
@@ -93,3 +94,9 @@ pub struct Chat {
     extra: Vec<Chat>,
 }
 
+impl Chat {
+    pub fn write(&self, buffer: &mut Vec<u8>) {
+        write_length_prefixed_string(buffer, &serde_json::to_string(&self)
+            .unwrap_or_else(|_| "INVALID".to_string()));
+    }
+}
