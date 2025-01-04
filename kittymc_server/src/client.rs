@@ -175,7 +175,7 @@ impl Client {
                     warn!("[{}] Error when deserializing packet: {}", self.addr, e);
                     warn!("[{}] Packet started with : {:?}", self.addr, & self.buffer[..n]);
                     trace!("================= RECV Packet End ==================");
-                    return Err(KittyMCError::DeserializationError);
+                    return Err(e);
                 }
             };
 
