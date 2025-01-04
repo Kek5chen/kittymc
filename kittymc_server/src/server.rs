@@ -52,7 +52,7 @@ impl KittyMCServer {
 
     fn handle_client(&self, client: &mut Client) -> Result<bool, KittyMCError> {
         if !client.do_heartbeat()? {
-            debug!("Client didn't respond to heartbeats for too long");
+            debug!("[{}] Client didn't respond to heartbeats for too long", client.addr());
            return Ok(false);
         }
 
@@ -154,13 +154,13 @@ impl KittyMCServer {
 
             match self.handle_client_pre_play(&mut client) {
                 Err(e) => {
-                    info!("Registering Client disconnected ({e})");
+                    info!("[{}] Registering Client disconnected ({e})", client.addr());
                     continue;
                 }
                 Ok(opt_uuid) => match opt_uuid {
                     Some(uuid) => {
+                        debug!("[{}] Client successfully registered", client.addr());
                         self.clients.write().unwrap().insert(uuid, client);
-                        debug!("Client successfully registered");
                     }
                     None => self.registering_clients.push_back(client)
                 }
@@ -174,16 +174,16 @@ impl KittyMCServer {
             match self.handle_client(client.1) {
                 Ok(keep_alive) => {
                     if !keep_alive {
-                        info!("Forced Client disconnect");
+                        info!("[{}] Forced Client disconnect", client.1.addr());
                         disconnect_uuids.push(client.0.clone());
                     }
                 }
                 Err(KittyMCError::Disconnected) => {
-                    info!("Client disconnected");
+                    info!("[{}] Client disconnected", client.1.addr());
                     disconnect_uuids.push(client.0.clone())
                 },
                 Err(e) => {
-                    warn!("Disconnected client due to error: {e}");
+                    warn!("[{}] Disconnected client due to error: {e}", client.1.addr());
                     disconnect_uuids.push(client.0.clone())
                 }
             }
