@@ -1,5 +1,7 @@
+use log::warn;
+use uuid::Uuid;
 use kittymc_macros::Packet;
-use crate::packets::packet_serialization::{write_bool, write_length_prefixed_string, write_varint_u32, SerializablePacket};
+use crate::packets::packet_serialization::{write_bool, write_length_prefixed_string, write_uuid, write_varint_u32, SerializablePacket};
 use crate::packets::wrap_packet;
 use crate::packets::client::play::GameMode;
 use crate::subtypes::Chat;
@@ -91,12 +93,23 @@ impl PlayerListItemAction {
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct PlayerListItemPacket {
-    actions: Vec<PlayerListItemAction>,
+    actions: Vec<(Uuid, PlayerListItemAction)>,
 }
 
 impl Default for PlayerListItemPacket {
     fn default() -> Self {
-        PlayerListItemPacket { actions: vec![] }
+        PlayerListItemPacket {
+            actions: vec![(
+                Uuid::new_v4(),
+                PlayerListItemAction::AddPlayer {
+                    name: "meow".to_string(),
+                    properties: vec![],
+                    game_mode: GameMode::Creative,
+                    ping: 5,
+                    display_name: None
+                }),
+            ]
+        }
     }
 }
 
@@ -107,17 +120,20 @@ impl SerializablePacket for PlayerListItemPacket {
         if !self.actions.is_empty() {
             let first = &self.actions[0];
             for action in &self.actions {
-                if first.id() != action.id() {
+                if first.1.id() != action.1.id() {
+                    warn!("Server tried to serialize a packet with different action types. This is not possible. Sending default packet");
                     return vec![3, 0x2E, 0, 0];
                 }
             }
         } else {
+            warn!("Server tried sending an empty PlayerListItem Packet for some reason");
             return vec![3, 0x2E, 0, 0];
         }
 
-        write_varint_u32(&mut packet, self.actions[0].id());
+        write_varint_u32(&mut packet, self.actions[0].1.id());
         write_varint_u32(&mut packet, self.actions.len() as u32);
-        for action in &self.actions {
+        for (uuid, action) in &self.actions {
+            write_uuid(&mut packet, uuid);
             action.write(&mut packet);
         }
 

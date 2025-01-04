@@ -1,33 +1,36 @@
-use nalgebra::Vector2;
 use kittymc_macros::Packet;
-use crate::packets::packet_serialization::{write_bool, write_direction, write_location2, SerializablePacket};
+use rand::random;
+use crate::packets::packet_serialization::{write_direction, write_location2, write_u8, write_varint_u32, SerializablePacket};
 use crate::packets::wrap_packet;
-use crate::packets::client::play::Location2;
+use crate::packets::client::play::{Direction, Location2};
 
 #[derive(PartialEq, Debug, Clone, Packet)]
-pub struct PlayerPositionAndLookPacket {
+pub struct ServerPlayerPositionAndLookPacket {
     location: Location2, // Feet
-    direction: Vector2<f32>,
-    on_ground: bool,
+    direction: Direction,
+    relative_flags: u8,
+    teleport_id: u32
 }
 
-impl Default for PlayerPositionAndLookPacket {
+impl Default for ServerPlayerPositionAndLookPacket {
     fn default() -> Self {
-        PlayerPositionAndLookPacket {
+        ServerPlayerPositionAndLookPacket {
             location: Default::default(),
             direction: Default::default(),
-            on_ground: false,
+            relative_flags: 0,
+            teleport_id: random()
         }
     }
 }
 
-impl SerializablePacket for PlayerPositionAndLookPacket {
+impl SerializablePacket for ServerPlayerPositionAndLookPacket {
     fn serialize(&self) -> Vec<u8> {
         let mut packet = vec![];
 
         write_location2(&mut packet, &self.location);
         write_direction(&mut packet, &self.direction);
-        write_bool(&mut packet, self.on_ground);
+        write_u8(&mut packet, self.relative_flags);
+        write_varint_u32(&mut packet, self.teleport_id);
 
         wrap_packet(&mut packet, Self::id());
 

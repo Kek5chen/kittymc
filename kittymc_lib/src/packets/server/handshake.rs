@@ -1,7 +1,7 @@
 use kittymc_macros::Packet;
 use crate::error::KittyMCError;
 use crate::packets::{wrap_packet, Packet};
-use crate::packets::packet_serialization::{read_state_varint, read_u16_be, read_length_prefixed_string, read_varint_u32, write_length_prefixed_string, write_varint_u32, SerializablePacket, write_u16};
+use crate::packets::packet_serialization::{read_u16, read_length_prefixed_string, read_varint_u32, write_length_prefixed_string, write_varint_u32, SerializablePacket, write_u16};
 use crate::subtypes::state::State;
 
 #[derive(Debug, Clone, PartialEq, Packet)]
@@ -31,8 +31,8 @@ impl SerializablePacket for HandshakePacket {
 
         let protocol_version = read_varint_u32(&mut data, &mut total_size)?;
         let server_address = read_length_prefixed_string(&mut data, &mut total_size)?;
-        let server_port = read_u16_be(&mut data, &mut total_size)?;
-        let next_state = read_state_varint(&mut data, &mut total_size)?;
+        let server_port = read_u16(&mut data, &mut total_size)?;
+        let next_state = State::from(read_varint_u32(&mut data, &mut total_size)?);
 
         Ok((total_size, Packet::Handshake(HandshakePacket {
             protocol_version,

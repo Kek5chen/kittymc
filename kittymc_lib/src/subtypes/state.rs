@@ -8,8 +8,8 @@ pub enum State {
     Undefined = 255,
 }
 
-impl From<u8> for State {
-    fn from(value: u8) -> Self {
+impl From<u32> for State {
+    fn from(value: u32) -> Self {
         match value {
             1 => State::Status,
             2 => State::Login,

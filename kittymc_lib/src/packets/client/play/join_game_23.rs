@@ -1,9 +1,10 @@
 use kittymc_macros::Packet;
 use crate::packets::client::play::{Difficulty, Dimension, GameMode, LevelType};
-use crate::packets::packet_serialization::{write_bool, write_i32, write_i8, write_length_prefixed_string, write_u8, SerializablePacket};
+use crate::packets::packet_serialization::{write_bool, write_i32, write_length_prefixed_string, write_u8, SerializablePacket};
 use crate::packets::wrap_packet;
 
 #[derive(Clone, Debug, Packet)]
+#[allow(dead_code)]
 pub struct JoinGamePacket {
     entity_id: i32,
     gamemode: GameMode,
@@ -34,7 +35,7 @@ impl SerializablePacket for JoinGamePacket {
 
         write_i32(&mut packet, self.entity_id);
         write_u8(&mut packet, self.gamemode as u8);
-        write_i8(&mut packet, self.dimension as i8);
+        write_i32(&mut packet, self.dimension as i32);
         write_u8(&mut packet, self.difficulty as u8);
         write_u8(&mut packet, 69); // TODO: Actual max players
         write_length_prefixed_string(&mut packet, self.level_type.as_str());

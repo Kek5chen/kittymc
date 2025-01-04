@@ -2,6 +2,7 @@ use kittymc_macros::Packet;
 use crate::packets::packet_serialization::SerializablePacket;
 use crate::packets::wrap_packet;
 
+#[allow(dead_code)]
 pub struct ChunkMeta {
     pos_x: i32,
     pos_y: i32,

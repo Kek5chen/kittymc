@@ -9,7 +9,7 @@ use tracing::{debug, info, instrument, trace, warn};
 
 use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::{Packet, packet_serialization::SerializablePacket, CompressionInfo};
-use kittymc_lib::packets::client::play::keep_alive_1f::KeepAlivePacket;
+use kittymc_lib::packets::client::play::keep_alive_1f::ServerKeepAlivePacket;
 use kittymc_lib::packets::packet_serialization::compress_packet;
 use kittymc_lib::subtypes::state::State;
 
@@ -20,13 +20,14 @@ pub struct ClientInfo {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct Client {
     connected_at: Instant,
     socket: TcpStream,
     addr: SocketAddr,
     current_state: State,
     last_heartbeat: Instant,
-    last_heartbeat_id: u32,
+    last_heartbeat_id: u64,
     last_backbeat: Instant,
     buffer: Vec<u8>,
     buffer_size: usize,
@@ -35,6 +36,7 @@ pub struct Client {
     brand: Option<String>,
 }
 
+#[allow(dead_code)]
 impl Client {
     #[instrument(skip(server))]
     pub fn accept(server: &TcpListener) -> Result<Option<Client>, KittyMCError> {
@@ -93,6 +95,7 @@ impl Client {
         self.brand = Some(brand);
     }
 
+    // TODO: Something is broken with compression
     #[instrument(skip(self, b_packet))]
     pub fn send_packet_raw(&mut self, b_packet: &[u8]) -> Result<(), KittyMCError> {
         if self.compression.enabled && b_packet.len() >= self.compression.compression_threshold as usize {
@@ -119,14 +122,14 @@ impl Client {
 
         if self.last_heartbeat.elapsed() >= Duration::from_secs(5) {
             self.last_heartbeat_id = rand::random();
-            self.send_packet(&KeepAlivePacket::new(self.last_heartbeat_id))?;
+            self.send_packet(&ServerKeepAlivePacket::new(self.last_heartbeat_id))?;
             self.last_heartbeat = Instant::now();
         }
 
         Ok(self.last_backbeat.elapsed() <= Duration::from_secs(30))
     }
 
-    pub fn register_backbeat(&mut self, _id: u32) {
+    pub fn register_backbeat(&mut self, _id: u64) {
         // TODO: Should probably store four heartbeat ids and then see if any matches
         //if self.last_heartbeat_id == id {
             self.last_backbeat = Instant::now();
@@ -162,19 +165,21 @@ impl Client {
         let (packet_len, packet) =
             match Packet::deserialize_packet(self.current_state, &self.buffer[..n], &self.compression) {
                 Ok(packet) => {
-                    trace!("[{}] Parsed Range : {:?}", self.addr, &self.buffer[..packet.0]);
                     debug!("[{}] IN <<< {}(0x{:x?})({})", self.addr, packet.1.name(), packet.1.id(), packet.1.id());
-                    packet
+                    (packet.0, Some(packet.1))
                 },
                 Err(KittyMCError::NotEnoughData(_, _)) => {
                     trace!("[{}] Not enough data. Waiting for more", self.addr);
                     self.fragmented = true;
                     return Ok(None);
                 }
+                Err(KittyMCError::NotImplemented(packet_id, packet_len)) => {
+                    warn!("[{}] IN UNIMPLEMENTED <<< UNKNOWN(0x{:x?})({}) (len: {})", self.addr, packet_id, packet_id, packet_len);
+                    (packet_len, None)
+                }
                 Err(e) => {
                     warn!("[{}] Error when deserializing packet: {}", self.addr, e);
                     warn!("[{}] Packet started with : {:?}", self.addr, & self.buffer[..n]);
-                    trace!("================= RECV Packet End ==================");
                     return Err(e);
                 }
             };
@@ -186,6 +191,6 @@ impl Client {
             self.buffer.resize(2048, 0); // shouldn't be able to become smaller than 2048
         }
 
-        Ok(Some(packet))
+        Ok(packet)
     }
 }

@@ -4,7 +4,7 @@ pub mod keep_alive_1f;
 pub mod join_game_23;
 pub mod spawn_position_46;
 pub mod chat_message_0f;
-pub mod plugin_message_18;
+pub mod server_plugin_message_18;
 pub mod server_difficulty_0d;
 pub mod player_abilities_2c;
 pub mod player_position_and_look_2f;

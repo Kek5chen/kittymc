@@ -6,7 +6,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum KittyMCError {
     #[error("packet type hasn't been implemented")]
-    NotImplemented,
+    NotImplemented(usize, usize),
     #[error("failed to deserialize packet")]
     DeserializationError,
     #[error("failed to decode string in packet")]
@@ -34,5 +34,9 @@ pub enum KittyMCError {
     #[error("The client version mismatched the server version")]
     VersionMissmatch,
     #[error("Data couldn't be decompressed properly")]
-    DecompressionError // No #[from] because DecompressError is stupip
+    DecompressionError, // No #[from] because DecompressError is stupip
+    #[error("Couldn't deserialize type \"{0}\". Needed {1} bytes, got {2}")]
+    NotEnoughBytesToDeserialize(&'static str, usize, usize),
+    #[error("Couldn't deserialize variable type \"{0}\"")]
+    VarDeserializationError(&'static str),
 }

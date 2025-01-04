@@ -1,10 +1,9 @@
 use integer_encoding::VarInt;
 use kittymc_macros::PacketHelperFuncs;
+use log::{warn};
 use crate::error::KittyMCError;
 use crate::packets::client::login::set_compression_03::SetCompressionPacket;
 use crate::packets::client::login::success_02::LoginSuccessPacket;
-use crate::packets::client::play::keep_alive_1f::KeepAlivePacket;
-use crate::packets::client::play::plugin_message_18::PluginMessagePacket;
 use crate::packets::client::status::response_00::StatusResponsePacket;
 use crate::packets::packet_serialization::{decompress_packet, read_varint_u32, SerializablePacket};
 use crate::packets::server::handshake::HandshakePacket;
@@ -13,6 +12,11 @@ use crate::packets::server::status::ping_01::StatusPingPongPacket;
 use crate::packets::server::status::request_00::StatusRequestPacket;
 use crate::subtypes::state::State;
 use crate::packets::packet_serialization::NamedPacket;
+use crate::packets::server::play::client_keep_alive_0b::ClientKeepAlivePacket;
+use crate::packets::server::play::client_player_position_and_look_0e::ClientPlayerPositionAndLookPacket;
+use crate::packets::server::play::client_settings_04::ClientSettingsPacket;
+use crate::packets::server::play::client_plugin_message_09::ClientPluginMessagePacket;
+use crate::packets::server::play::teleport_confirm_00::TeleportConfirmPacket;
 
 pub mod server;
 pub mod client;
@@ -33,85 +37,80 @@ pub enum Packet {
     StatusResponse(StatusResponsePacket),
     StatusPing(StatusPingPongPacket),
     StatusPong(StatusPingPongPacket),
-    KeepAlive(KeepAlivePacket),
+    KeepAlive(ClientKeepAlivePacket),
     SetCompression(SetCompressionPacket),
-    PluginMessage(PluginMessagePacket),
+    PluginMessage(ClientPluginMessagePacket),
+    ClientSettings(ClientSettingsPacket),
+    TeleportConfirm(TeleportConfirmPacket),
+    PlayerPositionAndLook(ClientPlayerPositionAndLookPacket),
 }
 
 impl Packet {
-    pub fn packet_id(&self) -> u32 {
-        match self {
-            Packet::Handshake(_) |
-            Packet::LoginStart(_) |
-            Packet::StatusRequest(_) |
-            Packet::StatusResponse(_) |
-            Packet::KeepAlive(_) => 0,
-
-            Packet::StatusPing(_) |
-            Packet::StatusPong(_) => 1,
-
-            Packet::LoginSuccess(_) => 2,
-
-            Packet::SetCompression(_) => 3,
-
-            Packet::PluginMessage(_) => 0x17,
-        }
-    }
-
     pub fn deserialize_packet(state: State, raw_data: &[u8], compression: &CompressionInfo) -> Result<(usize, Packet), KittyMCError> {
+        let mut data_part = raw_data;
         let threshold_hit = {
-            let mut raw_data = raw_data;
             let mut size = 0;
-            let data_len = read_varint_u32(&mut raw_data, &mut size)?;
-            data_len >= compression.compression_threshold
+            let _packet_length = read_varint_u32(&mut data_part, &mut size)?;
+            let data_len = read_varint_u32(&mut data_part, &mut size)?;
+            data_len != 0 && data_len >= compression.compression_threshold
         };
 
         let decompressed;
         let mut data: &[u8];
-        if compression.enabled && threshold_hit {
-            decompressed = decompress_packet(&raw_data)?;
-            data = &decompressed[..];
+        if compression.enabled {
+            if threshold_hit {
+                decompressed = decompress_packet(&raw_data)?;
+                data = &decompressed[..];
+            } else {
+                data = data_part;
+            }
         } else {
             data = raw_data;
         }
 
         let mut header_size = 0;
-        let packet_len = read_varint_u32(&mut data, &mut header_size)? as usize;
-        let packet_len = packet_len - header_size;
+        let packet_data_and_id_len = read_varint_u32(&mut data, &mut header_size)? as usize;
+        let full_packet_len = packet_data_and_id_len + header_size;
+        let packet_data_len = packet_data_and_id_len - header_size;
         let packet_id = read_varint_u32(&mut data, &mut header_size)? as usize;
 
-        if packet_len > data.len() {
-            return Err(KittyMCError::NotEnoughData(data.len(), packet_len));
+        if packet_data_len > data.len() {
+            warn!("Packet length was bigger than data length. Waiting for more data");
+            return Err(KittyMCError::NotEnoughData(data.len(), packet_data_len));
         }
 
+        // TODO: Macro-ize this
         let (packet_size, packet) = match state {
             State::Handshake => {
                 match packet_id {
-                    0 => HandshakePacket::deserialize(&data[..packet_len])?,
-                    _ => return Err(KittyMCError::NotImplemented),
+                    0 => HandshakePacket::deserialize(&data[..packet_data_len])?,
+                    _ => return Err(KittyMCError::NotImplemented(packet_id, full_packet_len)),
                 }
             }
             State::Status => {
                 match packet_id {
-                    0 => StatusRequestPacket::deserialize(&data[..packet_len])?,
-                    1 => StatusPingPongPacket::deserialize(&data[..packet_len])?,
-                    _ => return Err(KittyMCError::NotImplemented),
+                    0 => StatusRequestPacket::deserialize(&data[..packet_data_len])?,
+                    1 => StatusPingPongPacket::deserialize(&data[..packet_data_len])?,
+                    _ => return Err(KittyMCError::NotImplemented(packet_id, full_packet_len)),
                 }
             }
             State::Login => {
                 match packet_id {
-                    0 => LoginStartPacket::deserialize(&data[..packet_len])?,
-                    _ => return Err(KittyMCError::NotImplemented),
+                    0 => LoginStartPacket::deserialize(&data[..packet_data_len])?,
+                    _ => return Err(KittyMCError::NotImplemented(packet_id, full_packet_len)),
                 }
             }
             State::Play => {
                 match packet_id {
-                    0 => KeepAlivePacket::deserialize(&data[..packet_len])?,
-                    0x17 => PluginMessagePacket::deserialize(&data[..packet_len])?,
-                    _ => return Err(KittyMCError::NotImplemented),
+                    0 => TeleportConfirmPacket::deserialize(&data[..packet_data_len])?,
+                    4 => ClientSettingsPacket::deserialize(&data[..packet_data_len])?,
+                    9 => ClientPluginMessagePacket::deserialize(&data[..packet_data_len])?,
+                    0xB => ClientKeepAlivePacket::deserialize(&data[..packet_data_len])?,
+                    0xE => ClientPlayerPositionAndLookPacket::deserialize(&data[..packet_data_len])?,
+                    _ => return Err(KittyMCError::NotImplemented(packet_id, full_packet_len)),
                 }
             }
-            _ => return Err(KittyMCError::NotImplemented),
+            _ => return Err(KittyMCError::NotImplemented(packet_id, full_packet_len)),
         };
 
         Ok((header_size + packet_size, packet))
