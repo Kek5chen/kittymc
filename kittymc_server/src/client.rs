@@ -157,7 +157,7 @@ impl Client {
             },
             Err(e) => return Err(e.into()),
         }
-        trace!("[{}] Complete Received Packet : {:?}", self.addr, &self.buffer[..n]);
+        trace!("[{}] Complete Received Data : {:?}", self.addr, &self.buffer[..n]);
 
         let (packet_len, packet) =
             match Packet::deserialize_packet(self.current_state, &self.buffer[..n], &self.compression) {
