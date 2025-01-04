@@ -288,6 +288,7 @@ dependencies = [
  "derive_builder",
  "integer-encoding",
  "kittymc-macros",
+ "lazy_static",
  "log",
  "md5",
  "miniz_oxide",

@@ -11,7 +11,7 @@ pub struct SpawnPositionPacket {
 impl Default for SpawnPositionPacket {
     fn default() -> Self {
         SpawnPositionPacket {
-            position: Location::zeros(),
+            position: Location::new(0., 4., 0.),
         }
     }
 }

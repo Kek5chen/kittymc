@@ -148,7 +148,11 @@ impl KittyMCServer {
                     // Steer Vehicle ???
 
                     // after client answers send chunks
-                    client.send_packet(&ChunkDataPacket::default())?;
+                    for x in -4..4 {
+                        for z in -4..4 {
+                            client.send_packet(&ChunkDataPacket::default_at(x, z))?;
+                        }
+                    }
 
                     return Ok(Some(uuid))
                 }

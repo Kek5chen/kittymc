@@ -19,11 +19,11 @@ impl Default for JoinGamePacket {
     fn default() -> Self {
         Self {
             entity_id: 129,
-            gamemode: GameMode::Survival,
-            dimension: Dimension::Nether,
+            gamemode: GameMode::Creative,
+            dimension: Dimension::Overworld,
             difficulty: Difficulty::Peaceful,
-            max_players: 5,
-            level_type: LevelType::Default,
+            max_players: 1,
+            level_type: LevelType::Flat,
             reduced_debug_info: false,
         }
     }

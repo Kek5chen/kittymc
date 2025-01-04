@@ -26,8 +26,8 @@ impl Default for PlayerAbilitiesPacket {
     fn default() -> Self {
         PlayerAbilitiesPacket {
             flags: PlayerAbilitiesFlags::all(),
-            flying_speed: 1.0,
-            field_of_view_modifier: 1.0,
+            flying_speed: 0.1,
+            field_of_view_modifier: 0.1,
         }
     }
 }
