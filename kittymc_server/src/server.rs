@@ -54,6 +54,18 @@ impl KittyMCServer {
         })
     }
 
+    fn get_name_from_uuid(&self, uuid: &Uuid) -> Option<&str> {
+        self.players.get(uuid).map(|p| p.name())
+    }
+
+    fn send_to_all<P: SerializablePacket + Debug + NamedPacket>(&mut self, packet: &P) -> Result<(), KittyMCError> {
+        for client in self.clients.write().unwrap().iter_mut() {
+            client.1.send_packet(packet)?;
+        }
+
+        Ok(())
+    }
+
     fn handle_client(&self, client: &mut Client) -> Result<bool, KittyMCError> {
         if !client.do_heartbeat()? {
             debug!("[{}] Client didn't respond to heartbeats for too long", client.addr());
@@ -75,18 +87,6 @@ impl KittyMCServer {
                 _ => ()
             }
         }
-    }
-
-    fn get_name_from_uuid(&self, uuid: &Uuid) -> Option<&str> {
-        self.players.get(uuid).map(|p| p.name())
-    }
-
-    fn send_to_all<P: SerializablePacket + Debug + NamedPacket>(&mut self, packet: &P) -> Result<(), KittyMCError> {
-        for client in self.clients.write().unwrap().iter_mut() {
-            client.1.send_packet(packet)?;
-        }
-
-        Ok(())
     }
 
     fn handle_client_pre_play(&mut self, client: &mut Client) -> Result<Option<Uuid>, KittyMCError> {
