@@ -37,18 +37,20 @@ pub struct ChunkSection {
     block_light: Vec<u8>,
     /// same as block_light, only in Overworld
     sky_light: Vec<u8>,
+    section_y: u32,
 }
 
 impl ChunkSection {
     /// Create a new empty section with a specified bits-per-block.
     /// Typically you won’t call this directly; see `Chunk::to_chunk_sections`.
-    pub fn new(bits_per_block: u8) -> Self {
+    pub fn new(bits_per_block: u8, section_y: u32) -> Self {
         ChunkSection {
             bits_per_block,
             palette: Vec::new(),
             data: Vec::new(),
             block_light: vec![16; SECTION_SIZE / 2], // 2048 bytes
             sky_light: vec![16; SECTION_SIZE / 2],   // 2048 bytes
+            section_y,
         }
     }
 
@@ -95,6 +97,10 @@ impl ChunkSection {
                 write_u8(out, light_byte);
             }
         }
+    }
+
+    pub fn section_y(&self) -> u32 {
+        self.section_y
     }
 }
 
@@ -204,7 +210,7 @@ impl Chunk {
                 b
             };
 
-            let mut section = ChunkSection::new(bits_per_block);
+            let mut section = ChunkSection::new(bits_per_block, section_y as u32);
 
             // If bits_per_block <= 8, build a sorted local palette
             let mut palette_index_map = HashMap::new();
@@ -293,7 +299,7 @@ impl Chunk {
             let section = &sections
                 .iter()
                 .find(|s| {
-                    true
+                    s.section_y() == section_y as u32
                 })
                 .unwrap();
             section.write(buf, dimension_has_sky_light);
