@@ -21,6 +21,7 @@ use kittymc_lib::packets::client::play::spawn_position_05::SpawnPositionPacket;
 use kittymc_lib::packets::client::play::join_game_01::JoinGamePacket;
 use kittymc_lib::packets::client::play::player_position_and_look::PlayerPositionAndLookPacket;
 use kittymc_lib::packets::client::play::window_items_14::WindowItemsPacket;
+use kittymc_lib::packets::client::status::response_00::StatusResponsePacket;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use crate::client::{Client, ClientInfo};
 use crate::player::Player;
@@ -100,8 +101,8 @@ impl KittyMCServer {
                     }
                     client.set_state(handshake.next_state);
                 }
-                Packet::StatusRequest(request) => {
-                    client.send_packet(request)?;
+                Packet::StatusRequest(_) => {
+                    client.send_packet(&StatusResponsePacket::default())?;
                 }
                 Packet::StatusPing(ping) => {
                     client.send_packet(ping)?;
