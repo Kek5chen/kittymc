@@ -13,7 +13,7 @@ const NO_COMPRESSION: CompressionInfo = CompressionInfo {
 };
 
 fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize> {
-    let result = Packet::deserialize_packet(State::Handshake, &data, &NO_COMPRESSION);
+    let result = Packet::deserialize(State::Handshake, &data, &NO_COMPRESSION);
 
     if let Ok((size, mut packet)) = result {
         match packet {
@@ -30,7 +30,7 @@ fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize>
         return Ok(n);
     }
 
-    let result = Packet::deserialize_packet(State::Login, &data, &NO_COMPRESSION);
+    let result = Packet::deserialize(State::Login, &data, &NO_COMPRESSION);
 
     if let Ok((size, packet)) = result {
         match packet {
@@ -46,13 +46,13 @@ fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize>
 }
 
 fn modify_server_data(data: &mut Vec<u8>, _n: usize) -> anyhow::Result<usize> {
-    let result = Packet::deserialize_packet(State::Handshake, &data, &NO_COMPRESSION);
+    let result = Packet::deserialize(State::Handshake, &data, &NO_COMPRESSION);
 
     if let Ok((size, packet)) = result {
         println!("Server -> Client: Packet of size {size}: {packet:?}");
     }
 
-    let result = Packet::deserialize_packet(State::Login, &data, &NO_COMPRESSION);
+    let result = Packet::deserialize(State::Login, &data, &NO_COMPRESSION);
 
     if let Ok((size, packet)) = result {
         println!("Server -> Client: Packet of size {size}: {packet:?}");

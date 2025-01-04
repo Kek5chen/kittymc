@@ -320,19 +320,20 @@ pub fn compress_packet(mut packet: &[u8]) -> Result<Vec<u8>, KittyMCError> {
     Ok(new_packet)
 }
 
-pub fn decompress_packet(mut compressed_packet: &[u8]) -> Result<Vec<u8>, KittyMCError> {
-    let mut total_size = 0;
-    let compressed_packet_length = read_varint_u32(&mut compressed_packet, &mut total_size)? as usize;
+pub fn decompress_packet(mut compressed_packet: &[u8]) -> Result<(usize, Vec<u8>), KittyMCError> {
+    let mut header_size = 0;
+    let compressed_packet_length = read_varint_u32(&mut compressed_packet, &mut header_size)? as usize;
+    let total_size = compressed_packet_length + header_size;
 
-    if compressed_packet.len() != compressed_packet_length {
-        return Err(KittyMCError::DecompressionError);
+    if compressed_packet.len() < compressed_packet_length {
+        return Err(KittyMCError::NotEnoughData(compressed_packet.len(), compressed_packet_length));
     }
 
-    total_size = 0;
-    let uncompressed_data_length = read_varint_u32(&mut compressed_packet, &mut total_size)?;
+    header_size = 0;
+    let uncompressed_data_length = read_varint_u32(&mut compressed_packet, &mut header_size)?;
 
     let uncompressed_packet = decompress_to_vec_zlib_with_limit(compressed_packet, uncompressed_data_length as usize)
-        .map_err(|_| KittyMCError::DecompressionError)?;
+        .map_err(|e| KittyMCError::ZlibDecompressionError(e))?;
 
-    Ok(uncompressed_packet)
+    Ok((total_size, uncompressed_packet))
 }

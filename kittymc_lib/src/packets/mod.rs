@@ -1,11 +1,11 @@
 use integer_encoding::VarInt;
 use kittymc_macros::PacketHelperFuncs;
-use log::trace;
+use log::{trace, warn};
 use crate::error::KittyMCError;
 use crate::packets::client::login::set_compression_03::SetCompressionPacket;
 use crate::packets::client::login::success_02::LoginSuccessPacket;
 use crate::packets::client::status::response_00::StatusResponsePacket;
-use crate::packets::packet_serialization::{decompress_packet, read_varint_u32, SerializablePacket};
+use crate::packets::packet_serialization::{decompress_packet, read_varint_u32, write_varint_u32_splice, SerializablePacket};
 use crate::packets::server::handshake::HandshakePacket;
 use crate::packets::server::login::login_start_00::LoginStartPacket;
 use crate::packets::server::status::ping_01::StatusPingPongPacket;
@@ -48,30 +48,57 @@ pub enum Packet {
 }
 
 impl Packet {
-    pub fn deserialize_packet(state: State, raw_data: &[u8], compression: &CompressionInfo) -> Result<(usize, Packet), KittyMCError> {
-        let decompressed;
-        let mut data: &[u8];
+    pub fn deserialize_compressed(state: State, rawr_data: &[u8], compression: &CompressionInfo) -> Result<(usize, Packet), KittyMCError> {
+        let mut data_part = rawr_data;
+        let mut full_size;
+        let uncompressed_data_len;
+        let uncompressed_packet_len;
 
-        if compression.enabled {
-            let mut data_part = raw_data;
+        let is_packet_compressed = {
+            let mut size = 0;
+            full_size = read_varint_u32(&mut data_part, &mut size)? as usize;
+            full_size += size;
 
-            let threshold_hit = {
-                let mut size = 0;
-                let _packet_length = read_varint_u32(&mut data_part, &mut size)?;
-                let data_len = read_varint_u32(&mut data_part, &mut size)?;
-                data_len != 0 && data_len >= compression.compression_threshold
-            };
+            size = 0;
+            uncompressed_data_len = read_varint_u32(&mut data_part, &mut size)? as usize;
+            uncompressed_packet_len = uncompressed_data_len + size;
 
-            if threshold_hit {
-                decompressed = decompress_packet(&raw_data)?;
-                data = &decompressed[..];
-            } else {
-                data = data_part;
+            uncompressed_data_len != 0 && uncompressed_data_len >= compression.compression_threshold as usize
+        };
+
+        let mut decompressed;
+        let data;
+
+        if is_packet_compressed {
+            let (size, owned_data) = decompress_packet(&rawr_data)?;
+            decompressed = owned_data;
+            write_varint_u32_splice(&mut decompressed, uncompressed_data_len as u32, ..0);
+            trace!("Complete Uncompressed Packet : {:?}", decompressed);
+
+            if full_size != size {
+                warn!("Handled size of decompression function should be equal to deserialize_compressed functions size. Using decompression size.");
+                full_size = size;
             }
+
+            data = &decompressed[..];
         } else {
-            data = raw_data;
+            data = data_part;
         }
 
+        let (decompressed_size, packet) = match Self::deserialize_uncompressed(state, data) {
+            Ok(p) => Ok(p),
+            Err(KittyMCError::NotImplemented(id, _len)) => { Err(KittyMCError::NotImplemented(id, full_size)) } // Replace the length with the compressed length
+            Err(e) => Err(e)
+        }?;
+
+        if decompressed_size != uncompressed_packet_len {
+            return Err(KittyMCError::InvalidDecompressedPacketLength);
+        }
+
+        Ok((full_size, packet))
+    }
+
+    pub fn deserialize_uncompressed(state: State, mut data: &[u8]) -> Result<(usize, Packet), KittyMCError> {
         let mut header_size = 0;
         let packet_data_and_id_len = read_varint_u32(&mut data, &mut header_size)? as usize;
         let full_packet_len = packet_data_and_id_len + header_size;
@@ -121,7 +148,16 @@ impl Packet {
             _ => return Err(KittyMCError::NotImplemented(packet_id, full_packet_len)),
         };
 
-        Ok((header_size + packet_size, packet))
+        let full_size = header_size + packet_size;
+        Ok((full_size, packet))
+    }
+
+    pub fn deserialize(state: State, raw_data: &[u8], compression: &CompressionInfo) -> Result<(usize, Packet), KittyMCError> {
+        if compression.enabled {
+            Self::deserialize_compressed(state, raw_data, compression)
+        } else {
+            Self::deserialize_uncompressed(state, raw_data)
+        }
     }
 }
 

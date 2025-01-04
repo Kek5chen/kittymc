@@ -11,6 +11,7 @@ use kittymc_lib::subtypes::state::State;
 use log::debug;
 use uuid::Uuid;
 use kittymc_lib::packets::client::login::disconnect_login_00::DisconnectLoginPacket;
+use kittymc_lib::packets::client::login::set_compression_03::SetCompressionPacket;
 use kittymc_lib::packets::client::play::player_abilities_2c::PlayerAbilitiesPacket;
 use kittymc_lib::packets::client::play::server_plugin_message_18::ServerPluginMessagePacket;
 use kittymc_lib::packets::client::play::server_difficulty_0d::ServerDifficultyPacket;
@@ -123,9 +124,9 @@ impl KittyMCServer {
                     let uuid = player.uuid().clone();
                     self.players.insert(uuid.clone(), player);
 
-                    //let compression = SetCompressionPacket::default();
-                    //client.send_packet(&compression)?;
-                    //client.set_compression(true, compression.threshold);
+                    let compression = SetCompressionPacket::default();
+                    client.send_packet(&compression)?;
+                    client.set_compression(true, compression.threshold);
 
                     client.send_packet(&success)?;
                     client.set_state(State::Play);

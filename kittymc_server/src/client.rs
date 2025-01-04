@@ -166,7 +166,7 @@ impl Client {
         trace!("[{}] Complete Received Data : {:?}", self.addr, &self.buffer[..n]);
 
         let (packet_len, packet) =
-            match Packet::deserialize_packet(self.current_state, &self.buffer[..n], &self.compression) {
+            match Packet::deserialize(self.current_state, &self.buffer[..n], &self.compression) {
                 Ok(packet) => {
                     debug!("[{}] IN <<< {}(0x{:x?})({})", self.addr, packet.1.name(), packet.1.id(), packet.1.id());
                     (packet.0, Some(packet.1))

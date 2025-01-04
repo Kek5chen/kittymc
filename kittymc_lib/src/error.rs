@@ -6,15 +6,15 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum KittyMCError {
     #[error("packet type hasn't been implemented")]
-    NotImplemented(usize, usize),
+    NotImplemented(usize, usize), // packet_id packet_len
     #[error("failed to deserialize packet")]
     DeserializationError,
     #[error("failed to decode string in packet")]
     StringDecodeError(#[from] FromUtf8Error),
     #[error("not enough data: {0}<{1}")]
-    NotEnoughData(usize,usize),
+    NotEnoughData(usize,usize), // Actual, Required
     #[error("more data than was expected: {0}>{1}")]
-    TooMuchData(usize,usize),
+    TooMuchData(usize,usize), // Actual, Required
     #[error("{0}")]
     IoError(#[from] io::Error),
     #[error("{0}")]
@@ -43,4 +43,8 @@ pub enum KittyMCError {
     PacketLengthTooSmall,
     #[error("The packet length was invalid")]
     InvalidPacketLength,
+    #[error("Zlib Decompression failed with error: {0}")]
+    ZlibDecompressionError(miniz_oxide::inflate::DecompressError),
+    #[error("The decompressed packet size was different than previously announced. Assuming corruption.")]
+    InvalidDecompressedPacketLength,
 }
