@@ -39,4 +39,8 @@ pub enum KittyMCError {
     NotEnoughBytesToDeserialize(&'static str, usize, usize),
     #[error("Couldn't deserialize variable type \"{0}\"")]
     VarDeserializationError(&'static str),
+    #[error("The packet length was smaller than the header")]
+    PacketLengthTooSmall,
+    #[error("The packet length was invalid")]
+    InvalidPacketLength,
 }

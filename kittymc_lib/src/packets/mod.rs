@@ -1,6 +1,6 @@
 use integer_encoding::VarInt;
 use kittymc_macros::PacketHelperFuncs;
-use log::{warn};
+use log::trace;
 use crate::error::KittyMCError;
 use crate::packets::client::login::set_compression_03::SetCompressionPacket;
 use crate::packets::client::login::success_02::LoginSuccessPacket;
@@ -47,17 +47,19 @@ pub enum Packet {
 
 impl Packet {
     pub fn deserialize_packet(state: State, raw_data: &[u8], compression: &CompressionInfo) -> Result<(usize, Packet), KittyMCError> {
-        let mut data_part = raw_data;
-        let threshold_hit = {
-            let mut size = 0;
-            let _packet_length = read_varint_u32(&mut data_part, &mut size)?;
-            let data_len = read_varint_u32(&mut data_part, &mut size)?;
-            data_len != 0 && data_len >= compression.compression_threshold
-        };
-
         let decompressed;
         let mut data: &[u8];
+
         if compression.enabled {
+            let mut data_part = raw_data;
+
+            let threshold_hit = {
+                let mut size = 0;
+                let _packet_length = read_varint_u32(&mut data_part, &mut size)?;
+                let data_len = read_varint_u32(&mut data_part, &mut size)?;
+                data_len != 0 && data_len >= compression.compression_threshold
+            };
+
             if threshold_hit {
                 decompressed = decompress_packet(&raw_data)?;
                 data = &decompressed[..];
@@ -71,13 +73,16 @@ impl Packet {
         let mut header_size = 0;
         let packet_data_and_id_len = read_varint_u32(&mut data, &mut header_size)? as usize;
         let full_packet_len = packet_data_and_id_len + header_size;
-        let packet_data_len = packet_data_and_id_len - header_size;
-        let packet_id = read_varint_u32(&mut data, &mut header_size)? as usize;
 
-        if packet_data_len > data.len() {
-            warn!("Packet length was bigger than data length. Waiting for more data");
-            return Err(KittyMCError::NotEnoughData(data.len(), packet_data_len));
+        if packet_data_and_id_len > data.len() {
+            trace!("Not enough data yet. Packet length: {}. Current Data length: {}", packet_data_and_id_len, data.len());
+            return Err(KittyMCError::NotEnoughData(data.len(), packet_data_and_id_len));
         }
+
+        let packet_id = read_varint_u32(&mut data, &mut header_size)? as usize;
+        let Some(packet_data_len) = full_packet_len.checked_sub(header_size) else {
+            return Err(KittyMCError::InvalidPacketLength);
+        };
 
         // TODO: Macro-ize this
         let (packet_size, packet) = match state {
