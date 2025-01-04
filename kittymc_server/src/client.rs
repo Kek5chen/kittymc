@@ -95,7 +95,7 @@ impl Client {
 
     #[instrument(skip(self, b_packet))]
     pub fn send_packet_raw(&mut self, b_packet: &[u8]) -> Result<(), KittyMCError> {
-        if self.compression.enabled {
+        if self.compression.enabled && b_packet.len() >= self.compression.compression_threshold as usize {
             let compressed = compress_packet(b_packet)?;
             self.socket.write_all(&compressed)?;
         } else {
