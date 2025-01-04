@@ -129,8 +129,6 @@ impl KittyMCServer {
                     client.set_state(State::Play);
 
                     client.send_packet(&JoinGamePacket::default())?;
-                    self.send_to_all(&ChatMessagePacket::new_join_message(self.get_name_from_uuid(&uuid).unwrap()))?;
-
                     client.send_packet(&PluginMessagePacket::default_brand())?;
                     client.send_packet(&ServerDifficultyPacket::default())?;
                     client.send_packet(&PlayerAbilitiesPacket::default())?;
