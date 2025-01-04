@@ -330,11 +330,11 @@ pub struct ChunkDataPacket<'a> {
 
 lazy_static! {
     /// A default flat world chunk
-    static ref DEFAULT_CHUNK: Chunk = {
-        let mut chunk = Chunk {
+    static ref DEFAULT_CHUNK: Box<Chunk> = {
+        let mut chunk = Box::new(Chunk {
             blocks: [0; SECTION_SIZE * NUM_SECTIONS_PER_CHUNK_COLUMN],
             biomes: [1; 16 * 16],
-        };
+        });
 
         for x in 0..SECTION_WIDTH {
             for z in 0..SECTION_WIDTH {
