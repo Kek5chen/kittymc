@@ -7,6 +7,7 @@ use std::ops::{Add, AddAssign};
 pub mod state;
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Copy, Debug)]
+#[serde(rename_all = "snake_case")]
 pub enum Color {
     Black,
     DarkBlue,
@@ -92,7 +93,7 @@ pub struct Chat {
     #[builder(setter(into, strip_option), default)]
     color: Option<Color>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    #[builder(setter(custom), default)]
+    #[builder(default)]
     extra: Vec<Chat>,
 }
 
@@ -102,6 +103,21 @@ impl Chat {
             buffer,
             &serde_json::to_string(&self).unwrap_or_else(|_| "INVALID".to_string()),
         );
+    }
+
+    pub fn default_join(player: &str) -> Self {
+        ChatBuilder::default()
+            .text(player.to_string())
+            .bold(true)
+            .italic(true)
+            .color(Color::DarkPurple)
+            .extra(vec![ChatBuilder::default()
+                .text(" joined the game".to_string())
+                .color(Color::Gray)
+                .build()
+                .unwrap()])
+            .build()
+            .unwrap()
     }
 }
 
@@ -247,7 +263,7 @@ impl Iterator for ChunkPositionIterator {
 #[test]
 fn chunk_position_iterator_test() {
     let chunks: Vec<_> =
-        ChunkPositionIterator::new(&Location::new(0., 0., 0.), (CHUNK_WIDTH + 3) as f32, true)
+        ChunkPositionIterator::new(&Location::new(0., 5., 0.), CHUNK_WIDTH as f32 / 2., true)
             .collect();
 
     assert_eq!(chunks.len(), 4);

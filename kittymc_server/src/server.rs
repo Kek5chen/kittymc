@@ -7,6 +7,7 @@ use kittymc_lib::packets::client::play::*;
 use kittymc_lib::packets::client::status::*;
 use kittymc_lib::packets::packet_serialization::NamedPacket;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
+use kittymc_lib::packets::server::play::ServerChatMessagePacket;
 use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::Location;
@@ -203,7 +204,11 @@ impl KittyMCServer {
                 Ok(opt_uuid) => match opt_uuid {
                     Some(uuid) => {
                         debug!("[{}] Client successfully registered", client.addr());
-                        self.clients.write().unwrap().insert(uuid, client);
+                        self.clients.write().unwrap().insert(uuid.clone(), client);
+
+                        self.send_to_all(&ClientChatMessagePacket::new_join_message(
+                            self.get_name_from_uuid(&uuid).unwrap(),
+                        ))?;
                     }
                     None => self.registering_clients.push_back(client),
                 },

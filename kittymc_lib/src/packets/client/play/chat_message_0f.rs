@@ -2,6 +2,7 @@ use crate::packets::packet_serialization::{
     write_i8, write_length_prefixed_string, SerializablePacket,
 };
 use crate::packets::wrap_packet;
+use crate::subtypes::Chat;
 use kittymc_macros::Packet;
 use serde_json::json;
 
@@ -13,40 +14,33 @@ pub enum ChatPosition {
 }
 
 #[derive(PartialEq, Debug, Clone, Packet)]
-pub struct ChatMessagePacket {
-    text: String,
+pub struct ClientChatMessagePacket {
+    text: Chat,
     position: ChatPosition,
 }
 
-impl Default for ChatMessagePacket {
-    fn default() -> Self {
-        ChatMessagePacket {
-            text: "Meow".to_string(),
-            position: ChatPosition::Chat,
-        }
-    }
-}
-
-impl ChatMessagePacket {
+impl ClientChatMessagePacket {
     pub fn new_join_message(name: &str) -> Self {
-        ChatMessagePacket {
-            text: format!("{} joined the game :3", name),
+        ClientChatMessagePacket {
+            text: Chat::default_join(name),
             position: ChatPosition::Chat,
         }
     }
 }
 
-impl SerializablePacket for ChatMessagePacket {
+impl SerializablePacket for ClientChatMessagePacket {
     fn serialize(&self) -> Vec<u8> {
         let mut packet = vec![];
 
-        write_length_prefixed_string(
-            &mut packet,
-            &serde_json::to_string(&json!({
-                "text": self.text
-            }))
-            .unwrap(),
-        );
+        // write_length_prefixed_string(
+        //     &mut packet,
+        //     &serde_json::to_string(&json!({
+        //         "text": self.text
+        //     }))
+        //     .unwrap(),
+        // );
+
+        self.text.write(&mut packet);
         write_i8(&mut packet, self.position as i8);
 
         wrap_packet(&mut packet, Self::id());

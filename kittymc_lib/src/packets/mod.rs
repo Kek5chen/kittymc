@@ -43,6 +43,7 @@ pub enum Packet {
     PlayerPosition(PlayerPositionPacket),
     PlayerLook(PlayerLookPacket),
     ClientAnimation(ClientAnimationPacket),
+    ChatMessage(ServerChatMessagePacket),
 }
 
 impl Packet {
@@ -168,6 +169,7 @@ impl Packet {
             },
             State::Play => match packet_id {
                 0 => TeleportConfirmPacket::deserialize(data)?,
+                2 => ServerChatMessagePacket::deserialize(data)?,
                 4 => ClientSettingsPacket::deserialize(data)?,
                 9 => ClientPluginMessagePacket::deserialize(data)?,
                 0xB => ClientKeepAlivePacket::deserialize(data)?,

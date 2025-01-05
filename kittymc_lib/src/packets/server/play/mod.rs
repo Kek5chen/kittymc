@@ -1,4 +1,5 @@
 pub mod animation_1d;
+pub mod chat_message_02;
 pub mod client_held_item_change_a1;
 pub mod client_keep_alive_0b;
 pub mod client_player_position_and_look_0e;
@@ -9,6 +10,7 @@ pub mod player_position_0d;
 pub mod teleport_confirm_00;
 
 pub use animation_1d::ClientAnimationPacket;
+pub use chat_message_02::ServerChatMessagePacket;
 pub use client_held_item_change_a1::ClientHeldItemChangePacket;
 pub use client_keep_alive_0b::ClientKeepAlivePacket;
 pub use client_player_position_and_look_0e::ClientPlayerPositionAndLookPacket;

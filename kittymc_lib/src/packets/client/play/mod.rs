@@ -16,7 +16,7 @@ pub mod unload_chunk_1d;
 pub mod unlock_recipes_31;
 pub mod window_items_14;
 
-pub use chat_message_0f::ChatMessagePacket;
+pub use chat_message_0f::ClientChatMessagePacket;
 pub use chunk_data_20::ChunkDataPacket;
 pub use entity_status_1b::EntityStatusPacket;
 pub use join_game_23::JoinGamePacket;
