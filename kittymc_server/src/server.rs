@@ -172,7 +172,6 @@ impl KittyMCServer {
                     let mut chunk_manager = self.chunk_manager.write().unwrap();
                     for _ in 0..10 {
                         client.update_chunks(&Location::new(0., 5., 0.), &mut chunk_manager)?;
-                        println!("updating");
                         sleep(Duration::from_millis(100));
                     }
 

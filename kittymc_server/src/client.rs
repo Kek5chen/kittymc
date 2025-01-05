@@ -17,7 +17,7 @@ use kittymc_lib::packets::{packet_serialization::SerializablePacket, Compression
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::{ChunkPosition, Location};
 
-const CHUNK_LOAD_RADIUS: f32 = 1.;
+const CHUNK_LOAD_RADIUS: f32 = 5.;
 
 #[derive(Eq, Hash, PartialEq, Debug, Clone)]
 pub struct ClientInfo {

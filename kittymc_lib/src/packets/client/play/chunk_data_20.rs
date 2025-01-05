@@ -343,6 +343,9 @@ lazy_static! {
             }
         }
 
+        chunk.set_block(10, 5, 10, 0b1000_0000);
+        chunk.set_block(10, 6, 10, 0b1011_0000);
+
         chunk
     };
 }
