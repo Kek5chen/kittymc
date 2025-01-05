@@ -1,5 +1,5 @@
-use uuid::Uuid;
 use crate::client::ClientInfo;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Player {

@@ -1,13 +1,13 @@
-use kittymc_macros::Packet;
 use crate::packets::packet_serialization::{write_i16, write_u16, write_u8, SerializablePacket};
 use crate::packets::wrap_packet;
+use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct SlotData {
     block_id: u16, // 0xffff is empty
     item_count: u8,
     item_damage: u16,
-    nbt: Option<()> // TODO: NBT STUFF
+    nbt: Option<()>, // TODO: NBT STUFF
 }
 
 impl Default for SlotData {
@@ -34,14 +34,14 @@ impl SlotData {
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct WindowItemsPacket {
     window_id: u8,
-    slot_data: Vec<SlotData>
+    slot_data: Vec<SlotData>,
 }
 
 impl Default for WindowItemsPacket {
     fn default() -> Self {
         WindowItemsPacket {
             window_id: 0,
-            slot_data: vec![SlotData::default(); 45]
+            slot_data: vec![SlotData::default(); 45],
         }
     }
 }

@@ -1,7 +1,7 @@
-use serde_json::json;
-use kittymc_macros::Packet;
 use crate::packets::packet_serialization::{write_i8, write_length_prefixed_string, SerializablePacket};
-use crate::packets::{wrap_packet};
+use crate::packets::wrap_packet;
+use kittymc_macros::Packet;
+use serde_json::json;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum ChatPosition {

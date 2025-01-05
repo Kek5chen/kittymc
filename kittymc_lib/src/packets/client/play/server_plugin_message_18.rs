@@ -1,6 +1,6 @@
-use kittymc_macros::Packet;
 use crate::packets::packet_serialization::{write_length_prefixed_bytes, write_length_prefixed_string, SerializablePacket};
 use crate::packets::wrap_packet;
+use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct ServerPluginMessagePacket {

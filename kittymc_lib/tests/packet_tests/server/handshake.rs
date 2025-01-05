@@ -1,8 +1,8 @@
-use kittymc_lib::packets::Packet;
+use crate::packet_tests::utils::check_serialized_packet;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use kittymc_lib::packets::server::handshake::HandshakePacket;
+use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::state::State;
-use crate::packet_tests::utils::check_serialized_packet;
 
 #[test]
 fn test_00_handshake_serialize() {

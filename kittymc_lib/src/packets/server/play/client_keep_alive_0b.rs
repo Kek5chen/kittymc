@@ -1,7 +1,7 @@
-use kittymc_macros::Packet;
 use crate::error::KittyMCError;
 use crate::packets::packet_serialization::{read_u64, SerializablePacket};
 use crate::packets::Packet;
+use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct ClientKeepAlivePacket {

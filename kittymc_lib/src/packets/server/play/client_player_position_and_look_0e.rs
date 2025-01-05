@@ -26,7 +26,7 @@ impl SerializablePacket for ClientPlayerPositionAndLookPacket {
         Ok((size, Packet::PlayerPositionAndLook(ClientPlayerPositionAndLookPacket {
             location: Location2::new(location_x, location_y, location_z),
             direction: Direction::new(yaw, pitch),
-            on_ground
+            on_ground,
         })))
     }
 

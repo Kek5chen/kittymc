@@ -1,6 +1,6 @@
-use kittymc_macros::Packet;
 use crate::packets::packet_serialization::{write_bool, write_varint_u32, SerializablePacket};
 use crate::packets::wrap_packet;
+use kittymc_macros::Packet;
 
 #[repr(u32)]
 #[derive(PartialEq, Debug, Clone, Copy, Packet)]

@@ -1,10 +1,10 @@
-use log::warn;
-use uuid::Uuid;
-use kittymc_macros::Packet;
+use crate::packets::client::play::GameMode;
 use crate::packets::packet_serialization::{write_bool, write_length_prefixed_string, write_uuid, write_varint_u32, SerializablePacket};
 use crate::packets::wrap_packet;
-use crate::packets::client::play::GameMode;
 use crate::subtypes::Chat;
+use kittymc_macros::Packet;
+use log::warn;
+use uuid::Uuid;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct PlayerListItemProperties {
@@ -39,7 +39,7 @@ pub enum PlayerListItemAction {
     UpdateGameMode(GameMode),
     UpdateLatency(u32),
     UpdateDisplayName(Option<Chat>),
-    RemovePlayer
+    RemovePlayer,
 }
 
 impl PlayerListItemAction {

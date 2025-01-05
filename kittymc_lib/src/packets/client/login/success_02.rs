@@ -16,7 +16,7 @@ impl LoginSuccessPacket {
     pub fn from_name_cracked(name: &str) -> Result<Self, KittyMCError> {
         let uuid = generate_cracked_uuid(name)?;
 
-        Ok(LoginSuccessPacket{
+        Ok(LoginSuccessPacket {
             uuid,
             username: name.to_string(),
         })
@@ -43,7 +43,7 @@ impl SerializablePacket for LoginSuccessPacket {
 
         let username = read_length_prefixed_string(&mut data, &mut size)?;
 
-        Ok((size, Packet::LoginSuccess(LoginSuccessPacket{
+        Ok((size, Packet::LoginSuccess(LoginSuccessPacket {
             uuid,
             username,
         })))

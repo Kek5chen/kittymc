@@ -1,7 +1,7 @@
-use kittymc_macros::Packet;
 use crate::error::KittyMCError;
 use crate::packets::packet_serialization::{read_varint_u32, write_varint_u32, SerializablePacket};
 use crate::packets::{wrap_packet, Packet};
+use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct SetCompressionPacket {

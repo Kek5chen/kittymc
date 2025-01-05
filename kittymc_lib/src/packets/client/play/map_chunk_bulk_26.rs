@@ -1,6 +1,6 @@
-use kittymc_macros::Packet;
 use crate::packets::packet_serialization::SerializablePacket;
 use crate::packets::wrap_packet;
+use kittymc_macros::Packet;
 
 #[allow(dead_code)]
 pub struct ChunkMeta {

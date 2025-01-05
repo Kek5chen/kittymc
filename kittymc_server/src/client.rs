@@ -8,9 +8,9 @@ use uuid::Uuid;
 use tracing::{debug, info, instrument, trace, warn};
 
 use kittymc_lib::error::KittyMCError;
-use kittymc_lib::packets::{Packet, packet_serialization::SerializablePacket, CompressionInfo};
 use kittymc_lib::packets::client::play::keep_alive_1f::ServerKeepAlivePacket;
 use kittymc_lib::packets::packet_serialization::compress_packet;
+use kittymc_lib::packets::{packet_serialization::SerializablePacket, CompressionInfo, Packet};
 use kittymc_lib::subtypes::state::State;
 
 #[derive(Eq, Hash, PartialEq, Debug, Clone)]
@@ -132,7 +132,7 @@ impl Client {
     pub fn register_backbeat(&mut self, _id: u64) {
         // TODO: Should probably store four heartbeat ids and then see if any matches
         //if self.last_heartbeat_id == id {
-            self.last_backbeat = Instant::now();
+        self.last_backbeat = Instant::now();
         //}
     }
 
@@ -153,12 +153,12 @@ impl Client {
             Ok(new_n) => {
                 self.fragmented = false;
                 n += new_n;
-            },
+            }
             Err(e) if e.kind() == ErrorKind::WouldBlock => {
                 if n == 0 || self.fragmented {
                     return Ok(None);
                 }
-            },
+            }
             Err(e) => return Err(e.into()),
         }
         self.buffer_size = n;
@@ -170,7 +170,7 @@ impl Client {
                 Ok(packet) => {
                     debug!("[{}] IN <<< {}(0x{:x?})({})", self.addr, packet.1.name(), packet.1.id(), packet.1.id());
                     (packet.0, Some(packet.1))
-                },
+                }
                 Err(KittyMCError::NotEnoughData(_, _)) => {
                     trace!("[{}] Not enough data. Waiting for more", self.addr);
                     self.fragmented = true;

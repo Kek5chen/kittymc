@@ -1,8 +1,8 @@
-use std::fmt::{Debug, Formatter};
-use kittymc_macros::Packet;
 use crate::error::KittyMCError;
 use crate::packets::packet_serialization::{read_length_prefixed_bytes, read_length_prefixed_string, SerializablePacket};
 use crate::packets::Packet;
+use kittymc_macros::Packet;
+use std::fmt::{Debug, Formatter};
 
 #[derive(PartialEq, Clone, Packet)]
 pub struct ClientPluginMessagePacket {
@@ -27,7 +27,7 @@ impl SerializablePacket for ClientPluginMessagePacket {
 
         Ok((total_size, Packet::PluginMessage(ClientPluginMessagePacket {
             channel,
-            data
+            data,
         })))
     }
 

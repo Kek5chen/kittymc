@@ -1,11 +1,11 @@
-use kittymc_macros::Packet;
 use crate::packets::packet_serialization::{
     write_bool, write_i32, write_u64, write_u8, write_varint_u32,
-    write_varint_u32_splice, SerializablePacket
+    write_varint_u32_splice, SerializablePacket,
 };
 use crate::packets::wrap_packet;
-use std::collections::HashMap;
+use kittymc_macros::Packet;
 use lazy_static::lazy_static;
+use std::collections::HashMap;
 
 const NUM_SECTIONS_PER_CHUNK_COLUMN: usize = 16;
 
@@ -42,7 +42,7 @@ pub struct ChunkSection {
 
 impl ChunkSection {
     /// Create a new empty section with a specified bits-per-block.
-    /// Typically you won’t call this directly; see `Chunk::to_chunk_sections`.
+    /// Typically, you won’t call this directly; see `Chunk::to_chunk_sections`.
     pub fn new(bits_per_block: u8, section_y: u32) -> Self {
         ChunkSection {
             bits_per_block,
@@ -62,7 +62,7 @@ impl ChunkSection {
     /// - [VarInt] length of the data array
     /// - data array (u64s)
     /// - block light bytes
-    /// - sky light bytes (if dimension has sky light)
+    /// - skylight bytes (if dimension has skylight)
     pub fn write(&self, out: &mut Vec<u8>, has_sky_light: bool) {
         write_u8(out, self.bits_per_block);
 
@@ -91,7 +91,7 @@ impl ChunkSection {
             write_u8(out, light_byte);
         }
 
-        // 6) If we’re in Overworld (has_sky_light = true), write sky light
+        // 6) If we’re in Overworld (has_sky_light = true), write skylight
         if has_sky_light {
             for &light_byte in &self.sky_light {
                 write_u8(out, light_byte);
@@ -376,7 +376,7 @@ impl SerializablePacket for ChunkDataPacket<'_> {
         self.data.write(&mut packet, self.ground_up_continuous, true, &mut primary_bit_mask); // TODO: Nobody knows if this is an overworld chunk or not yet
 
         self.data.to_chunk_sections(&mut primary_bit_mask);
-        write_varint_u32_splice(&mut packet, primary_bit_mask,mask_pos..mask_pos);
+        write_varint_u32_splice(&mut packet, primary_bit_mask, mask_pos..mask_pos);
 
         write_varint_u32(&mut packet, 0u32); // TODO: Implement Block Entitites
 

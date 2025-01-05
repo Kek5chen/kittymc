@@ -1,7 +1,7 @@
-use kittymc_macros::Packet;
 use crate::error::KittyMCError;
-use crate::packets::Packet;
 use crate::packets::packet_serialization::SerializablePacket;
+use crate::packets::Packet;
+use kittymc_macros::Packet;
 
 #[derive(PartialEq, Clone, Debug, Packet)]
 pub struct StatusRequestPacket;

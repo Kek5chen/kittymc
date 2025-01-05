@@ -2,8 +2,8 @@ mod server;
 mod client;
 mod player;
 
-use tracing_subscriber::EnvFilter;
 use crate::server::KittyMCServer;
+use tracing_subscriber::EnvFilter;
 
 fn main() {
     tracing_subscriber::fmt()

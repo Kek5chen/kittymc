@@ -1,7 +1,7 @@
-use kittymc_macros::Packet;
 use crate::packets::client::play::{Difficulty, Dimension, GameMode, LevelType};
 use crate::packets::packet_serialization::{write_bool, write_i32, write_length_prefixed_string, write_u8, SerializablePacket};
 use crate::packets::wrap_packet;
+use kittymc_macros::Packet;
 
 #[derive(Clone, Debug, Packet)]
 #[allow(dead_code)]
@@ -12,7 +12,7 @@ pub struct JoinGamePacket {
     difficulty: Difficulty,
     max_players: u8,
     level_type: LevelType,
-    reduced_debug_info: bool
+    reduced_debug_info: bool,
 }
 
 impl Default for JoinGamePacket {

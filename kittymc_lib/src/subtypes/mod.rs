@@ -1,6 +1,6 @@
+use crate::packets::packet_serialization::write_length_prefixed_string;
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
-use crate::packets::packet_serialization::write_length_prefixed_string;
 
 pub mod state;
 

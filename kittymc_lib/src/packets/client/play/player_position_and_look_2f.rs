@@ -1,15 +1,15 @@
-use kittymc_macros::Packet;
-use rand::random;
+use crate::packets::client::play::{Direction, Location2};
 use crate::packets::packet_serialization::{write_direction, write_location2, write_u8, write_varint_u32, SerializablePacket};
 use crate::packets::wrap_packet;
-use crate::packets::client::play::{Direction, Location2};
+use kittymc_macros::Packet;
+use rand::random;
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct ServerPlayerPositionAndLookPacket {
     location: Location2, // Feet
     direction: Direction,
     relative_flags: u8,
-    teleport_id: u32
+    teleport_id: u32,
 }
 
 impl Default for ServerPlayerPositionAndLookPacket {
@@ -18,7 +18,7 @@ impl Default for ServerPlayerPositionAndLookPacket {
             location: Location2::new(0., 5., 0.),
             direction: Default::default(),
             relative_flags: 0,
-            teleport_id: random()
+            teleport_id: random(),
         }
     }
 }

@@ -12,9 +12,9 @@ pub enum KittyMCError {
     #[error("failed to decode string in packet")]
     StringDecodeError(#[from] FromUtf8Error),
     #[error("not enough data: {0}<{1}")]
-    NotEnoughData(usize,usize), // Actual, Required
+    NotEnoughData(usize, usize), // Actual, Required
     #[error("more data than was expected: {0}>{1}")]
-    TooMuchData(usize,usize), // Actual, Required
+    TooMuchData(usize, usize), // Actual, Required
     #[error("{0}")]
     IoError(#[from] io::Error),
     #[error("{0}")]
@@ -45,6 +45,7 @@ pub enum KittyMCError {
     InvalidPacketLength,
     #[error("Zlib Decompression failed with error: {0}")]
     ZlibDecompressionError(miniz_oxide::inflate::DecompressError),
-    #[error("The decompressed packet size was different than previously announced. Assuming corruption. {0} != {1}")]
+    #[error("The decompressed packet size was different than previously announced. Assuming corruption. {0} != {1}"
+    )]
     InvalidDecompressedPacketLength(usize, usize), // Announced, Actual
 }

@@ -1,7 +1,7 @@
-use bitflags::bitflags;
-use kittymc_macros::Packet;
 use crate::packets::packet_serialization::{write_f32, write_u8, SerializablePacket};
 use crate::packets::wrap_packet;
+use bitflags::bitflags;
+use kittymc_macros::Packet;
 
 bitflags! {
 

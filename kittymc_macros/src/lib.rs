@@ -13,7 +13,7 @@ pub fn derive_packet_helper_funcs(input: TokenStream) -> TokenStream {
         _ => {
             return syn::Error::new_spanned(
                 name,
-                "SerializePacketFunc can only be derived for enums"
+                "SerializePacketFunc can only be derived for enums",
             ).to_compile_error().into();
         }
     };
@@ -25,7 +25,7 @@ pub fn derive_packet_helper_funcs(input: TokenStream) -> TokenStream {
             _ => {
                 return Err(syn::Error::new_spanned(
                     vname,
-                    "Packet Enum Variant MUST have an inner struct that does serialization and deserialization."
+                    "Packet Enum Variant MUST have an inner struct that does serialization and deserialization.",
                 ).to_compile_error().into());
             }
         };

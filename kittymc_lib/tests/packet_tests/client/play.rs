@@ -20,5 +20,5 @@ fn test_02_login_success() {
     // clients accept it fine without the extra 0
 
     let packet = LoginSuccessPacket::deserialize(&raw_packet[2..]).unwrap();
-    assert_eq!(&packet.1.serialize(), raw_packet) // Here the implementation of integer-encodings varint encode is different than the minecraft one
+    assert_eq!(&packet.1.serialize(), raw_packet) // Here the implementation of integer-encodings varint encode is different from the minecraft one
 }

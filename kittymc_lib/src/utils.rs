@@ -1,5 +1,5 @@
-use uuid::{Builder, Uuid};
 use crate::error::KittyMCError;
+use uuid::{Builder, Uuid};
 
 pub fn generate_cracked_uuid(name: &str) -> Result<Uuid, KittyMCError> {
     if name.len() > 16 {

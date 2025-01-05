@@ -1,11 +1,11 @@
-use std::net::SocketAddr;
 use anyhow::{format_err, Context};
+use kittymc_lib::packets::packet_serialization::SerializablePacket;
+use kittymc_lib::packets::{CompressionInfo, Packet};
+use kittymc_lib::subtypes::state::State;
+use std::net::SocketAddr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::task::JoinHandle;
-use kittymc_lib::packets::{CompressionInfo, Packet};
-use kittymc_lib::packets::packet_serialization::SerializablePacket;
-use kittymc_lib::subtypes::state::State;
 
 const NO_COMPRESSION: CompressionInfo = CompressionInfo {
     enabled: false,
@@ -102,7 +102,7 @@ fn get_server_address() -> String {
     "gommehd.net".to_string()
 }
 
-async fn client_loop(client: TcpStream, sockaddr: &SocketAddr) -> anyhow::Result<()>{
+async fn client_loop(client: TcpStream, sockaddr: &SocketAddr) -> anyhow::Result<()> {
     let server_url = get_server_address();
     let server_addr = (server_url.as_str(), 25565);
     let server = TcpStream::connect(server_addr)

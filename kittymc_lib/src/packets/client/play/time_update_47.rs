@@ -1,6 +1,6 @@
-use kittymc_macros::Packet;
 use crate::packets::packet_serialization::{write_u64, SerializablePacket};
 use crate::packets::wrap_packet;
+use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Default, Packet)]
 pub struct TimeUpdatePacket {

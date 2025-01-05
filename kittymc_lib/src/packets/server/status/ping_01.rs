@@ -1,12 +1,12 @@
-use kittymc_macros::Packet;
 use crate::error::KittyMCError;
-use crate::packets::{wrap_packet, Packet};
 use crate::packets::packet_serialization::{read_i64, write_i64, SerializablePacket};
+use crate::packets::{wrap_packet, Packet};
+use kittymc_macros::Packet;
 
 // Special Packet. Is being used for serializing the clientbound Ping and deserializing the serverbound Pong
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct StatusPingPongPacket {
-    payload: i64
+    payload: i64,
 }
 
 impl SerializablePacket for StatusPingPongPacket {
