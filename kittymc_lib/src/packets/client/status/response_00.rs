@@ -65,10 +65,10 @@ impl Default for StatusResponsePacket {
                 protocol: 340, // TODO: Replace this with global versioned consts
             },
             players: StatusResponsePlayers {
-                max: 69,
-                online: 55,
+                max: 1,
+                online: 0,
                 sample: vec![StatusResponsePlayer {
-                    name: "will_owo".to_string(),
+                    name: "§d§lwillow was here :3".to_string(),
                     id: Uuid::from_str("6eab089f-9698-47fb-8fe5-c95fb5d20b6c").unwrap(),
                 }],
             },

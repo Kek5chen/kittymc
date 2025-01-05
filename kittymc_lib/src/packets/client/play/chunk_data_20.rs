@@ -339,12 +339,24 @@ lazy_static! {
                 for y in 1..4 {
                     chunk.set_block(x, y, z, 0b0001_0000);
                 }
-                chunk.set_block(x, 4, z, 0b0010_0000);
+                chunk.set_block(x, 4, z, 5 << 4);
             }
         }
 
-        chunk.set_block(10, 5, 10, 0b1000_0000);
-        chunk.set_block(10, 6, 10, 0b1011_0000);
+        for x in 0..16 {
+            for z in 5..11 {
+                let block: u32 = (35 << 4)
+                    | match z {
+                        5 => 14,
+                        6 => 1,
+                        7 => 4,
+                        8 => 5,
+                        n => n as u32,
+                    };
+
+                chunk.set_block(x, 4, z, block);
+            }
+        }
 
         chunk
     };
