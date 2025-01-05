@@ -329,8 +329,7 @@ pub struct ChunkDataPacket<'a> {
 }
 
 lazy_static! {
-    /// A default flat world chunk
-    static ref DEFAULT_CHUNK: Box<Chunk> = {
+    static ref DEFAULT_FLAT_CHUNK: Box<Chunk> = {
         let mut chunk = Box::new(Chunk {
             blocks: [0; SECTION_SIZE * NUM_SECTIONS_PER_CHUNK_COLUMN],
             biomes: [1; 16 * 16],
@@ -356,7 +355,7 @@ impl ChunkDataPacket<'_> {
             x,
             z,
             ground_up_continuous: true,
-            data: &DEFAULT_CHUNK,
+            data: &DEFAULT_FLAT_CHUNK,
             block_entities: vec![],
         }
     }
