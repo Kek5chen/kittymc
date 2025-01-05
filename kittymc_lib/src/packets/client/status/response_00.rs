@@ -67,18 +67,15 @@ impl Default for StatusResponsePacket {
             players: StatusResponsePlayers {
                 max: 69,
                 online: 55,
-                sample: vec![
-                    StatusResponsePlayer {
-                        name: "will_owo".to_string(),
-                        id: Uuid::from_str("6eab089f-9698-47fb-8fe5-c95fb5d20b6c").unwrap(),
-                    },
-                    StatusResponsePlayer {
-                        name: "IT0NA31".to_string(),
-                        id: Uuid::from_str("f7671649-0271-4749-aa00-2a5ea2cb573d").unwrap(),
-                    }
-                ],
+                sample: vec![StatusResponsePlayer {
+                    name: "will_owo".to_string(),
+                    id: Uuid::from_str("6eab089f-9698-47fb-8fe5-c95fb5d20b6c").unwrap(),
+                }],
             },
-            description: StatusResponseText { text: "§4K§6I§eT§aT§bY §dMC §5!!!!! §d[ TOTALLY SCENE! ]\n§d~ xXx M3W M3W SHREDZ xXx ~".to_string() },
+            description: StatusResponseText {
+                text: "§4K§6I§eT§aT§bY §dMC §5!!!!! §d[ totally wow ]\n§d~ xXx mew mew xXx ~"
+                    .to_string(),
+            },
             favicon: DEFAULT_IMAGE_DATA.to_string(),
             enforces_secure_chat: false,
         }
