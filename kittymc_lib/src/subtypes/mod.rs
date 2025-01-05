@@ -114,45 +114,113 @@ pub struct ChunkPositionIterator {
 }
 
 impl ChunkPositionIterator {
-    pub fn new(center: &Location, radius: f32, xz_only: bool) -> Self {
-        // Compute bounding box in integer steVjjjjjjjjjjps of CHUNK_WIDTH
-        let min_x = (center.x - radius).floor() as i32;
-        let max_x = (center.x + radius).ceil() as i32;
-        let min_z = (center.z - radius).floor() as i32;
-        let max_z = (center.z + radius).ceil() as i32;
-        let step = CHUNK_WIDTH as usize;
-        let mut center = center.clone();
+    /// Return the min (lowest corner) of the chunk in block coords
+    fn chunk_box_min(cpos: &ChunkPosition) -> Location {
+        Location::new(
+            cpos.block_x() as f32,
+            cpos.block_y() as f32,
+            cpos.block_z() as f32,
+        )
+    }
 
-        // For `xz_only`, we treat y as just the center's integer y.
-        // If you prefer a different approach, adjust accordingly.
-        let (min_y, max_y) = if xz_only {
-            let cy = center.y.floor() as i32;
-            center.y = (cy - (cy % CHUNK_WIDTH as i32)) as f32;
-            (cy, cy) // no vertical iteration
+    /// Return the max corner of the chunk in block coords
+    fn chunk_box_max(cpos: &ChunkPosition) -> Location {
+        Self::chunk_box_min(cpos)
+            + Location::new(CHUNK_WIDTH as f32, CHUNK_WIDTH as f32, CHUNK_WIDTH as f32)
+    }
+
+    /// 3D bounding box distance
+    fn distance_to_chunk_box_3d(cpos: &ChunkPosition, point: &Location) -> f32 {
+        let bmin = Self::chunk_box_min(cpos);
+        let bmax = Self::chunk_box_max(cpos);
+
+        // For each dimension, compute how far `point` is outside bmin..bmax.
+        let dx = if point.x < bmin.x {
+            bmin.x - point.x
+        } else if point.x > bmax.x {
+            point.x - bmax.x
         } else {
-            let min_y = (center.y - radius).floor() as i32;
-            let max_y = (center.y + radius).ceil() as i32;
-            (min_y, max_y)
+            0.0
         };
+
+        let dy = if point.y < bmin.y {
+            bmin.y - point.y
+        } else if point.y > bmax.y {
+            point.y - bmax.y
+        } else {
+            0.0
+        };
+
+        let dz = if point.z < bmin.z {
+            bmin.z - point.z
+        } else if point.z > bmax.z {
+            point.z - bmax.z
+        } else {
+            0.0
+        };
+
+        (dx * dx + dy * dy + dz * dz).sqrt()
+    }
+
+    /// 2D bounding box distance (XZ only), ignoring Y dimension
+    fn distance_to_chunk_box_xz(cpos: &ChunkPosition, point: &Location) -> f32 {
+        let bmin = Self::chunk_box_min(cpos);
+        let bmax = Self::chunk_box_max(cpos);
+
+        // 2D in XZ
+        let dx = if point.x < bmin.x {
+            bmin.x - point.x
+        } else if point.x > bmax.x {
+            point.x - bmax.x
+        } else {
+            0.0
+        };
+
+        let dz = if point.z < bmin.z {
+            bmin.z - point.z
+        } else if point.z > bmax.z {
+            point.z - bmax.z
+        } else {
+            0.0
+        };
+
+        // In the XZ‑only approach, we just treat Y as “unchanged”.
+        (dx * dx + dz * dz).sqrt()
+    }
+
+    pub fn new(center: &Location, radius: f32, xz_only: bool) -> Self {
+        let center_chunk = ChunkPosition::from(center.clone());
+
+        let radius_in_chunks = (radius / CHUNK_WIDTH as f32).ceil() as isize;
 
         let mut positions = Vec::new();
 
-        //debug!("Center: {center}");
+        let (min_y, max_y) = if xz_only {
+            (0, 0)
+        } else {
+            (
+                center_chunk.chunk_y() - radius_in_chunks,
+                center_chunk.chunk_y() + radius_in_chunks,
+            )
+        };
 
-        // Step in multiples of CHUNK_WIDTH from min..=max
-        for y in (min_y..=max_y).step_by(step) {
-            for z in (min_z..=max_z).step_by(step) {
-                for x in (min_x..=max_x).step_by(step) {
-                    let loc = ChunkPosition::from(Location::new(x as f32, y as f32, z as f32));
-                    // Only keep points within the radius
-                    // debug!(
-                    //     "Magnitude of center {:?} of {:?} is {}",
-                    //     loc,
-                    //     loc.center(),
-                    //     (loc.center() - center).magnitude()
-                    // );
-                    if (loc.center() - center).magnitude() <= radius {
-                        positions.push(ChunkPosition::from(loc));
+        for cy in min_y..=max_y {
+            for cz in (center_chunk.chunk_z() - radius_in_chunks)
+                ..=(center_chunk.chunk_z() + radius_in_chunks)
+            {
+                for cx in (center_chunk.chunk_x() - radius_in_chunks)
+                    ..=(center_chunk.chunk_x() + radius_in_chunks)
+                {
+                    let cpos = ChunkPosition::new(cx, cy, cz);
+
+                    let dist = if xz_only {
+                        Self::distance_to_chunk_box_xz(&cpos, center)
+                    } else {
+                        Self::distance_to_chunk_box_3d(&cpos, center)
+                    };
+
+                    if dist <= radius {
+                        positions.push(cpos);
                     }
                 }
             }
@@ -189,28 +257,50 @@ fn chunk_position_iterator_test() {
 pub struct ChunkPosition(Vector3<isize>);
 
 impl ChunkPosition {
-    // TODO: Make this return chunk position, not block position
-    pub fn x(&self) -> isize {
+    /// Constructs a new `ChunkPosition` from raw chunk indices.
+    /// E.g. `ChunkPosition::new(2, 0, 4)` means chunk #2 on X, #0 on Y, #4 on Z.
+    pub fn new(cx: isize, cy: isize, cz: isize) -> Self {
+        ChunkPosition(Vector3::new(cx, cy, cz))
+    }
+
+    pub fn chunk_x(&self) -> isize {
         self.0.x
     }
 
-    pub fn y(&self) -> isize {
+    pub fn chunk_y(&self) -> isize {
+        self.0.y
+    }
+
+    pub fn chunk_z(&self) -> isize {
         self.0.z
     }
 
-    pub fn z(&self) -> isize {
-        self.0.z
+    /// Returns the lowest corner of this chunk *in block/world coordinates*
+    pub fn block_x(&self) -> isize {
+        self.0.x * CHUNK_WIDTH
     }
 
-    pub fn to_location(&self) -> Location {
-        Location::new(self.0.x as f32, self.0.y as f32, self.0.z as f32)
+    pub fn block_y(&self) -> isize {
+        self.0.y * CHUNK_WIDTH
+    }
+
+    pub fn block_z(&self) -> isize {
+        self.0.z * CHUNK_WIDTH
+    }
+
+    pub fn block_location(&self) -> Location {
+        Location::new(
+            self.block_x() as f32,
+            self.block_y() as f32,
+            self.block_z() as f32,
+        )
     }
 
     pub fn center(&self) -> Location {
         Location::new(
-            self.0.x as f32 + HALF_CHUNK_WIDTH,
-            self.0.y as f32 + HALF_CHUNK_WIDTH,
-            self.0.z as f32 + HALF_CHUNK_WIDTH,
+            self.block_x() as f32 + HALF_CHUNK_WIDTH,
+            self.block_y() as f32 + HALF_CHUNK_WIDTH,
+            self.block_z() as f32 + HALF_CHUNK_WIDTH,
         )
     }
 
@@ -228,7 +318,6 @@ impl Add for ChunkPosition {
 
     fn add(mut self, rhs: Self) -> Self::Output {
         self.0 += rhs.0;
-
         self
     }
 }
@@ -237,47 +326,38 @@ impl Add<isize> for ChunkPosition {
     type Output = ChunkPosition;
 
     fn add(mut self, rhs: isize) -> Self::Output {
-        self.0.x += rhs * CHUNK_WIDTH;
-        self.0.y += rhs * CHUNK_WIDTH;
-        self.0.z += rhs * CHUNK_WIDTH;
-
+        self.0.x += rhs;
+        self.0.y += rhs;
+        self.0.z += rhs;
         self
     }
 }
 
 impl AddAssign<isize> for ChunkPosition {
     fn add_assign(&mut self, rhs: isize) {
-        self.0.x += rhs * CHUNK_WIDTH;
-        self.0.y += rhs * CHUNK_WIDTH;
-        self.0.z += rhs * CHUNK_WIDTH;
+        self.0.x += rhs;
+        self.0.y += rhs;
+        self.0.z += rhs;
     }
 }
 
 impl From<Location> for ChunkPosition {
     fn from(loc: Location) -> ChunkPosition {
-        let mut x = loc.x.floor() as isize;
-        let mut y = loc.y.floor() as isize;
-        let mut z = loc.z.floor() as isize;
-
-        x = x - (x % CHUNK_WIDTH);
-        y = y - (y % CHUNK_WIDTH);
-        z = z - (z % CHUNK_WIDTH);
-
-        ChunkPosition(Vector3::new(x, y, z))
+        Self::from(&loc)
     }
 }
 
 impl From<&Location> for ChunkPosition {
     fn from(loc: &Location) -> ChunkPosition {
-        let mut x = loc.x.floor() as isize;
-        let mut y = loc.y.floor() as isize;
-        let mut z = loc.z.floor() as isize;
+        let bx = loc.x.floor() as isize;
+        let by = loc.y.floor() as isize;
+        let bz = loc.z.floor() as isize;
 
-        x = x - (x % CHUNK_WIDTH);
-        y = y - (y % CHUNK_WIDTH);
-        z = z - (z % CHUNK_WIDTH);
+        let cx = bx / CHUNK_WIDTH;
+        let cy = by / CHUNK_WIDTH;
+        let cz = bz / CHUNK_WIDTH;
 
-        ChunkPosition(Vector3::new(x, y, z))
+        ChunkPosition(Vector3::new(cx, cy, cz))
     }
 }
 

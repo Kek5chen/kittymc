@@ -12,8 +12,8 @@ pub struct UnloadChunkPacket {
 impl UnloadChunkPacket {
     pub fn new(pos: &ChunkPosition) -> UnloadChunkPacket {
         UnloadChunkPacket {
-            x: pos.x() as i32 / 16,
-            z: pos.z() as i32 / 16,
+            x: pos.chunk_x() as i32,
+            z: pos.chunk_z() as i32,
         }
     }
 }

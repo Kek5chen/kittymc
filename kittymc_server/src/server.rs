@@ -86,6 +86,9 @@ impl KittyMCServer {
                 Packet::PluginMessage(msg) if msg.channel == "MC|Brand" => {
                     client.set_brand(String::from_utf8_lossy(&msg.data).to_string())
                 }
+                Packet::ClientSettings(settings) => {
+                    client.set_view_distance(settings.view_distance as u32);
+                }
                 Packet::PlayerPositionAndLook(packet) => {
                     let location = Location::new(
                         packet.location.x as f32,

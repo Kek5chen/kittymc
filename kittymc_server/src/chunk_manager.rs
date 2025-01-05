@@ -6,16 +6,8 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::thread::JoinHandle;
 use std::time::Instant;
-use tracing::debug;
 
 pub type SharedChunk = Arc<RwLock<Box<Chunk>>>;
-
-pub enum LoadingChunk {
-    Loading,
-    Loaded(Arc<Chunk>),
-}
-
-impl LoadingChunk {}
 
 #[derive(Debug)]
 pub struct ChunkManager {
@@ -57,14 +49,17 @@ impl ChunkManager {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn is_chunk_loaded(&self, loc: &ChunkPosition) -> bool {
         self.loaded_chunks.read().unwrap().contains_key(loc)
     }
 
     pub fn get_chunk_at(&mut self, pos: &ChunkPosition) -> Option<SharedChunk> {
+        self.access_list.insert(pos.clone(), Instant::now());
         self.loaded_chunks.read().unwrap().get(pos).cloned()
     }
 
+    #[allow(dead_code)]
     pub fn get_chunk_containing(&mut self, loc: &Location) -> Option<SharedChunk> {
         self.loaded_chunks.read().unwrap().get(&loc.into()).cloned()
     }
@@ -89,6 +84,7 @@ impl ChunkManager {
         None
     }
 
+    #[allow(dead_code)]
     pub fn request_chunks_bulk(
         &mut self,
         chunks: &[ChunkPosition],
@@ -107,6 +103,7 @@ impl ChunkManager {
         loaded
     }
 
+    #[allow(dead_code)]
     pub fn poll_chunks_in_range(
         &mut self,
         loc: &Location,
@@ -138,7 +135,7 @@ impl ChunkManager {
         Some(loaded_chunks)
     }
 
-    // range is blocks x 16 around loc
+    #[allow(dead_code)]
     pub fn request_chunks_in_range(
         &mut self,
         loc: &Location,
@@ -158,7 +155,7 @@ impl ChunkManager {
         loaded_chunks
     }
 
-    pub fn load_chunk_thread(requested_chunk: ChunkPosition) -> Box<Chunk> {
+    pub fn load_chunk_thread(_requested_chunk: ChunkPosition) -> Box<Chunk> {
         DEFAULT_FLAT_CHUNK.clone()
     }
 }

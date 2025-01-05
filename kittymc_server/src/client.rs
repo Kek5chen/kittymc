@@ -1,4 +1,5 @@
 use kittymc_lib::packets::packet_serialization::NamedPacket;
+use log::error;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::io::{ErrorKind, Read, Write};
@@ -17,7 +18,7 @@ use kittymc_lib::packets::{packet_serialization::SerializablePacket, Compression
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::{ChunkPosition, Location};
 
-const CHUNK_LOAD_RADIUS: f32 = 5.;
+const DEFAULT_CHUNK_LOAD_RADIUS: u32 = 4;
 
 #[derive(Eq, Hash, PartialEq, Debug, Clone)]
 pub struct ClientInfo {
@@ -41,6 +42,7 @@ pub struct Client {
     compression: CompressionInfo,
     brand: Option<String>,
     loaded_chunks: HashSet<ChunkPosition>,
+    view_distance: u32,
 }
 
 #[allow(dead_code)]
@@ -78,6 +80,7 @@ impl Client {
             compression: CompressionInfo::default(),
             brand: None,
             loaded_chunks: HashSet::new(),
+            view_distance: DEFAULT_CHUNK_LOAD_RADIUS,
         })
     }
 
@@ -116,18 +119,22 @@ impl Client {
         Ok(())
     }
 
+    pub fn set_view_distance(&mut self, view_distance: u32) {
+        self.view_distance = view_distance;
+    }
+
     #[instrument(skip(self, packet))]
     pub fn send_packet<P: SerializablePacket + Debug + NamedPacket>(
         &mut self,
         packet: &P,
     ) -> Result<(), KittyMCError> {
-        debug!(
-            "[{}] OUT >>> {}(0x{:x?})({})",
-            self.addr,
-            P::name(),
-            P::id(),
-            P::id()
-        );
+        // debug!(
+        //     "[{}] OUT >>> {}(0x{:x?})({})",
+        //     self.addr,
+        //     P::name(),
+        //     P::id(),
+        //     P::id()
+        // );
         self.send_packet_raw(&packet.serialize())?;
         Ok(())
     }
@@ -247,12 +254,13 @@ impl Client {
                 continue;
             };
 
-            trace!("[{}] Loading new Chunk {:?}", self.addr, pos);
-
             {
                 let chunk = chunk.read().unwrap();
-                let packet =
-                    ChunkDataPacket::new(chunk.as_ref(), pos.x() as i32 / 16, pos.z() as i32 / 16);
+                let packet = ChunkDataPacket::new(
+                    chunk.as_ref(),
+                    pos.chunk_x() as i32,
+                    pos.chunk_z() as i32,
+                );
                 self.send_packet(&packet)?;
             }
             self.loaded_chunks.insert(pos.clone());
@@ -267,12 +275,11 @@ impl Client {
     {
         for pos in positions {
             let packet = UnloadChunkPacket::new(pos);
-            trace!("[{}] Unloading Chunk {:?}", self.addr, pos);
             match self.send_packet(&packet) {
                 Ok(_) => {
                     self.loaded_chunks.remove(pos);
                 }
-                _ => (),
+                _ => error!("Unloading chunk failed"),
             }
         }
     }
@@ -284,7 +291,7 @@ impl Client {
         chunk_manager: &mut ChunkManager,
     ) -> Result<(), KittyMCError> {
         let new: Vec<_> =
-            ChunkPosition::iter_xz_circle_in_range(pos, CHUNK_LOAD_RADIUS * 16.).collect();
+            ChunkPosition::iter_xz_circle_in_range(pos, self.view_distance as f32 * 16.).collect();
         let unloadable = self
             .loaded_chunks
             .iter()

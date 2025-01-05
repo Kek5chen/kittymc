@@ -60,12 +60,12 @@ impl From<u32> for Hand {
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct ClientSettingsPacket {
-    locale: String,
-    view_distance: u8,
-    chat_mode: ChatMode,
-    chat_colors: bool,
-    displayed_skin_parts: DisplayedSkinParts,
-    main_hand: Hand,
+    pub locale: String,
+    pub view_distance: u8,
+    pub chat_mode: ChatMode,
+    pub chat_colors: bool,
+    pub displayed_skin_parts: DisplayedSkinParts,
+    pub main_hand: Hand,
 }
 
 impl SerializablePacket for ClientSettingsPacket {
