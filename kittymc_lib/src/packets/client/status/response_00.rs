@@ -1,5 +1,7 @@
 use crate::error::KittyMCError;
-use crate::packets::packet_serialization::{read_length_prefixed_string, write_length_prefixed_string, SerializablePacket};
+use crate::packets::packet_serialization::{
+    read_length_prefixed_string, write_length_prefixed_string, SerializablePacket,
+};
 use crate::packets::{wrap_packet, Packet};
 use kittymc_macros::Packet;
 use serde::{Deserialize, Serialize};

@@ -1,5 +1,7 @@
 use crate::packets::client::play::{Direction, Location2};
-use crate::packets::packet_serialization::{write_direction, write_location2, write_u8, write_varint_u32, SerializablePacket};
+use crate::packets::packet_serialization::{
+    write_direction, write_location2, write_u8, write_varint_u32, SerializablePacket,
+};
 use crate::packets::wrap_packet;
 use kittymc_macros::Packet;
 use rand::random;

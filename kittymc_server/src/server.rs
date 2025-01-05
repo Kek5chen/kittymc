@@ -46,7 +46,10 @@ impl KittyMCServer {
         self.players.get(uuid).map(|p| p.name())
     }
 
-    fn send_to_all<P: SerializablePacket + Debug + NamedPacket>(&mut self, packet: &P) -> Result<(), KittyMCError> {
+    fn send_to_all<P: SerializablePacket + Debug + NamedPacket>(
+        &mut self,
+        packet: &P,
+    ) -> Result<(), KittyMCError> {
         for client in self.clients.write().unwrap().iter_mut() {
             client.1.send_packet(packet)?;
         }
@@ -56,7 +59,10 @@ impl KittyMCServer {
 
     fn handle_client(&self, client: &mut Client) -> Result<bool, KittyMCError> {
         if !client.do_heartbeat()? {
-            debug!("[{}] Client didn't respond to heartbeats for too long", client.addr());
+            debug!(
+                "[{}] Client didn't respond to heartbeats for too long",
+                client.addr()
+            );
             return Ok(false);
         }
 
@@ -74,12 +80,15 @@ impl KittyMCServer {
                 Packet::PluginMessage(msg) if msg.channel == "MC|Brand" => {
                     client.set_brand(String::from_utf8_lossy(&msg.data).to_string())
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
 
-    fn handle_client_pre_play(&mut self, client: &mut Client) -> Result<Option<Uuid>, KittyMCError> {
+    fn handle_client_pre_play(
+        &mut self,
+        client: &mut Client,
+    ) -> Result<Option<Uuid>, KittyMCError> {
         loop {
             let Some(packet) = client.fetch_packet()? else {
                 return Ok(None);
@@ -168,8 +177,8 @@ impl KittyMCServer {
                         debug!("[{}] Client successfully registered", client.addr());
                         self.clients.write().unwrap().insert(uuid, client);
                     }
-                    None => self.registering_clients.push_back(client)
-                }
+                    None => self.registering_clients.push_back(client),
+                },
             }
         }
 
@@ -189,7 +198,10 @@ impl KittyMCServer {
                     disconnect_uuids.push(client.0.clone())
                 }
                 Err(e) => {
-                    warn!("[{}] Disconnected client due to error: {e}", client.1.addr());
+                    warn!(
+                        "[{}] Disconnected client due to error: {e}",
+                        client.1.addr()
+                    );
                     disconnect_uuids.push(client.0.clone())
                 }
             }

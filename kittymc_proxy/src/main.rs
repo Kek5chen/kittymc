@@ -24,7 +24,7 @@ fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize>
                 data.splice(..n, serialized);
                 n = serialized_len;
             }
-            _ => ()
+            _ => (),
         }
         println!("Client -> Server: Packet of size {size}: {packet:?}");
         return Ok(n);
@@ -34,7 +34,7 @@ fn modify_client_data(data: &mut Vec<u8>, mut n: usize) -> anyhow::Result<usize>
 
     if let Ok((size, packet)) = result {
         match packet {
-            _ => ()
+            _ => (),
         }
         println!("Client -> Server: Packet of size {size}: {packet:?}");
         return Ok(n);
@@ -109,7 +109,10 @@ async fn client_loop(client: TcpStream, sockaddr: &SocketAddr) -> anyhow::Result
         .await
         .with_context(|| format!("Failed to connect to server at {:?}", server_addr))?;
 
-    println!("Established proxy between client {} and server {}", sockaddr, server_url);
+    println!(
+        "Established proxy between client {} and server {}",
+        sockaddr, server_url
+    );
 
     // ugly tokio::TcpStream::try_clone() https://github.com/tokio-rs/tokio-core/issues/198
     let std_client = client.into_std()?;
@@ -154,7 +157,9 @@ async fn handle_new_client(server: &TcpListener) -> JoinHandle<()> {
 
 #[tokio::main]
 async fn main() {
-    let server = TcpListener::bind(("0.0.0.0", 25565)).await.expect("Failed to bind");
+    let server = TcpListener::bind(("0.0.0.0", 25565))
+        .await
+        .expect("Failed to bind");
     loop {
         handle_new_client(&server).await;
     }

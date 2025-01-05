@@ -17,10 +17,13 @@ impl SerializablePacket for PlayerPositionPacket {
         let location = read_location2(&mut data, &mut size)?;
         let on_ground = read_bool(&mut data, &mut size)?;
 
-        Ok((size, Packet::PlayerPosition(PlayerPositionPacket {
-            location,
-            on_ground,
-        })))
+        Ok((
+            size,
+            Packet::PlayerPosition(PlayerPositionPacket {
+                location,
+                on_ground,
+            }),
+        ))
     }
 
     fn id() -> u32 {

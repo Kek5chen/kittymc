@@ -46,7 +46,9 @@ impl Client {
             Err(e) => Err(e)?,
         };
 
-        socket.set_nonblocking(true).expect("Couldn't set socket to nonblocking");
+        socket
+            .set_nonblocking(true)
+            .expect("Couldn't set socket to nonblocking");
 
         Client::new(socket, addr).map(|c| Some(c))
     }
@@ -55,22 +57,20 @@ impl Client {
     pub fn new(socket: TcpStream, addr: SocketAddr) -> Result<Client, KittyMCError> {
         info!("[{}] Client connected", addr);
 
-        Ok(
-            Client {
-                connected_at: Instant::now(),
-                socket,
-                addr,
-                current_state: State::Handshake,
-                last_heartbeat: Instant::now(),
-                last_heartbeat_id: 0,
-                last_backbeat: Instant::now(),
-                buffer: vec![0; 2048],
-                buffer_size: 0,
-                fragmented: false,
-                compression: CompressionInfo::default(),
-                brand: None,
-            },
-        )
+        Ok(Client {
+            connected_at: Instant::now(),
+            socket,
+            addr,
+            current_state: State::Handshake,
+            last_heartbeat: Instant::now(),
+            last_heartbeat_id: 0,
+            last_backbeat: Instant::now(),
+            buffer: vec![0; 2048],
+            buffer_size: 0,
+            fragmented: false,
+            compression: CompressionInfo::default(),
+            brand: None,
+        })
     }
 
     pub fn addr(&self) -> &SocketAddr {
@@ -109,8 +109,17 @@ impl Client {
     }
 
     #[instrument(skip(self, packet))]
-    pub fn send_packet<P: SerializablePacket + Debug + NamedPacket>(&mut self, packet: &P) -> Result<(), KittyMCError> {
-        debug!("[{}] OUT >>> {}(0x{:x?})({})", self.addr, P::name(), P::id(), P::id());
+    pub fn send_packet<P: SerializablePacket + Debug + NamedPacket>(
+        &mut self,
+        packet: &P,
+    ) -> Result<(), KittyMCError> {
+        debug!(
+            "[{}] OUT >>> {}(0x{:x?})({})",
+            self.addr,
+            P::name(),
+            P::id(),
+            P::id()
+        );
         self.send_packet_raw(&packet.serialize())?;
         Ok(())
     }
@@ -163,12 +172,22 @@ impl Client {
         }
         self.buffer_size = n;
 
-        trace!("[{}] Complete Received Data : {:?}", self.addr, &self.buffer[..n]);
+        trace!(
+            "[{}] Complete Received Data : {:?}",
+            self.addr,
+            &self.buffer[..n]
+        );
 
         let (packet_len, packet) =
             match Packet::deserialize(self.current_state, &self.buffer[..n], &self.compression) {
                 Ok(packet) => {
-                    debug!("[{}] IN <<< {}(0x{:x?})({})", self.addr, packet.1.name(), packet.1.id(), packet.1.id());
+                    debug!(
+                        "[{}] IN <<< {}(0x{:x?})({})",
+                        self.addr,
+                        packet.1.name(),
+                        packet.1.id(),
+                        packet.1.id()
+                    );
                     (packet.0, Some(packet.1))
                 }
                 Err(KittyMCError::NotEnoughData(_, _)) => {
@@ -177,12 +196,19 @@ impl Client {
                     return Ok(None);
                 }
                 Err(KittyMCError::NotImplemented(packet_id, packet_len)) => {
-                    warn!("[{}] IN UNIMPLEMENTED <<< UNKNOWN(0x{:x?})({}) (len: {})", self.addr, packet_id, packet_id, packet_len);
+                    warn!(
+                        "[{}] IN UNIMPLEMENTED <<< UNKNOWN(0x{:x?})({}) (len: {})",
+                        self.addr, packet_id, packet_id, packet_len
+                    );
                     (packet_len, None)
                 }
                 Err(e) => {
                     warn!("[{}] Error when deserializing packet: {}", self.addr, e);
-                    warn!("[{}] Packet started with : {:?}", self.addr, & self.buffer[..n]);
+                    warn!(
+                        "[{}] Packet started with : {:?}",
+                        self.addr,
+                        &self.buffer[..n]
+                    );
                     return Err(e);
                 }
             };

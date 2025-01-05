@@ -14,9 +14,10 @@ impl SerializablePacket for TeleportConfirmPacket {
 
         let teleport_id = read_varint_u32(&mut data, &mut size)?;
 
-        Ok((size, Packet::TeleportConfirm(TeleportConfirmPacket {
-            teleport_id
-        })))
+        Ok((
+            size,
+            Packet::TeleportConfirm(TeleportConfirmPacket { teleport_id }),
+        ))
     }
 
     fn id() -> u32 {

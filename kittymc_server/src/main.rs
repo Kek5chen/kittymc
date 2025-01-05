@@ -1,6 +1,6 @@
-mod server;
 mod client;
 mod player;
+mod server;
 
 use crate::server::KittyMCServer;
 use tracing_subscriber::EnvFilter;

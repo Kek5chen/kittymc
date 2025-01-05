@@ -14,7 +14,9 @@ pub fn derive_packet_helper_funcs(input: TokenStream) -> TokenStream {
             return syn::Error::new_spanned(
                 name,
                 "SerializePacketFunc can only be derived for enums",
-            ).to_compile_error().into();
+            )
+            .to_compile_error()
+            .into();
         }
     };
 
@@ -43,22 +45,29 @@ pub fn derive_packet_helper_funcs(input: TokenStream) -> TokenStream {
         }))
     });
 
-    let results: Vec<Result<(proc_macro2::TokenStream, proc_macro2::TokenStream, proc_macro2::TokenStream), proc_macro2::TokenStream>> = variant_arms.clone().collect();
+    let results: Vec<
+        Result<
+            (
+                proc_macro2::TokenStream,
+                proc_macro2::TokenStream,
+                proc_macro2::TokenStream,
+            ),
+            proc_macro2::TokenStream,
+        >,
+    > = variant_arms.clone().collect();
 
     if results.iter().any(|v| v.is_err()) {
         let mut error_collector = proc_macro2::TokenStream::new();
         error_collector.append_all(
             results
                 .into_iter()
-                .filter(|res| res
-                    .is_err())
-                .map(|res| res.unwrap_err()));
+                .filter(|res| res.is_err())
+                .map(|res| res.unwrap_err()),
+        );
         return error_collector.into();
     }
 
-    let results = results
-        .into_iter()
-        .map(|res| res.unwrap());
+    let results = results.into_iter().map(|res| res.unwrap());
 
     let mut serializers = vec![];
     let mut names = vec![];

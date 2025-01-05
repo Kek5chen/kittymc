@@ -1,12 +1,12 @@
-pub mod client_settings_04;
-pub mod client_plugin_message_09;
-pub mod client_keep_alive_0b;
-pub mod teleport_confirm_00;
-pub mod client_player_position_and_look_0e;
-pub mod client_held_item_change_a1;
-pub mod player_position_0d;
-pub mod player_look_0f;
 pub mod animation_1d;
+pub mod client_held_item_change_a1;
+pub mod client_keep_alive_0b;
+pub mod client_player_position_and_look_0e;
+pub mod client_plugin_message_09;
+pub mod client_settings_04;
+pub mod player_look_0f;
+pub mod player_position_0d;
+pub mod teleport_confirm_00;
 
 pub use animation_1d::ClientAnimationPacket;
 pub use client_held_item_change_a1::ClientHeldItemChangePacket;

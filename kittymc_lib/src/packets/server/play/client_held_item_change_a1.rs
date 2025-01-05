@@ -14,9 +14,10 @@ impl SerializablePacket for ClientHeldItemChangePacket {
 
         let slot = read_u16(&mut data, &mut size)?;
 
-        Ok((size, Packet::ClientHeldItemChange(ClientHeldItemChangePacket {
-            slot
-        })))
+        Ok((
+            size,
+            Packet::ClientHeldItemChange(ClientHeldItemChangePacket { slot }),
+        ))
     }
 
     fn id() -> u32 {

@@ -1,5 +1,7 @@
 use crate::error::KittyMCError;
-use crate::packets::packet_serialization::{read_length_prefixed_string, write_length_prefixed_string, SerializablePacket};
+use crate::packets::packet_serialization::{
+    read_length_prefixed_string, write_length_prefixed_string, SerializablePacket,
+};
 use crate::packets::{wrap_packet, Packet};
 use kittymc_macros::Packet;
 
@@ -24,9 +26,7 @@ impl SerializablePacket for LoginStartPacket {
         let mut size = 0;
         let name = read_length_prefixed_string(&mut data, &mut size)?;
 
-        Ok((size, Packet::LoginStart(LoginStartPacket {
-            name,
-        })))
+        Ok((size, Packet::LoginStart(LoginStartPacket { name })))
     }
 
     fn id() -> u32 {

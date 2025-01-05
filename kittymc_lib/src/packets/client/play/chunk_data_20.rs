@@ -1,6 +1,6 @@
 use crate::packets::packet_serialization::{
-    write_bool, write_i32, write_u64, write_u8, write_varint_u32,
-    write_varint_u32_splice, SerializablePacket,
+    write_bool, write_i32, write_u64, write_u8, write_varint_u32, write_varint_u32_splice,
+    SerializablePacket,
 };
 use crate::packets::wrap_packet;
 use kittymc_macros::Packet;
@@ -160,10 +160,7 @@ impl Chunk {
     ///  - If distinct > 256, use “global” bits=13, palette length=0
     ///
     /// We also fill block_light=0 and sky_light=0 as placeholders.
-    pub fn to_chunk_sections(
-        &self,
-        primary_bit_mask_out: &mut u32,
-    ) -> Vec<ChunkSection> {
+    pub fn to_chunk_sections(&self, primary_bit_mask_out: &mut u32) -> Vec<ChunkSection> {
         let mut sections = Vec::new();
 
         for section_y in 0..NUM_SECTIONS_PER_CHUNK_COLUMN {
@@ -216,10 +213,7 @@ impl Chunk {
             let mut palette_index_map = HashMap::new();
             if bits_per_block <= MAX_PALETTE_BITS {
                 // create a sorted palette
-                let mut local_palette: Vec<BlockStateId> = distinct_map
-                    .keys()
-                    .copied()
-                    .collect();
+                let mut local_palette: Vec<BlockStateId> = distinct_map.keys().copied().collect();
                 local_palette.sort_unstable();
 
                 // build map from blockstate -> local palette index
@@ -280,7 +274,13 @@ impl Chunk {
     /// - We do *not* skip chunk entirely if empty, but skip sections.
     /// - `ground_up_continuous = true` means we send biomes.
     /// - The “size” field is written as VarInt for the total chunk data, not including the packet header.
-    pub fn write(&self, buf: &mut Vec<u8>, ground_up_continuous: bool, dimension_has_sky_light: bool, primary_bit_mask: &mut u32) {
+    pub fn write(
+        &self,
+        buf: &mut Vec<u8>,
+        ground_up_continuous: bool,
+        dimension_has_sky_light: bool,
+        primary_bit_mask: &mut u32,
+    ) {
         // We write the chunk sections into a temporary buffer, so we can prepend the final size.
         let start_len = buf.len();
 
@@ -298,9 +298,7 @@ impl Chunk {
             // Actually write the data for that section
             let section = &sections
                 .iter()
-                .find(|s| {
-                    s.section_y() == section_y as u32
-                })
+                .find(|s| s.section_y() == section_y as u32)
                 .unwrap();
             section.write(buf, dimension_has_sky_light);
         }
@@ -373,7 +371,12 @@ impl SerializablePacket for ChunkDataPacket<'_> {
         let mask_pos = packet.len();
 
         let mut primary_bit_mask = 0u32;
-        self.data.write(&mut packet, self.ground_up_continuous, true, &mut primary_bit_mask); // TODO: Nobody knows if this is an overworld chunk or not yet
+        self.data.write(
+            &mut packet,
+            self.ground_up_continuous,
+            true,
+            &mut primary_bit_mask,
+        ); // TODO: Nobody knows if this is an overworld chunk or not yet
 
         self.data.to_chunk_sections(&mut primary_bit_mask);
         write_varint_u32_splice(&mut packet, primary_bit_mask, mask_pos..mask_pos);

@@ -23,9 +23,7 @@ impl SerializablePacket for StatusPingPongPacket {
         let mut size = 0;
         let payload = read_i64(&mut data, &mut size)?;
 
-        Ok((size, Packet::StatusPing(StatusPingPongPacket {
-            payload
-        })))
+        Ok((size, Packet::StatusPing(StatusPingPongPacket { payload })))
     }
 
     fn id() -> u32 {

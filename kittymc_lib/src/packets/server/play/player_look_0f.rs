@@ -17,10 +17,13 @@ impl SerializablePacket for PlayerLookPacket {
         let direction = read_direction(&mut data, &mut size)?;
         let on_ground = read_bool(&mut data, &mut size)?;
 
-        Ok((size, Packet::PlayerLook(PlayerLookPacket {
-            direction,
-            on_ground,
-        })))
+        Ok((
+            size,
+            Packet::PlayerLook(PlayerLookPacket {
+                direction,
+                on_ground,
+            }),
+        ))
     }
 
     fn id() -> u32 {

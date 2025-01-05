@@ -10,9 +10,7 @@ pub struct ClientKeepAlivePacket {
 
 impl ClientKeepAlivePacket {
     pub fn new(id: u64) -> Self {
-        ClientKeepAlivePacket {
-            id,
-        }
+        ClientKeepAlivePacket { id }
     }
 }
 
@@ -22,9 +20,7 @@ impl SerializablePacket for ClientKeepAlivePacket {
 
         let id = read_u64(&mut data, &mut size)?;
 
-        Ok((size, Packet::KeepAlive(ClientKeepAlivePacket {
-            id
-        })))
+        Ok((size, Packet::KeepAlive(ClientKeepAlivePacket { id })))
     }
 
     fn id() -> u32 {

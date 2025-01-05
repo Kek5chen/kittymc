@@ -10,9 +10,7 @@ pub struct SetCompressionPacket {
 
 impl Default for SetCompressionPacket {
     fn default() -> Self {
-        SetCompressionPacket {
-            threshold: 256
-        }
+        SetCompressionPacket { threshold: 256 }
     }
 }
 
@@ -32,9 +30,10 @@ impl SerializablePacket for SetCompressionPacket {
 
         let threshold = read_varint_u32(&mut data, &mut size)?;
 
-        Ok((size, Packet::SetCompression(SetCompressionPacket {
-            threshold
-        })))
+        Ok((
+            size,
+            Packet::SetCompression(SetCompressionPacket { threshold }),
+        ))
     }
 
     fn id() -> u32 {

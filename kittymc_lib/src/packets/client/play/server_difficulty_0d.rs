@@ -11,7 +11,7 @@ pub struct ServerDifficultyPacket {
 impl Default for ServerDifficultyPacket {
     fn default() -> Self {
         ServerDifficultyPacket {
-            difficulty: Difficulty::Normal
+            difficulty: Difficulty::Normal,
         }
     }
 }

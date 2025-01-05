@@ -1,5 +1,7 @@
 use crate::error::KittyMCError;
-use crate::packets::packet_serialization::{read_length_prefixed_string, write_length_prefixed_string, SerializablePacket};
+use crate::packets::packet_serialization::{
+    read_length_prefixed_string, write_length_prefixed_string, SerializablePacket,
+};
 use crate::packets::{wrap_packet, Packet};
 use crate::utils::generate_cracked_uuid;
 use kittymc_macros::Packet;
@@ -43,10 +45,10 @@ impl SerializablePacket for LoginSuccessPacket {
 
         let username = read_length_prefixed_string(&mut data, &mut size)?;
 
-        Ok((size, Packet::LoginSuccess(LoginSuccessPacket {
-            uuid,
-            username,
-        })))
+        Ok((
+            size,
+            Packet::LoginSuccess(LoginSuccessPacket { uuid, username }),
+        ))
     }
 
     fn id() -> u32 {

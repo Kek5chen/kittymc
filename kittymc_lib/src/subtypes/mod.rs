@@ -96,7 +96,9 @@ pub struct Chat {
 
 impl Chat {
     pub fn write(&self, buffer: &mut Vec<u8>) {
-        write_length_prefixed_string(buffer, &serde_json::to_string(&self)
-            .unwrap_or_else(|_| "INVALID".to_string()));
+        write_length_prefixed_string(
+            buffer,
+            &serde_json::to_string(&self).unwrap_or_else(|_| "INVALID".to_string()),
+        );
     }
 }

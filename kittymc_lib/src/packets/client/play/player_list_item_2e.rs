@@ -1,5 +1,7 @@
 use crate::packets::client::play::GameMode;
-use crate::packets::packet_serialization::{write_bool, write_length_prefixed_string, write_uuid, write_varint_u32, SerializablePacket};
+use crate::packets::packet_serialization::{
+    write_bool, write_length_prefixed_string, write_uuid, write_varint_u32, SerializablePacket,
+};
 use crate::packets::wrap_packet;
 use crate::subtypes::Chat;
 use kittymc_macros::Packet;
@@ -60,7 +62,7 @@ impl PlayerListItemAction {
                 properties,
                 game_mode,
                 ping,
-                display_name
+                display_name,
             } => {
                 write_length_prefixed_string(buffer, name);
                 write_varint_u32(buffer, properties.len() as u32);
@@ -86,7 +88,7 @@ impl PlayerListItemAction {
                     display.write(buffer);
                 }
             }
-            PlayerListItemAction::RemovePlayer => ()
+            PlayerListItemAction::RemovePlayer => (),
         }
     }
 }
@@ -106,9 +108,9 @@ impl Default for PlayerListItemPacket {
                     properties: vec![],
                     game_mode: GameMode::Creative,
                     ping: 5,
-                    display_name: None
-                }),
-            ]
+                    display_name: None,
+                },
+            )],
         }
     }
 }

@@ -4,9 +4,7 @@ use kittymc_lib::packets::packet_serialization::SerializablePacket;
 
 #[test]
 fn test_03_set_compression() {
-    let packet = SetCompressionPacket {
-        threshold: 256,
-    }.serialize();
+    let packet = SetCompressionPacket { threshold: 256 }.serialize();
 
     assert_eq!(&packet, &[03, 03, 0x80, 02]);
 }

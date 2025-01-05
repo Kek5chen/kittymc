@@ -9,9 +9,7 @@ pub struct ServerKeepAlivePacket {
 
 impl ServerKeepAlivePacket {
     pub fn new(id: u64) -> Self {
-        ServerKeepAlivePacket {
-            id,
-        }
+        ServerKeepAlivePacket { id }
     }
 }
 

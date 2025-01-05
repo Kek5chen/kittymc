@@ -22,12 +22,14 @@ impl SerializablePacket for ClientPlayerPositionAndLookPacket {
         let pitch = read_f32(&mut data, &mut size)?;
         let on_ground = read_bool(&mut data, &mut size)?;
 
-
-        Ok((size, Packet::PlayerPositionAndLook(ClientPlayerPositionAndLookPacket {
-            location: Location2::new(location_x, location_y, location_z),
-            direction: Direction::new(yaw, pitch),
-            on_ground,
-        })))
+        Ok((
+            size,
+            Packet::PlayerPositionAndLook(ClientPlayerPositionAndLookPacket {
+                location: Location2::new(location_x, location_y, location_z),
+                direction: Direction::new(yaw, pitch),
+                on_ground,
+            }),
+        ))
     }
 
     fn id() -> u32 {

@@ -1,4 +1,6 @@
-use crate::packets::packet_serialization::{write_i8, write_length_prefixed_string, SerializablePacket};
+use crate::packets::packet_serialization::{
+    write_i8, write_length_prefixed_string, SerializablePacket,
+};
 use crate::packets::wrap_packet;
 use kittymc_macros::Packet;
 use serde_json::json;
@@ -38,9 +40,13 @@ impl SerializablePacket for ChatMessagePacket {
     fn serialize(&self) -> Vec<u8> {
         let mut packet = vec![];
 
-        write_length_prefixed_string(&mut packet, &serde_json::to_string(&json!({
-            "text": self.text
-        })).unwrap());
+        write_length_prefixed_string(
+            &mut packet,
+            &serde_json::to_string(&json!({
+                "text": self.text
+            }))
+            .unwrap(),
+        );
         write_i8(&mut packet, self.position as i8);
 
         wrap_packet(&mut packet, Self::id());

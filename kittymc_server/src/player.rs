@@ -13,10 +13,7 @@ impl Player {
     }
 
     pub fn new(uuid: Uuid, username: String) -> Self {
-        Self {
-            uuid,
-            username,
-        }
+        Self { uuid, username }
     }
 
     pub fn uuid(&self) -> &Uuid {

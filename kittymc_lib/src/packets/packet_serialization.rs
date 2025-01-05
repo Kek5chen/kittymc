@@ -21,17 +21,27 @@ pub trait SerializablePacket {
 
     // not including length or packet id
     fn deserialize(data: &[u8]) -> Result<(usize, Packet), KittyMCError> {
-        Err(KittyMCError::NotImplemented(Self::id() as usize, data.len()))
+        Err(KittyMCError::NotImplemented(
+            Self::id() as usize,
+            data.len(),
+        ))
     }
 
     fn id() -> u32;
 }
 
-pub fn read_length_prefixed_string(data: &mut &[u8], total_size: &mut usize) -> Result<String, KittyMCError> {
+pub fn read_length_prefixed_string(
+    data: &mut &[u8],
+    total_size: &mut usize,
+) -> Result<String, KittyMCError> {
     let len = read_varint_u32(data, total_size)? as usize;
 
     if data.len() < len {
-        return Err(KittyMCError::NotEnoughBytesToDeserialize("String", len, data.len()));
+        return Err(KittyMCError::NotEnoughBytesToDeserialize(
+            "String",
+            len,
+            data.len(),
+        ));
     }
 
     let raw_bytes = &data[..len];
@@ -42,11 +52,18 @@ pub fn read_length_prefixed_string(data: &mut &[u8], total_size: &mut usize) -> 
     Ok(s)
 }
 
-pub fn read_length_prefixed_bytes(data: &mut &[u8], total_size: &mut usize) -> Result<Vec<u8>, KittyMCError> {
+pub fn read_length_prefixed_bytes(
+    data: &mut &[u8],
+    total_size: &mut usize,
+) -> Result<Vec<u8>, KittyMCError> {
     let len = read_varint_u32(data, total_size)? as usize;
 
     if data.len() < len {
-        return Err(KittyMCError::NotEnoughBytesToDeserialize("Byte Array", len, data.len()));
+        return Err(KittyMCError::NotEnoughBytesToDeserialize(
+            "Byte Array",
+            len,
+            data.len(),
+        ));
     }
 
     let bytes = data[..len].to_vec();
@@ -58,12 +75,18 @@ pub fn read_length_prefixed_bytes(data: &mut &[u8], total_size: &mut usize) -> R
 
 pub fn read_u64(data: &mut &[u8], total_size: &mut usize) -> Result<u64, KittyMCError> {
     if data.len() < 8 {
-        return Err(KittyMCError::NotEnoughBytesToDeserialize("ULong", 8, data.len()));
+        return Err(KittyMCError::NotEnoughBytesToDeserialize(
+            "ULong",
+            8,
+            data.len(),
+        ));
     }
 
-    let value = u64::from_be_bytes(data[..8]
-        .try_into()
-        .map_err(|_| KittyMCError::DeserializationError)?);
+    let value = u64::from_be_bytes(
+        data[..8]
+            .try_into()
+            .map_err(|_| KittyMCError::DeserializationError)?,
+    );
     *data = &data[8..];
     *total_size += 8;
     Ok(value)
@@ -71,12 +94,18 @@ pub fn read_u64(data: &mut &[u8], total_size: &mut usize) -> Result<u64, KittyMC
 
 pub fn read_u32(data: &mut &[u8], total_size: &mut usize) -> Result<u32, KittyMCError> {
     if data.len() < 4 {
-        return Err(KittyMCError::NotEnoughBytesToDeserialize("UInt", 4, data.len()));
+        return Err(KittyMCError::NotEnoughBytesToDeserialize(
+            "UInt",
+            4,
+            data.len(),
+        ));
     }
 
-    let value = u32::from_be_bytes(data[..4]
-        .try_into()
-        .map_err(|_| KittyMCError::DeserializationError)?);
+    let value = u32::from_be_bytes(
+        data[..4]
+            .try_into()
+            .map_err(|_| KittyMCError::DeserializationError)?,
+    );
     *data = &data[4..];
     *total_size += 4;
     Ok(value)
@@ -84,12 +113,18 @@ pub fn read_u32(data: &mut &[u8], total_size: &mut usize) -> Result<u32, KittyMC
 
 pub fn read_u16(data: &mut &[u8], total_size: &mut usize) -> Result<u16, KittyMCError> {
     if data.len() < 2 {
-        return Err(KittyMCError::NotEnoughBytesToDeserialize("UShort", 2, data.len()));
+        return Err(KittyMCError::NotEnoughBytesToDeserialize(
+            "UShort",
+            2,
+            data.len(),
+        ));
     }
 
-    let value = u16::from_be_bytes(data[..2]
-        .try_into()
-        .map_err(|_| KittyMCError::DeserializationError)?);
+    let value = u16::from_be_bytes(
+        data[..2]
+            .try_into()
+            .map_err(|_| KittyMCError::DeserializationError)?,
+    );
     *data = &data[2..];
     *total_size += size_of::<u16>();
     Ok(value)
@@ -97,12 +132,18 @@ pub fn read_u16(data: &mut &[u8], total_size: &mut usize) -> Result<u16, KittyMC
 
 pub fn read_u8(data: &mut &[u8], total_size: &mut usize) -> Result<u8, KittyMCError> {
     if data.len() < 1 {
-        return Err(KittyMCError::NotEnoughBytesToDeserialize("UByte", 1, data.len()));
+        return Err(KittyMCError::NotEnoughBytesToDeserialize(
+            "UByte",
+            1,
+            data.len(),
+        ));
     }
 
-    let value = u8::from_be_bytes(data[..1]
-        .try_into()
-        .map_err(|_| KittyMCError::DeserializationError)?);
+    let value = u8::from_be_bytes(
+        data[..1]
+            .try_into()
+            .map_err(|_| KittyMCError::DeserializationError)?,
+    );
     *data = &data[1..];
     *total_size += 1;
     Ok(value)
@@ -110,12 +151,18 @@ pub fn read_u8(data: &mut &[u8], total_size: &mut usize) -> Result<u8, KittyMCEr
 
 pub fn read_i64(data: &mut &[u8], total_size: &mut usize) -> Result<i64, KittyMCError> {
     if data.len() < 8 {
-        return Err(KittyMCError::NotEnoughBytesToDeserialize("Long", 8, data.len()));
+        return Err(KittyMCError::NotEnoughBytesToDeserialize(
+            "Long",
+            8,
+            data.len(),
+        ));
     }
 
-    let value = i64::from_be_bytes(data[..8]
-        .try_into()
-        .map_err(|_| KittyMCError::DeserializationError)?);
+    let value = i64::from_be_bytes(
+        data[..8]
+            .try_into()
+            .map_err(|_| KittyMCError::DeserializationError)?,
+    );
     *data = &data[8..];
     *total_size += 8;
     Ok(value)
@@ -123,12 +170,18 @@ pub fn read_i64(data: &mut &[u8], total_size: &mut usize) -> Result<i64, KittyMC
 
 pub fn read_f64(data: &mut &[u8], total_size: &mut usize) -> Result<f64, KittyMCError> {
     if data.len() < 8 {
-        return Err(KittyMCError::NotEnoughBytesToDeserialize("Double", 8, data.len()));
+        return Err(KittyMCError::NotEnoughBytesToDeserialize(
+            "Double",
+            8,
+            data.len(),
+        ));
     }
 
-    let value = f64::from_be_bytes(data[..8]
-        .try_into()
-        .map_err(|_| KittyMCError::DeserializationError)?);
+    let value = f64::from_be_bytes(
+        data[..8]
+            .try_into()
+            .map_err(|_| KittyMCError::DeserializationError)?,
+    );
     *data = &data[8..];
     *total_size += 8;
     Ok(value)
@@ -136,12 +189,18 @@ pub fn read_f64(data: &mut &[u8], total_size: &mut usize) -> Result<f64, KittyMC
 
 pub fn read_f32(data: &mut &[u8], total_size: &mut usize) -> Result<f32, KittyMCError> {
     if data.len() < 4 {
-        return Err(KittyMCError::NotEnoughBytesToDeserialize("Float", 4, data.len()));
+        return Err(KittyMCError::NotEnoughBytesToDeserialize(
+            "Float",
+            4,
+            data.len(),
+        ));
     }
 
-    let value = f32::from_be_bytes(data[..4]
-        .try_into()
-        .map_err(|_| KittyMCError::DeserializationError)?);
+    let value = f32::from_be_bytes(
+        data[..4]
+            .try_into()
+            .map_err(|_| KittyMCError::DeserializationError)?,
+    );
     *data = &data[4..];
     *total_size += 4;
     Ok(value)
@@ -149,7 +208,11 @@ pub fn read_f32(data: &mut &[u8], total_size: &mut usize) -> Result<f32, KittyMC
 
 pub fn read_bool(data: &mut &[u8], total_size: &mut usize) -> Result<bool, KittyMCError> {
     if data.len() < 1 {
-        return Err(KittyMCError::NotEnoughBytesToDeserialize("Bool", 1, data.len()));
+        return Err(KittyMCError::NotEnoughBytesToDeserialize(
+            "Bool",
+            1,
+            data.len(),
+        ));
     }
     let value = data[0] != 0;
     *data = &data[1..];
@@ -158,21 +221,24 @@ pub fn read_bool(data: &mut &[u8], total_size: &mut usize) -> Result<bool, Kitty
 }
 
 pub fn read_varint_i32(data: &mut &[u8], total_size: &mut usize) -> Result<i32, KittyMCError> {
-    let (value, size) = VarInt::decode_var(*data).ok_or(KittyMCError::VarDeserializationError("VarInt"))?;
+    let (value, size) =
+        VarInt::decode_var(*data).ok_or(KittyMCError::VarDeserializationError("VarInt"))?;
     *data = &data[size..];
     *total_size += size;
     Ok(value)
 }
 
 pub fn read_varint_u64(data: &mut &[u8], total_size: &mut usize) -> Result<u64, KittyMCError> {
-    let (value, size) = VarInt::decode_var(*data).ok_or(KittyMCError::VarDeserializationError("VarLong"))?;
+    let (value, size) =
+        VarInt::decode_var(*data).ok_or(KittyMCError::VarDeserializationError("VarLong"))?;
     *data = &data[size..];
     *total_size += size;
     Ok(value)
 }
 
 pub fn read_varint_u32(data: &mut &[u8], total_size: &mut usize) -> Result<u32, KittyMCError> {
-    let (value, size) = VarInt::decode_var(*data).ok_or(KittyMCError::VarDeserializationError("VarInt"))?;
+    let (value, size) =
+        VarInt::decode_var(*data).ok_or(KittyMCError::VarDeserializationError("VarInt"))?;
     *data = &data[size..];
     *total_size += size;
     Ok(value)
@@ -250,7 +316,6 @@ pub fn write_varint_u32(buffer: &mut Vec<u8>, value: u32) {
     buffer.extend_from_slice(&value.encode_var_vec());
 }
 
-
 pub fn write_varint_u32_splice<R: RangeBounds<usize>>(buffer: &mut Vec<u8>, value: u32, at: R) {
     buffer.splice(at, value.encode_var_vec());
 }
@@ -296,9 +361,9 @@ pub fn write_block_location(buffer: &mut Vec<u8>, loc: &Location) {
     //    Because Rust negative numbers in two's complement will still
     //    produce the correct lower bits, masking is enough here.
 
-    let x_masked = (x & 0x3FFFFFF) as u64;  // 26 bits
-    let z_masked = (z & 0x3FFFFFF) as u64;  // 26 bits
-    let y_masked = (y & 0xFFF) as u64;      // 12 bits
+    let x_masked = (x & 0x3FFFFFF) as u64; // 26 bits
+    let z_masked = (z & 0x3FFFFFF) as u64; // 26 bits
+    let y_masked = (y & 0xFFF) as u64; // 12 bits
 
     // 2) Pack them into 64 bits.
     // Bit layout (most significant on the left):
@@ -344,18 +409,23 @@ pub fn compress_packet(mut packet: &[u8], threshold: u32) -> Result<Vec<u8>, Kit
 
 pub fn decompress_packet(mut compressed_packet: &[u8]) -> Result<(usize, Vec<u8>), KittyMCError> {
     let mut header_size = 0;
-    let compressed_packet_length = read_varint_u32(&mut compressed_packet, &mut header_size)? as usize;
+    let compressed_packet_length =
+        read_varint_u32(&mut compressed_packet, &mut header_size)? as usize;
     let total_size = compressed_packet_length + header_size;
 
     if compressed_packet.len() < compressed_packet_length {
-        return Err(KittyMCError::NotEnoughData(compressed_packet.len(), compressed_packet_length));
+        return Err(KittyMCError::NotEnoughData(
+            compressed_packet.len(),
+            compressed_packet_length,
+        ));
     }
 
     header_size = 0;
     let uncompressed_data_length = read_varint_u32(&mut compressed_packet, &mut header_size)?;
 
-    let uncompressed_packet = decompress_to_vec_zlib_with_limit(compressed_packet, uncompressed_data_length as usize)
-        .map_err(|e| KittyMCError::ZlibDecompressionError(e))?;
+    let uncompressed_packet =
+        decompress_to_vec_zlib_with_limit(compressed_packet, uncompressed_data_length as usize)
+            .map_err(|e| KittyMCError::ZlibDecompressionError(e))?;
 
     Ok((total_size, uncompressed_packet))
 }

@@ -1,5 +1,7 @@
 use crate::error::KittyMCError;
-use crate::packets::packet_serialization::{read_bool, read_length_prefixed_string, read_u8, read_varint_u32, SerializablePacket};
+use crate::packets::packet_serialization::{
+    read_bool, read_length_prefixed_string, read_u8, read_varint_u32, SerializablePacket,
+};
 use crate::packets::Packet;
 use bitflags::bitflags;
 use kittymc_macros::Packet;
@@ -19,7 +21,7 @@ impl From<u32> for ChatMode {
             0 => ChatMode::Enabled,
             1 => ChatMode::CommandsOnly,
             2 => ChatMode::Hidden,
-            _ => ChatMode::Unknown
+            _ => ChatMode::Unknown,
         }
     }
 }
@@ -51,7 +53,7 @@ impl From<u32> for Hand {
         match value {
             0 => Hand::Left,
             1 => Hand::Right,
-            _ => Hand::Unknown
+            _ => Hand::Unknown,
         }
     }
 }
@@ -78,14 +80,17 @@ impl SerializablePacket for ClientSettingsPacket {
             .ok_or(KittyMCError::DeserializationError)?;
         let main_hand = read_varint_u32(&mut data, &mut size)?.into();
 
-        Ok((size, Packet::ClientSettings(ClientSettingsPacket {
-            locale,
-            view_distance,
-            chat_mode,
-            chat_colors,
-            displayed_skin_parts,
-            main_hand,
-        })))
+        Ok((
+            size,
+            Packet::ClientSettings(ClientSettingsPacket {
+                locale,
+                view_distance,
+                chat_mode,
+                chat_colors,
+                displayed_skin_parts,
+                main_hand,
+            }),
+        ))
     }
 
     fn id() -> u32 {

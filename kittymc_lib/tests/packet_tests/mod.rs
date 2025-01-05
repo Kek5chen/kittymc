@@ -1,3 +1,3 @@
-mod utils;
-mod server;
 mod client;
+mod server;
+mod utils;

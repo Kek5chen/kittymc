@@ -15,9 +15,10 @@ impl SerializablePacket for ClientAnimationPacket {
 
         let hand = read_varint_u32(&mut data, &mut size)?.into();
 
-        Ok((size, Packet::ClientAnimation(ClientAnimationPacket {
-            hand
-        })))
+        Ok((
+            size,
+            Packet::ClientAnimation(ClientAnimationPacket { hand }),
+        ))
     }
 
     fn id() -> u32 {

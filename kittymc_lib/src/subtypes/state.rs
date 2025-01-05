@@ -15,7 +15,7 @@ impl From<u32> for State {
             2 => State::Login,
             3 => State::Transfer,
             4 => State::Play,
-            _ => State::Undefined
+            _ => State::Undefined,
         }
     }
 }
