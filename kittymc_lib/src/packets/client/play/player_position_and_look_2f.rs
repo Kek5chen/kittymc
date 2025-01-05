@@ -15,7 +15,7 @@ pub struct ServerPlayerPositionAndLookPacket {
 impl Default for ServerPlayerPositionAndLookPacket {
     fn default() -> Self {
         ServerPlayerPositionAndLookPacket {
-            location: Location2::new(0., 4., 0.),
+            location: Location2::new(0., 5., 0.),
             direction: Default::default(),
             relative_flags: 0,
             teleport_id: random()
