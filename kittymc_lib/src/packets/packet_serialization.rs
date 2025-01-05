@@ -1,12 +1,12 @@
-use std::mem::size_of;
-use std::ops::RangeBounds;
-use integer_encoding::VarInt;
-use miniz_oxide::deflate::compress_to_vec_zlib;
-use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;
-use uuid::Uuid;
 use crate::error::KittyMCError;
 use crate::packets::client::play::{Direction, Location, Location2};
 use crate::packets::Packet;
+use integer_encoding::VarInt;
+use miniz_oxide::deflate::compress_to_vec_zlib;
+use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;
+use std::mem::size_of;
+use std::ops::RangeBounds;
+use uuid::Uuid;
 
 pub trait NamedPacket {
     fn name() -> &'static str {
@@ -16,7 +16,7 @@ pub trait NamedPacket {
 
 pub trait SerializablePacket {
     fn serialize(&self) -> Vec<u8> {
-        vec![ 0 ]
+        vec![0]
     }
 
     // not including length or packet id
@@ -176,6 +176,21 @@ pub fn read_varint_u32(data: &mut &[u8], total_size: &mut usize) -> Result<u32, 
     *data = &data[size..];
     *total_size += size;
     Ok(value)
+}
+
+pub fn read_location2(data: &mut &[u8], total_size: &mut usize) -> Result<Location2, KittyMCError> {
+    let x = read_f64(data, total_size)?;
+    let y = read_f64(data, total_size)?;
+    let z = read_f64(data, total_size)?;
+
+    Ok(Location2::new(x, y, z))
+}
+
+pub fn read_direction(data: &mut &[u8], total_size: &mut usize) -> Result<Direction, KittyMCError> {
+    let yaw = read_f32(data, total_size)?;
+    let pitch = read_f32(data, total_size)?;
+
+    Ok(Direction::new(yaw, pitch))
 }
 
 pub fn write_i64(buffer: &mut Vec<u8>, value: i64) {

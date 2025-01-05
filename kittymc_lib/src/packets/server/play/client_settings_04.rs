@@ -1,8 +1,8 @@
-use bitflags::bitflags;
-use kittymc_macros::Packet;
 use crate::error::KittyMCError;
 use crate::packets::packet_serialization::{read_bool, read_length_prefixed_string, read_u8, read_varint_u32, SerializablePacket};
 use crate::packets::Packet;
+use bitflags::bitflags;
+use kittymc_macros::Packet;
 
 #[repr(u32)]
 #[derive(PartialEq, Debug, Clone)]
@@ -40,18 +40,18 @@ bitflags! {
 
 #[repr(u32)]
 #[derive(PartialEq, Debug, Clone, Packet)]
-pub enum MainHand {
+pub enum Hand {
     Left = 0,
     Right = 1,
     Unknown = 0xFFFF_FFFF,
 }
 
-impl From<u32> for MainHand {
+impl From<u32> for Hand {
     fn from(value: u32) -> Self {
         match value {
-            0 => MainHand::Left,
-            1 => MainHand::Right,
-            _ => MainHand::Unknown
+            0 => Hand::Left,
+            1 => Hand::Right,
+            _ => Hand::Unknown
         }
     }
 }
@@ -63,7 +63,7 @@ pub struct ClientSettingsPacket {
     chat_mode: ChatMode,
     chat_colors: bool,
     displayed_skin_parts: DisplayedSkinParts,
-    main_hand: MainHand
+    main_hand: Hand,
 }
 
 impl SerializablePacket for ClientSettingsPacket {

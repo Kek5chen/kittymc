@@ -1,33 +1,20 @@
+use crate::client::{Client, ClientInfo};
+use crate::player::Player;
+use kittymc_lib::error::KittyMCError;
+use kittymc_lib::packets::client::login::*;
+use kittymc_lib::packets::client::play::*;
+use kittymc_lib::packets::client::status::*;
 use kittymc_lib::packets::packet_serialization::NamedPacket;
+use kittymc_lib::packets::packet_serialization::SerializablePacket;
+use kittymc_lib::packets::Packet;
+use kittymc_lib::subtypes::state::State;
+use log::debug;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::net::TcpListener;
 use std::sync::RwLock;
 use tracing::{info, instrument, warn};
-use kittymc_lib::error::KittyMCError;
-use kittymc_lib::packets::client::login::success_02::LoginSuccessPacket;
-use kittymc_lib::packets::Packet;
-use kittymc_lib::subtypes::state::State;
-use log::debug;
 use uuid::Uuid;
-use kittymc_lib::packets::client::login::disconnect_login_00::DisconnectLoginPacket;
-use kittymc_lib::packets::client::login::set_compression_03::SetCompressionPacket;
-use kittymc_lib::packets::client::play::player_abilities_2c::PlayerAbilitiesPacket;
-use kittymc_lib::packets::client::play::server_plugin_message_18::ServerPluginMessagePacket;
-use kittymc_lib::packets::client::play::server_difficulty_0d::ServerDifficultyPacket;
-use kittymc_lib::packets::client::play::chunk_data_20::ChunkDataPacket;
-use kittymc_lib::packets::client::play::entity_status_1b::EntityStatusPacket;
-use kittymc_lib::packets::client::play::server_held_item_change_3a::ServerHeldItemChangePacket;
-use kittymc_lib::packets::client::play::spawn_position_46::SpawnPositionPacket;
-use kittymc_lib::packets::client::play::join_game_23::JoinGamePacket;
-use kittymc_lib::packets::client::play::player_list_item_2e::PlayerListItemPacket;
-use kittymc_lib::packets::client::play::player_position_and_look_2f::ServerPlayerPositionAndLookPacket;
-use kittymc_lib::packets::client::play::time_update_47::TimeUpdatePacket;
-use kittymc_lib::packets::client::play::unlock_recipes_31::UnlockRecipesPacket;
-use kittymc_lib::packets::client::status::response_00::StatusResponsePacket;
-use kittymc_lib::packets::packet_serialization::SerializablePacket;
-use crate::client::{Client, ClientInfo};
-use crate::player::Player;
 
 #[derive(Debug)]
 pub struct KittyMCServer {
@@ -70,7 +57,7 @@ impl KittyMCServer {
     fn handle_client(&self, client: &mut Client) -> Result<bool, KittyMCError> {
         if !client.do_heartbeat()? {
             debug!("[{}] Client didn't respond to heartbeats for too long", client.addr());
-           return Ok(false);
+            return Ok(false);
         }
 
         loop {
@@ -154,7 +141,7 @@ impl KittyMCServer {
                         }
                     }
 
-                    return Ok(Some(uuid))
+                    return Ok(Some(uuid));
                 }
                 _ => {}
             }
@@ -200,7 +187,7 @@ impl KittyMCServer {
                 Err(KittyMCError::Disconnected) => {
                     info!("[{}] Client disconnected", client.1.addr());
                     disconnect_uuids.push(client.0.clone())
-                },
+                }
                 Err(e) => {
                     warn!("[{}] Disconnected client due to error: {e}", client.1.addr());
                     disconnect_uuids.push(client.0.clone())
