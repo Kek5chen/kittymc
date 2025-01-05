@@ -1,3 +1,4 @@
+mod chunk_manager;
 mod client;
 mod player;
 mod server;

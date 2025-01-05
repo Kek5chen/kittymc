@@ -1,3 +1,4 @@
+use crate::chunk_manager::ChunkManager;
 use crate::client::{Client, ClientInfo};
 use crate::player::Player;
 use kittymc_lib::error::KittyMCError;
@@ -8,11 +9,14 @@ use kittymc_lib::packets::packet_serialization::NamedPacket;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::state::State;
+use kittymc_lib::subtypes::Location;
 use log::debug;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::net::TcpListener;
 use std::sync::RwLock;
+use std::thread::sleep;
+use std::time::Duration;
 use tracing::{info, instrument, warn};
 use uuid::Uuid;
 
@@ -22,6 +26,7 @@ pub struct KittyMCServer {
     players: HashMap<Uuid, Player>,
     clients: RwLock<HashMap<Uuid, Client>>,
     registering_clients: VecDeque<Client>,
+    chunk_manager: ChunkManager,
 }
 
 #[allow(dead_code)]
@@ -39,6 +44,7 @@ impl KittyMCServer {
             players: HashMap::new(),
             clients: RwLock::new(HashMap::new()),
             registering_clients: VecDeque::new(),
+            chunk_manager: ChunkManager::new(),
         })
     }
 
@@ -144,10 +150,25 @@ impl KittyMCServer {
                     // Steer Vehicle ???
 
                     // after client answers send chunks
-                    for x in -4..4 {
-                        for z in -4..4 {
-                            client.send_packet(&ChunkDataPacket::default_at(x, z))?;
+
+                    let chunks = loop {
+                        match self
+                            .chunk_manager
+                            .poll_chunks_in_range(&Location::new(0., 5., 0.), 16 * 4)
+                        {
+                            None => sleep(Duration::from_millis(5)),
+                            Some(chunks) => {
+                                break chunks;
+                            }
                         }
+                    };
+
+                    for (pos, chunk) in chunks {
+                        client.send_packet(&ChunkDataPacket::new(
+                            chunk.read().unwrap().as_ref(),
+                            pos.x() as i32 / 16,
+                            pos.z() as i32 / 16,
+                        ))?;
                     }
 
                     return Ok(Some(uuid));

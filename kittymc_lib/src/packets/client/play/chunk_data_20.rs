@@ -327,7 +327,7 @@ pub struct ChunkDataPacket<'a> {
 }
 
 lazy_static! {
-    static ref DEFAULT_FLAT_CHUNK: Box<Chunk> = {
+    pub static ref DEFAULT_FLAT_CHUNK: Box<Chunk> = {
         let mut chunk = Box::new(Chunk {
             blocks: [0; SECTION_SIZE * NUM_SECTIONS_PER_CHUNK_COLUMN],
             biomes: [1; 16 * 16],
@@ -354,6 +354,16 @@ impl ChunkDataPacket<'_> {
             z,
             ground_up_continuous: true,
             data: &DEFAULT_FLAT_CHUNK,
+            block_entities: vec![],
+        }
+    }
+
+    pub fn new(chunk: &Chunk, x: i32, z: i32) -> ChunkDataPacket {
+        ChunkDataPacket {
+            x,
+            z,
+            ground_up_continuous: true,
+            data: chunk,
             block_entities: vec![],
         }
     }

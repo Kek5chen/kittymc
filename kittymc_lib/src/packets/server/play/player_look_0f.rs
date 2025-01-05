@@ -1,7 +1,7 @@
 use crate::error::KittyMCError;
-use crate::packets::client::play::Direction;
 use crate::packets::packet_serialization::{read_bool, read_direction, SerializablePacket};
 use crate::packets::Packet;
+use crate::subtypes::Direction;
 use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Packet)]

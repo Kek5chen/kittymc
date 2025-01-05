@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::array::TryFromSliceError;
 use std::io;
 use std::string::FromUtf8Error;
@@ -48,4 +49,6 @@ pub enum KittyMCError {
     #[error("The decompressed packet size was different than previously announced. Assuming corruption. {0} != {1}"
     )]
     InvalidDecompressedPacketLength(usize, usize), // Announced, Actual
+    #[error("Thread exited unexpectedly: {0:?}")]
+    ThreadError(Box<dyn Any + Send>),
 }

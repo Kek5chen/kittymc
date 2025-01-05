@@ -1,5 +1,3 @@
-use nalgebra::{Vector2, Vector3};
-
 pub mod chat_message_0f;
 pub mod chunk_data_20;
 pub mod entity_status_1b;
@@ -81,7 +79,3 @@ impl LevelType {
         }
     }
 }
-
-pub type Location = Vector3<f32>;
-pub type Location2 = Vector3<f64>;
-pub type Direction = Vector2<f32>;

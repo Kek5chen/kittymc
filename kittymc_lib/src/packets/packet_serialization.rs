@@ -1,6 +1,6 @@
 use crate::error::KittyMCError;
-use crate::packets::client::play::{Direction, Location, Location2};
 use crate::packets::Packet;
+use crate::subtypes::{Direction, Location, Location2};
 use integer_encoding::VarInt;
 use miniz_oxide::deflate::compress_to_vec_zlib;
 use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;

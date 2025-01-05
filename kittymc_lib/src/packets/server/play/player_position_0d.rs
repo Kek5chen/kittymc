@@ -1,7 +1,7 @@
 use crate::error::KittyMCError;
-use crate::packets::client::play::Location2;
 use crate::packets::packet_serialization::{read_bool, read_location2, SerializablePacket};
 use crate::packets::Packet;
+use crate::subtypes::Location2;
 use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Packet)]

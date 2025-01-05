@@ -1,6 +1,6 @@
-use crate::packets::client::play::Location;
 use crate::packets::packet_serialization::{write_block_location, SerializablePacket};
 use crate::packets::wrap_packet;
+use crate::subtypes::Location;
 use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Packet)]
