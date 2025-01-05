@@ -1,4 +1,5 @@
 use kittymc_lib::packets::packet_serialization::NamedPacket;
+use std::collections::HashSet;
 use std::fmt::Debug;
 use std::io::{ErrorKind, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -7,11 +8,16 @@ use uuid::Uuid;
 
 use tracing::{debug, info, instrument, trace, warn};
 
+use crate::chunk_manager::ChunkManager;
 use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::client::play::keep_alive_1f::ServerKeepAlivePacket;
+use kittymc_lib::packets::client::play::{ChunkDataPacket, UnloadChunkPacket};
 use kittymc_lib::packets::packet_serialization::compress_packet;
 use kittymc_lib::packets::{packet_serialization::SerializablePacket, CompressionInfo, Packet};
 use kittymc_lib::subtypes::state::State;
+use kittymc_lib::subtypes::{ChunkPosition, Location};
+
+const CHUNK_LOAD_RADIUS: f32 = 1.;
 
 #[derive(Eq, Hash, PartialEq, Debug, Clone)]
 pub struct ClientInfo {
@@ -34,6 +40,7 @@ pub struct Client {
     fragmented: bool,
     compression: CompressionInfo,
     brand: Option<String>,
+    loaded_chunks: HashSet<ChunkPosition>,
 }
 
 #[allow(dead_code)]
@@ -70,6 +77,7 @@ impl Client {
             fragmented: false,
             compression: CompressionInfo::default(),
             brand: None,
+            loaded_chunks: HashSet::new(),
         })
     }
 
@@ -221,5 +229,72 @@ impl Client {
         }
 
         Ok(packet)
+    }
+
+    pub fn load_chunks<'a, I>(
+        &mut self,
+        positions: I,
+        chunk_manager: &mut ChunkManager,
+    ) -> Result<(), KittyMCError>
+    where
+        I: Iterator<Item = &'a ChunkPosition>,
+    {
+        for pos in positions {
+            if self.loaded_chunks.contains(pos) {
+                continue;
+            }
+            let Some(chunk) = chunk_manager.request_chunk(pos) else {
+                continue;
+            };
+
+            trace!("[{}] Loading new Chunk {:?}", self.addr, pos);
+
+            {
+                let chunk = chunk.read().unwrap();
+                let packet =
+                    ChunkDataPacket::new(chunk.as_ref(), pos.x() as i32 / 16, pos.z() as i32 / 16);
+                self.send_packet(&packet)?;
+            }
+            self.loaded_chunks.insert(pos.clone());
+        }
+
+        Ok(())
+    }
+
+    pub fn unload_chunks<'a, I>(&mut self, positions: I)
+    where
+        I: Iterator<Item = &'a ChunkPosition>,
+    {
+        for pos in positions {
+            let packet = UnloadChunkPacket::new(pos);
+            trace!("[{}] Unloading Chunk {:?}", self.addr, pos);
+            match self.send_packet(&packet) {
+                Ok(_) => {
+                    self.loaded_chunks.remove(pos);
+                }
+                _ => (),
+            }
+        }
+    }
+
+    #[instrument(skip(self, pos, chunk_manager))]
+    pub fn update_chunks(
+        &mut self,
+        pos: &Location,
+        chunk_manager: &mut ChunkManager,
+    ) -> Result<(), KittyMCError> {
+        let new: Vec<_> =
+            ChunkPosition::iter_xz_circle_in_range(pos, CHUNK_LOAD_RADIUS * 16.).collect();
+        let unloadable = self
+            .loaded_chunks
+            .iter()
+            .filter(|c| !new.contains(c))
+            .cloned()
+            .collect::<Vec<_>>();
+
+        self.load_chunks(new.iter(), chunk_manager)?;
+        self.unload_chunks(unloadable.iter());
+
+        Ok(())
     }
 }

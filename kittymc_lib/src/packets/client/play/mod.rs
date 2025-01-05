@@ -12,6 +12,7 @@ pub mod server_held_item_change_3a;
 pub mod server_plugin_message_18;
 pub mod spawn_position_46;
 pub mod time_update_47;
+pub mod unload_chunk_1d;
 pub mod unlock_recipes_31;
 pub mod window_items_14;
 
@@ -29,6 +30,7 @@ pub use server_held_item_change_3a::ServerHeldItemChangePacket;
 pub use server_plugin_message_18::ServerPluginMessagePacket;
 pub use spawn_position_46::SpawnPositionPacket;
 pub use time_update_47::TimeUpdatePacket;
+pub use unload_chunk_1d::UnloadChunkPacket;
 pub use unlock_recipes_31::UnlockRecipesPacket;
 pub use window_items_14::WindowItemsPacket;
 

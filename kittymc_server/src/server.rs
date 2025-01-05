@@ -26,7 +26,7 @@ pub struct KittyMCServer {
     players: HashMap<Uuid, Player>,
     clients: RwLock<HashMap<Uuid, Client>>,
     registering_clients: VecDeque<Client>,
-    chunk_manager: ChunkManager,
+    chunk_manager: RwLock<ChunkManager>,
 }
 
 #[allow(dead_code)]
@@ -44,7 +44,7 @@ impl KittyMCServer {
             players: HashMap::new(),
             clients: RwLock::new(HashMap::new()),
             registering_clients: VecDeque::new(),
-            chunk_manager: ChunkManager::new(),
+            chunk_manager: RwLock::new(ChunkManager::new()),
         })
     }
 
@@ -85,6 +85,24 @@ impl KittyMCServer {
                 }
                 Packet::PluginMessage(msg) if msg.channel == "MC|Brand" => {
                     client.set_brand(String::from_utf8_lossy(&msg.data).to_string())
+                }
+                Packet::PlayerPositionAndLook(packet) => {
+                    let location = Location::new(
+                        packet.location.x as f32,
+                        packet.location.y as f32,
+                        packet.location.z as f32,
+                    );
+                    let mut chunk_manager = self.chunk_manager.write().unwrap();
+                    client.update_chunks(&location, &mut chunk_manager)?;
+                }
+                Packet::PlayerPosition(packet) => {
+                    let location = Location::new(
+                        packet.location.x as f32,
+                        packet.location.y as f32,
+                        packet.location.z as f32,
+                    );
+                    let mut chunk_manager = self.chunk_manager.write().unwrap();
+                    client.update_chunks(&location, &mut chunk_manager)?;
                 }
                 _ => (),
             }
@@ -151,24 +169,11 @@ impl KittyMCServer {
 
                     // after client answers send chunks
 
-                    let chunks = loop {
-                        match self
-                            .chunk_manager
-                            .poll_chunks_in_range(&Location::new(0., 5., 0.), 16 * 4)
-                        {
-                            None => sleep(Duration::from_millis(5)),
-                            Some(chunks) => {
-                                break chunks;
-                            }
-                        }
-                    };
-
-                    for (pos, chunk) in chunks {
-                        client.send_packet(&ChunkDataPacket::new(
-                            chunk.read().unwrap().as_ref(),
-                            pos.x() as i32 / 16,
-                            pos.z() as i32 / 16,
-                        ))?;
+                    let mut chunk_manager = self.chunk_manager.write().unwrap();
+                    for _ in 0..10 {
+                        client.update_chunks(&Location::new(0., 5., 0.), &mut chunk_manager)?;
+                        println!("updating");
+                        sleep(Duration::from_millis(100));
                     }
 
                     return Ok(Some(uuid));
@@ -205,29 +210,32 @@ impl KittyMCServer {
 
         let mut disconnect_uuids = vec![];
 
-        let mut clients = self.clients.write().unwrap();
-        for client in clients.iter_mut() {
-            match self.handle_client(client.1) {
-                Ok(keep_alive) => {
-                    if !keep_alive {
-                        info!("[{}] Forced Client disconnect", client.1.addr());
-                        disconnect_uuids.push(client.0.clone());
+        {
+            let mut clients = self.clients.write().unwrap();
+            for client in clients.iter_mut() {
+                match self.handle_client(client.1) {
+                    Ok(keep_alive) => {
+                        if !keep_alive {
+                            info!("[{}] Forced Client disconnect", client.1.addr());
+                            disconnect_uuids.push(client.0.clone());
+                        }
                     }
-                }
-                Err(KittyMCError::Disconnected) => {
-                    info!("[{}] Client disconnected", client.1.addr());
-                    disconnect_uuids.push(client.0.clone())
-                }
-                Err(e) => {
-                    warn!(
-                        "[{}] Disconnected client due to error: {e}",
-                        client.1.addr()
-                    );
-                    disconnect_uuids.push(client.0.clone())
+                    Err(KittyMCError::Disconnected) => {
+                        info!("[{}] Client disconnected", client.1.addr());
+                        disconnect_uuids.push(client.0.clone())
+                    }
+                    Err(e) => {
+                        warn!(
+                            "[{}] Disconnected client due to error: {e}",
+                            client.1.addr()
+                        );
+                        disconnect_uuids.push(client.0.clone())
+                    }
                 }
             }
         }
 
+        let mut clients = self.clients.write().unwrap();
         for uuid in disconnect_uuids {
             clients.remove(&uuid);
         }

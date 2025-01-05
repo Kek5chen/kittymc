@@ -69,14 +69,42 @@ impl ChunkManager {
         self.loaded_chunks.read().unwrap().get(&loc.into()).cloned()
     }
 
-    pub fn request_chunk(&mut self, chunk_pos: ChunkPosition) {
-        if self.actively_loading_threads.contains_key(&chunk_pos) {
-            return;
+    pub fn request_chunk(&mut self, chunk_pos: &ChunkPosition) -> Option<SharedChunk> {
+        if let Err(e) = self.collect_finished_threads() {
+            error!("Ran into error when collecting from chunk thread {e}");
+        }
+        match self.get_chunk_at(chunk_pos) {
+            Some(chunk) => return Some(chunk),
+            _ => {}
+        }
+        if self.actively_loading_threads.contains_key(chunk_pos) {
+            return None;
         }
 
         let chunk_pos_clone = chunk_pos.clone();
         let thread = std::thread::spawn(move || Self::load_chunk_thread(chunk_pos_clone));
-        self.actively_loading_threads.insert(chunk_pos, thread);
+        self.actively_loading_threads
+            .insert(chunk_pos.clone(), thread);
+
+        None
+    }
+
+    pub fn request_chunks_bulk(
+        &mut self,
+        chunks: &[ChunkPosition],
+    ) -> HashMap<ChunkPosition, SharedChunk> {
+        let mut loaded = HashMap::new();
+
+        for pos in chunks {
+            match self.request_chunk(pos) {
+                None => continue,
+                Some(chunk) => {
+                    loaded.insert(pos.clone(), chunk);
+                }
+            }
+        }
+
+        loaded
     }
 
     pub fn poll_chunks_in_range(
@@ -89,15 +117,14 @@ impl ChunkManager {
             ChunkPosition::iter_xz_circle_in_range(loc, radius as f32).collect();
         let requested_count = requested_chunks.len();
 
-        debug!("Requested: {requested_chunks:?}");
+        //debug!("Requested: {requested_chunks:?}");
 
         if let Err(e) = self.collect_finished_threads() {
             error!("{e}");
         }
 
         for chunk_pos in requested_chunks {
-            let Some(chunk) = self.get_chunk_at(&chunk_pos) else {
-                self.request_chunk(chunk_pos);
+            let Some(chunk) = self.request_chunk(&chunk_pos) else {
                 continue;
             };
 
@@ -122,12 +149,10 @@ impl ChunkManager {
             ChunkPosition::iter_xz_circle_in_range(loc, radius as f32).collect();
 
         for chunk_pos in requested_chunks {
-            if let Some(chunk) = self.get_chunk_at(&chunk_pos) {
-                loaded_chunks.push((chunk_pos.clone(), chunk));
-                continue;
+            match self.request_chunk(&chunk_pos) {
+                Some(chunk) => loaded_chunks.push((chunk_pos.clone(), chunk)),
+                _ => {}
             }
-
-            self.request_chunk(chunk_pos);
         }
 
         loaded_chunks

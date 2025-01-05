@@ -1,6 +1,5 @@
 use crate::packets::packet_serialization::write_length_prefixed_string;
 use derive_builder::Builder;
-use log::debug;
 use nalgebra::{Vector2, Vector3};
 use serde::{Deserialize, Serialize};
 use std::ops::{Add, AddAssign};
@@ -138,7 +137,7 @@ impl ChunkPositionIterator {
 
         let mut positions = Vec::new();
 
-        debug!("Center: {center}");
+        //debug!("Center: {center}");
 
         // Step in multiples of CHUNK_WIDTH from min..=max
         for y in (min_y..=max_y).step_by(step) {
@@ -146,12 +145,12 @@ impl ChunkPositionIterator {
                 for x in (min_x..=max_x).step_by(step) {
                     let loc = ChunkPosition::from(Location::new(x as f32, y as f32, z as f32));
                     // Only keep points within the radius
-                    debug!(
-                        "Magnitude of center {:?} of {:?} is {}",
-                        loc,
-                        loc.center(),
-                        (loc.center() - center).magnitude()
-                    );
+                    // debug!(
+                    //     "Magnitude of center {:?} of {:?} is {}",
+                    //     loc,
+                    //     loc.center(),
+                    //     (loc.center() - center).magnitude()
+                    // );
                     if (loc.center() - center).magnitude() <= radius {
                         positions.push(ChunkPosition::from(loc));
                     }

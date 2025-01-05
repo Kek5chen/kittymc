@@ -6,8 +6,8 @@ use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct PlayerPositionPacket {
-    location: Location2, // Feet
-    on_ground: bool,
+    pub location: Location2, // Feet
+    pub on_ground: bool,
 }
 
 impl SerializablePacket for PlayerPositionPacket {
