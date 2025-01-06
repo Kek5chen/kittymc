@@ -1,10 +1,7 @@
-use crate::packets::packet_serialization::{
-    write_i8, write_length_prefixed_string, SerializablePacket,
-};
+use crate::packets::packet_serialization::{write_i8, SerializablePacket};
 use crate::packets::wrap_packet;
-use crate::subtypes::Chat;
+use crate::subtypes::Component;
 use kittymc_macros::Packet;
-use serde_json::json;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum ChatPosition {
@@ -13,16 +10,16 @@ pub enum ChatPosition {
     Hotbar = 2,
 }
 
-#[derive(PartialEq, Debug, Clone, Packet)]
+#[derive(Debug, Packet)]
 pub struct ClientChatMessagePacket {
-    text: Chat,
+    text: Component,
     position: ChatPosition,
 }
 
 impl ClientChatMessagePacket {
     pub fn new_join_message(name: &str) -> Self {
         ClientChatMessagePacket {
-            text: Chat::default_join(name),
+            text: Component::default_join(name),
             position: ChatPosition::Chat,
         }
     }

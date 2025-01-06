@@ -7,7 +7,6 @@ use kittymc_lib::packets::client::play::*;
 use kittymc_lib::packets::client::status::*;
 use kittymc_lib::packets::packet_serialization::NamedPacket;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
-use kittymc_lib::packets::server::play::ServerChatMessagePacket;
 use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::Location;

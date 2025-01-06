@@ -1,14 +1,16 @@
 use crate::packets::packet_serialization::write_length_prefixed_string;
-use derive_builder::Builder;
 use nalgebra::{Vector2, Vector3};
 use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 use std::ops::{Add, AddAssign};
+use typed_builder::TypedBuilder;
 
 pub mod state;
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Copy, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum Color {
+    Reset,
     Black,
     DarkBlue,
     DarkGreen,
@@ -46,6 +48,7 @@ impl Color {
             Color::LightPurple => "light_purple",
             Color::Yellow => "yellow",
             Color::White => "white",
+            Color::Reset => "reset",
         }
     }
 
@@ -67,37 +70,136 @@ impl Color {
             Color::LightPurple => "§d",
             Color::Yellow => "§e",
             Color::White => "§f",
+            Color::Reset => "§r",
         }
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder)]
-pub struct Chat {
-    text: String,
-    #[builder(setter(into, strip_option), default)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    bold: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option), default)]
-    italic: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option), default)]
-    underlined: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option), default)]
-    strikethrough: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option), default)]
-    obfuscated: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option), default)]
-    color: Option<Color>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    #[builder(default)]
-    extra: Vec<Chat>,
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, TypedBuilder)]
+pub struct ClickEvent {
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    #[builder(default, setter(into))]
+    pub open_url: String,
+
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    #[builder(default, setter(into))]
+    pub run_command: String,
+
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    #[builder(default, setter(into))]
+    pub suggest_command: String,
+
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    #[builder(setter(strip_option), default)]
+    pub change_page: Option<u32>,
 }
 
-impl Chat {
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, TypedBuilder)]
+pub struct HoverEvent {
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    #[builder(setter(into, strip_option), default)]
+    pub show_text: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    #[builder(setter(strip_option), default)]
+    pub show_item: Option<()>, // TODO: NBT
+
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    #[builder(setter(strip_option), default)]
+    pub show_entity: Option<()>, // TODO: NBT
+}
+
+fn is_false(b: &bool) -> bool {
+    !*b
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, TypedBuilder, Default)]
+pub struct BaseComponent {
+    #[serde(skip_serializing_if = "is_false", default)]
+    #[builder(default)]
+    pub bold: bool,
+
+    #[serde(skip_serializing_if = "is_false", default)]
+    #[builder(default)]
+    pub italic: bool,
+
+    #[serde(skip_serializing_if = "is_false", default)]
+    #[builder(default)]
+    pub underlined: bool,
+
+    #[serde(skip_serializing_if = "is_false", default)]
+    #[builder(default)]
+    pub strikethrough: bool,
+
+    #[serde(skip_serializing_if = "is_false", default)]
+    #[builder(default)]
+    pub obfuscated: bool,
+
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    #[builder(setter(strip_option), default)]
+    pub color: Option<Color>,
+
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    #[builder(default)]
+    pub insertion: String,
+
+    #[serde(skip_serializing_if = "Option::is_none", flatten, default)]
+    #[builder(setter(strip_option), default)]
+    pub click_event: Option<ClickEvent>,
+
+    #[serde(skip_serializing_if = "Option::is_none", flatten, default)]
+    #[builder(setter(strip_option), default)]
+    pub hover_event: Option<HoverEvent>,
+
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    #[builder(default)]
+    pub extra: Vec<Component>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, TypedBuilder)]
+pub struct TextComponent {
+    #[builder(setter(into), default)]
+    pub text: String,
+    #[serde(flatten, default)]
+    #[builder(default)]
+    pub options: BaseComponent,
+}
+
+impl TextComponent {
+    pub fn write(&self, buffer: &mut Vec<u8>) {
+        write_length_prefixed_string(
+            buffer,
+            &serde_json::to_string(self).unwrap_or_else(|_| "INVALID".to_string()),
+        )
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct TranslationComponent {
+    pub translate: String,
+    pub with: Vec<Component>,
+}
+
+impl TranslationComponent {
+    pub fn write(&self, buffer: &mut Vec<u8>) {
+        write_length_prefixed_string(
+            buffer,
+            &serde_json::to_string(self).unwrap_or_else(|_| "INVALID".to_string()),
+        )
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(untagged)]
+pub enum Component {
+    Text(TextComponent),
+    Translation(TranslationComponent),
+    KeyBind,  // TODO
+    Score,    // TODO
+    Selector, // TODO
+}
+
+impl Component {
     pub fn write(&self, buffer: &mut Vec<u8>) {
         write_length_prefixed_string(
             buffer,
@@ -106,18 +208,24 @@ impl Chat {
     }
 
     pub fn default_join(player: &str) -> Self {
-        ChatBuilder::default()
-            .text(player.to_string())
-            .bold(true)
-            .italic(true)
-            .color(Color::DarkPurple)
-            .extra(vec![ChatBuilder::default()
-                .text(" joined the game".to_string())
-                .color(Color::Gray)
-                .build()
-                .unwrap()])
-            .build()
-            .unwrap()
+        Component::Text(
+            TextComponent::builder()
+                .text(player.to_string())
+                .options(
+                    BaseComponent::builder()
+                        .bold(true)
+                        .italic(true)
+                        .color(Color::DarkPurple)
+                        .extra(vec![Component::Text(
+                            TextComponent::builder()
+                                .text(" joined the game".to_string())
+                                .options(BaseComponent::builder().color(Color::Gray).build())
+                                .build(),
+                        )])
+                        .build(),
+                )
+                .build(),
+        )
     }
 }
 

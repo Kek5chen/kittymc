@@ -3,7 +3,7 @@ use crate::packets::packet_serialization::{
     write_bool, write_length_prefixed_string, write_uuid, write_varint_u32, SerializablePacket,
 };
 use crate::packets::wrap_packet;
-use crate::subtypes::Chat;
+use crate::subtypes::TextComponent;
 use kittymc_macros::Packet;
 use log::warn;
 use uuid::Uuid;
@@ -36,11 +36,11 @@ pub enum PlayerListItemAction {
         game_mode: GameMode,
         ping: u32,
         // has_display_name: bool, // determined by display_name Optional
-        display_name: Option<Chat>,
+        display_name: Option<TextComponent>,
     },
     UpdateGameMode(GameMode),
     UpdateLatency(u32),
-    UpdateDisplayName(Option<Chat>),
+    UpdateDisplayName(Option<TextComponent>),
     RemovePlayer,
 }
 
