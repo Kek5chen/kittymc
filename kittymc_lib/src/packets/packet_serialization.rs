@@ -1,6 +1,6 @@
 use crate::error::KittyMCError;
 use crate::packets::Packet;
-use crate::subtypes::{Direction, Location, Location2};
+use crate::subtypes::{Direction, Location, Location2, Rotation};
 use integer_encoding::VarInt;
 use log::warn;
 use miniz_oxide::deflate::compress_to_vec_zlib;
@@ -388,6 +388,12 @@ pub fn write_location2(buffer: &mut Vec<u8>, loc: &Location2) {
 pub fn write_direction(buffer: &mut Vec<u8>, loc: &Direction) {
     write_f32(buffer, loc.x);
     write_f32(buffer, loc.y);
+}
+
+pub fn write_rotation(buffer: &mut Vec<u8>, loc: &Rotation) {
+    write_f32(buffer, loc.x);
+    write_f32(buffer, loc.y);
+    write_f32(buffer, loc.z);
 }
 
 pub fn write_angle(buffer: &mut Vec<u8>, angle: f32) {

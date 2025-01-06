@@ -1,12 +1,10 @@
 use crate::packets::packet_serialization::{
-    write_direction, write_direction_as_angles, write_location2, write_u8, write_uuid,
-    write_varint_u32, SerializablePacket,
+    write_direction_as_angles, write_location2, write_uuid, write_varint_u32, SerializablePacket,
 };
 use crate::packets::wrap_packet;
 use crate::subtypes::metadata::EntityMetadata;
 use crate::subtypes::{Direction, Location2};
 use kittymc_macros::Packet;
-use log::debug;
 use uuid::Uuid;
 
 #[derive(PartialEq, Debug, Clone, Packet)]
@@ -26,8 +24,7 @@ impl SerializablePacket for SpawnPlayerPacket {
         write_uuid(&mut packet, &self.player_uuid);
         write_location2(&mut packet, &self.location);
         write_direction_as_angles(&mut packet, &self.direction);
-        // TODO: self.metadata.write(&mut packet);
-        write_u8(&mut packet, 0xFF);
+        self.metadata.write_metadata(&mut packet);
 
         wrap_packet(&mut packet, Self::id());
 

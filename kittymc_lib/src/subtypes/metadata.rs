@@ -1,9 +1,96 @@
+use crate::packets::client::play::window_items_14::SlotData;
 use crate::packets::packet_serialization::{
-    write_bool, write_f32, write_length_prefixed_string, write_nbt, write_u8, write_varint_u32,
+    write_bool, write_direction, write_f32, write_length_prefixed_string, write_location2,
+    write_nbt, write_rotation, write_u8, write_uuid, write_varint_u32,
 };
 use crate::packets::server::play::client_settings_04::DisplayedSkinParts;
+use crate::subtypes::components::Component;
+use crate::subtypes::{Direction, Location2, Rotation};
 use bitflags::bitflags;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
+use typed_builder::TypedBuilder;
+use uuid::Uuid;
+
+pub enum MetaData {
+    Byte(u8),
+    VarInt(u32),
+    Float(f32),
+    String(String),
+    Chat(Component),
+    Slot(SlotData),
+    Boolean(bool),
+    Rotation(Rotation),
+    Position(Location2),
+    OptPosition(Option<Location2>), // Boolean + Optional Position
+    Direction(Direction),           // varints
+    OptUuid(Option<Uuid>),          // Boolean + Optional Uuid
+    OptBlockId(Option<u32>),        // Boolean + Optional VarInt
+    NBTTag(fastnbt::Value),
+}
+
+impl MetaData {
+    pub fn type_id(&self) -> u8 {
+        match self {
+            MetaData::Byte(_) => 0,
+            MetaData::VarInt(_) => 1,
+            MetaData::Float(_) => 2,
+            MetaData::String(_) => 3,
+            MetaData::Chat(_) => 4,
+            MetaData::Slot(_) => 5,
+            MetaData::Boolean(_) => 6,
+            MetaData::Rotation(_) => 7,
+            MetaData::Position(_) => 8,
+            MetaData::OptPosition(_) => 9,
+            MetaData::Direction(_) => 10,
+            MetaData::OptUuid(_) => 11,
+            MetaData::OptBlockId(_) => 12,
+            MetaData::NBTTag(_) => 13,
+        }
+    }
+
+    pub fn write(&self, buffer: &mut Vec<u8>) {
+        match self {
+            MetaData::Byte(b) => write_u8(buffer, *b),
+            MetaData::VarInt(i) => write_varint_u32(buffer, *i),
+            MetaData::Float(f) => write_f32(buffer, *f),
+            MetaData::String(s) => write_length_prefixed_string(buffer, s),
+            MetaData::Chat(c) => c.write(buffer),
+            MetaData::Slot(s) => s.write(buffer),
+            MetaData::Boolean(b) => write_bool(buffer, *b),
+            MetaData::Rotation(rotation) => write_rotation(buffer, rotation),
+            MetaData::Position(pos) => write_location2(buffer, pos),
+            MetaData::OptPosition(pos) => {
+                write_bool(buffer, pos.is_some());
+                if let Some(pos) = pos {
+                    write_location2(buffer, pos);
+                }
+            }
+            MetaData::Direction(dir) => write_direction(buffer, dir),
+            MetaData::OptUuid(uuid) => {
+                write_bool(buffer, uuid.is_some());
+                if let Some(uuid) = uuid {
+                    write_uuid(buffer, uuid);
+                }
+            }
+            MetaData::OptBlockId(block_id) => {
+                write_bool(buffer, block_id.is_some());
+                if let Some(block_id) = block_id {
+                    write_varint_u32(buffer, *block_id);
+                }
+            }
+            MetaData::NBTTag(tag) => write_nbt(buffer, tag),
+        }
+    }
+}
+
+pub fn write_metadata(buffer: &mut Vec<u8>, meta_data: &BTreeMap<u8, MetaData>) {
+    for (index, value) in meta_data {
+        write_u8(buffer, *index);
+        write_u8(buffer, value.type_id());
+        value.write(buffer);
+    }
+    write_u8(buffer, 0xFF);
+}
 
 bitflags! {
     #[derive(PartialEq, Eq, Debug, Copy, Clone)]
@@ -26,18 +113,18 @@ bitflags! {
 }
 
 impl EntityMetaState {
-    pub fn write(&self, buffer: &mut Vec<u8>) {
-        write_u8(buffer, self.bits());
+    pub fn write_to_metadata(&self, meta_data: &mut BTreeMap<u8, MetaData>, index: u8) {
+        meta_data.insert(index, MetaData::Byte(self.bits()));
     }
 }
 
 impl LivingHandState {
-    pub fn write(&self, buffer: &mut Vec<u8>) {
-        write_u8(buffer, self.bits());
+    pub fn write_to_metadata(&self, meta_data: &mut BTreeMap<u8, MetaData>, index: u8) {
+        meta_data.insert(index, MetaData::Byte(self.bits()));
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, TypedBuilder)]
 pub struct EntityMetadata {
     pub meta_state: EntityMetaState,
     pub air: u32,
@@ -61,17 +148,23 @@ impl Default for EntityMetadata {
 }
 
 impl EntityMetadata {
-    pub fn write(&self, buffer: &mut Vec<u8>) {
-        self.meta_state.write(buffer);
-        write_varint_u32(buffer, self.air);
-        write_length_prefixed_string(buffer, &self.custom_name);
-        write_bool(buffer, self.is_custom_name_visible);
-        write_bool(buffer, self.is_silent);
-        write_bool(buffer, self.no_gravity);
+    pub fn write_to_metadata(&self, mut meta_data: &mut BTreeMap<u8, MetaData>) {
+        self.meta_state.write_to_metadata(&mut meta_data, 0);
+        meta_data.insert(1, MetaData::VarInt(self.air));
+        meta_data.insert(2, MetaData::String(self.custom_name.clone()));
+        meta_data.insert(3, MetaData::Boolean(self.is_custom_name_visible));
+        meta_data.insert(4, MetaData::Boolean(self.is_silent));
+        meta_data.insert(5, MetaData::Boolean(self.no_gravity));
+    }
+
+    pub fn write_metadata(&self, buffer: &mut Vec<u8>) {
+        let mut metadata = BTreeMap::new();
+        self.write_to_metadata(&mut metadata);
+        write_metadata(buffer, &metadata);
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, TypedBuilder)]
 pub struct LivingMetadata {
     pub entity: EntityMetadata,
     pub hand_state: LivingHandState,
@@ -95,17 +188,23 @@ impl Default for LivingMetadata {
 }
 
 impl LivingMetadata {
-    pub fn write(&self, buffer: &mut Vec<u8>) {
-        self.entity.write(buffer);
-        self.hand_state.write(buffer);
-        write_f32(buffer, self.health);
-        write_varint_u32(buffer, self.potion_effect_color);
-        write_bool(buffer, self.is_potion_effect_ambient);
-        write_varint_u32(buffer, self.number_of_arrows_in_entity);
+    pub fn write_to_metadata(&self, mut meta_data: &mut BTreeMap<u8, MetaData>) {
+        self.entity.write_to_metadata(&mut meta_data);
+        self.hand_state.write_to_metadata(&mut meta_data, 6);
+        meta_data.insert(6, MetaData::Float(self.health));
+        meta_data.insert(7, MetaData::VarInt(self.potion_effect_color));
+        meta_data.insert(8, MetaData::Boolean(self.is_potion_effect_ambient));
+        meta_data.insert(9, MetaData::VarInt(self.number_of_arrows_in_entity));
+    }
+
+    pub fn write_metadata(&self, buffer: &mut Vec<u8>) {
+        let mut metadata = BTreeMap::new();
+        self.write_to_metadata(&mut metadata);
+        write_metadata(buffer, &metadata);
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, TypedBuilder)]
 pub struct PlayerMetadata {
     pub living: LivingMetadata,
     pub additional_hearts: f32,
@@ -131,13 +230,22 @@ impl Default for PlayerMetadata {
 }
 
 impl PlayerMetadata {
-    pub fn write(&self, buffer: &mut Vec<u8>) {
-        self.living.write(buffer);
-        write_f32(buffer, self.additional_hearts);
-        write_varint_u32(buffer, self.score);
-        self.displayed_skin_parts.write(buffer);
-        write_u8(buffer, self.main_hand);
-        write_nbt(buffer, &self.left_shoulder_entity_data);
-        write_nbt(buffer, &self.right_shoulder_entity_data);
+    pub fn write_to_metadata(&self, mut meta_data: &mut BTreeMap<u8, MetaData>) {
+        self.living.write_to_metadata(&mut meta_data);
+        meta_data.insert(11, MetaData::Float(self.additional_hearts));
+        meta_data.insert(12, MetaData::VarInt(self.score));
+        meta_data.insert(13, MetaData::Byte(self.displayed_skin_parts.bits()));
+        meta_data.insert(14, MetaData::Byte(self.main_hand));
+        meta_data.insert(15, MetaData::NBTTag(self.left_shoulder_entity_data.clone()));
+        meta_data.insert(
+            16,
+            MetaData::NBTTag(self.right_shoulder_entity_data.clone()),
+        );
+    }
+
+    pub fn write_metadata(&self, buffer: &mut Vec<u8>) {
+        let mut metadata = BTreeMap::new();
+        self.write_to_metadata(&mut metadata);
+        write_metadata(buffer, &metadata);
     }
 }
