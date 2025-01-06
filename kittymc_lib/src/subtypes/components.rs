@@ -169,13 +169,14 @@ impl Component {
     }
 
     pub fn default_chat(player: &str, message: &str) -> Self {
+        let name = rainbowize_cool_people(player, true);
         Component::Translation(
             TranslationComponent::builder()
                 .translate(CHAT_TRANSLATION_TAG.to_string())
                 .with(vec![
                     Component::Text(
                         TextComponent::builder()
-                            .text(player)
+                            .text(name)
                             .options(
                                 BaseComponent::builder()
                                     .bold(true)
