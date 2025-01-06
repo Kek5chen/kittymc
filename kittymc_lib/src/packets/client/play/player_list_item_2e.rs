@@ -10,10 +10,10 @@ use uuid::Uuid;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct PlayerListItemProperties {
-    name: String,
-    value: String,
+    pub name: String,
+    pub value: String,
     // is_signed: bool, // determined by signature Optional
-    signature: Option<String>,
+    pub signature: Option<String>,
 }
 
 impl PlayerListItemProperties {
@@ -95,7 +95,7 @@ impl PlayerListItemAction {
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct PlayerListItemPacket {
-    actions: Vec<(Uuid, PlayerListItemAction)>,
+    pub actions: Vec<(Uuid, PlayerListItemAction)>,
 }
 
 impl Default for PlayerListItemPacket {

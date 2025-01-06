@@ -3,16 +3,19 @@ use crate::client::{Client, ClientInfo};
 use crate::player::Player;
 use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::client::login::*;
+use kittymc_lib::packets::client::play::player_list_item_2e::PlayerListItemAction;
 use kittymc_lib::packets::client::play::*;
 use kittymc_lib::packets::client::status::*;
 use kittymc_lib::packets::packet_serialization::NamedPacket;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
+use kittymc_lib::packets::server::login::LoginStartPacket;
 use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::Location;
-use log::debug;
+use log::{debug, error};
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
+use std::io::ErrorKind;
 use std::net::TcpListener;
 use std::sync::RwLock;
 use std::thread::sleep;
@@ -27,6 +30,7 @@ pub struct KittyMCServer {
     clients: RwLock<HashMap<Uuid, Client>>,
     registering_clients: VecDeque<Client>,
     chunk_manager: RwLock<ChunkManager>,
+    next_entity_id: u32,
 }
 
 #[allow(dead_code)]
@@ -45,6 +49,7 @@ impl KittyMCServer {
             clients: RwLock::new(HashMap::new()),
             registering_clients: VecDeque::new(),
             chunk_manager: RwLock::new(ChunkManager::new()),
+            next_entity_id: 0,
         })
     }
 
@@ -57,12 +62,18 @@ impl KittyMCServer {
         sender: &mut Client,
         packet: &P,
     ) -> Result<(), KittyMCError> {
-        sender.send_packet(packet)?;
+        let mut error = Ok(());
+
+        if let Err(e) = sender.send_packet(packet) {
+            error = Err(e);
+        }
         for client in self.clients.write().unwrap().iter_mut() {
-            client.1.send_packet(packet)?;
+            if let Err(e) = client.1.send_packet(packet) {
+                error = Err(e);
+            }
         }
 
-        Ok(())
+        error
     }
 
     fn handle_client(&mut self, uuid: &Uuid, client: &mut Client) -> Result<bool, KittyMCError> {
@@ -119,6 +130,95 @@ impl KittyMCServer {
         }
     }
 
+    fn add_player_to_all_player_lists(
+        &mut self,
+        client: &mut Client,
+        player: &Player,
+    ) -> Result<(), KittyMCError> {
+        self.send_to_all(
+            client,
+            &PlayerListItemPacket {
+                actions: vec![(
+                    player.uuid().clone(),
+                    PlayerListItemAction::AddPlayer {
+                        name: player.name().to_string(),
+                        properties: vec![],
+                        game_mode: GameMode::Survival,
+                        ping: 0, // fix ping
+                        display_name: None,
+                    },
+                )],
+            },
+        )
+    }
+
+    fn remove_player_from_all_player_lists(
+        &mut self,
+        client: &mut Client,
+        player: &Player,
+    ) -> Result<(), KittyMCError> {
+        self.send_to_all(
+            client,
+            &PlayerListItemPacket {
+                actions: vec![(player.uuid().clone(), PlayerListItemAction::RemovePlayer)],
+            },
+        )
+    }
+
+    fn login_player(
+        &mut self,
+        client: &mut Client,
+        login: &LoginStartPacket,
+    ) -> Result<Uuid, KittyMCError> {
+        let success = LoginSuccessPacket::from_name_cracked(&login.name)?;
+        let client_info = ClientInfo {
+            username: success.username.clone(),
+            uuid: success.uuid.clone(),
+        };
+
+        let player = Player::from_client_info(client_info, self.get_next_entity_id());
+        let uuid = player.uuid().clone();
+
+        let compression = SetCompressionPacket::default();
+        client.send_packet(&compression)?;
+        client.set_compression(true, compression.threshold);
+
+        client.send_packet(&success)?;
+        client.set_state(State::Play);
+
+        client.send_packet(&JoinGamePacket::new(player.id()))?;
+        let _ = self.add_player_to_all_player_lists(client, &player);
+        self.players.insert(uuid.clone(), player);
+
+        client.send_packet(&ServerPluginMessagePacket::default_brand())?;
+        client.send_packet(&ServerDifficultyPacket::default())?;
+        client.send_packet(&PlayerAbilitiesPacket::default())?;
+        client.send_packet(&ServerHeldItemChangePacket::default())?;
+        client.send_packet(&EntityStatusPacket::default())?;
+        client.send_packet(&UnlockRecipesPacket::default())?;
+        for player in &self.players {
+            client.add_player_to_player_list(player.1)?;
+        }
+        // Another Player List Item
+        client.send_packet(&ServerPlayerPositionAndLookPacket::default())?;
+        // World Border
+        client.send_packet(&TimeUpdatePacket::default())?;
+        client.send_packet(&SpawnPositionPacket::default())?;
+        // Player Digging ???
+        // Steer Vehicle ???
+
+        // after client answers send chunks
+
+        // FIXME: This is blocking right now. It's GOING TO stall the whole server if chunks
+        //   get harder to generate. This should definitely become an asynchronous stated thing.
+        let mut chunk_manager = self.chunk_manager.write().unwrap();
+        while !client.update_chunks(&Location::new(0., 5., 0.), &mut chunk_manager)? {
+            sleep(Duration::from_millis(5))
+        }
+
+        Ok(uuid)
+    }
+
     fn handle_client_pre_play(
         &mut self,
         client: &mut Client,
@@ -144,49 +244,7 @@ impl KittyMCServer {
                     client.send_packet(ping)?;
                 }
                 Packet::LoginStart(login) => {
-                    let success = LoginSuccessPacket::from_name_cracked(&login.name)?;
-                    let client_info = ClientInfo {
-                        username: success.username.clone(),
-                        uuid: success.uuid.clone(),
-                    };
-
-                    let player = Player::from_client_info(client_info);
-                    let uuid = player.uuid().clone();
-                    self.players.insert(uuid.clone(), player);
-
-                    let compression = SetCompressionPacket::default();
-                    client.send_packet(&compression)?;
-                    client.set_compression(true, compression.threshold);
-
-                    client.send_packet(&success)?;
-                    client.set_state(State::Play);
-
-                    client.send_packet(&JoinGamePacket::default())?;
-                    client.send_packet(&ServerPluginMessagePacket::default_brand())?;
-                    client.send_packet(&ServerDifficultyPacket::default())?;
-                    client.send_packet(&PlayerAbilitiesPacket::default())?;
-                    client.send_packet(&ServerHeldItemChangePacket::default())?;
-                    client.send_packet(&EntityStatusPacket::default())?;
-                    client.send_packet(&UnlockRecipesPacket::default())?;
-                    client.send_packet(&PlayerListItemPacket::default())?;
-                    // Another Player List Item
-                    client.send_packet(&ServerPlayerPositionAndLookPacket::default())?;
-                    // World Border
-                    client.send_packet(&TimeUpdatePacket::default())?;
-                    client.send_packet(&SpawnPositionPacket::default())?;
-                    // Player Digging ???
-                    // Steer Vehicle ???
-
-                    // after client answers send chunks
-
-                    // FIXME: This is blocking right now. It's GOING TO stall the whole server if chunks
-                    //   get harder to generate. This should definitely become an asynchronous stated thing.
-                    let mut chunk_manager = self.chunk_manager.write().unwrap();
-                    while !client.update_chunks(&Location::new(0., 5., 0.), &mut chunk_manager)? {
-                        sleep(Duration::from_millis(5))
-                    }
-
-                    return Ok(Some(uuid));
+                    return Ok(Some(self.login_player(client, login)?));
                 }
                 _ => {}
             }
@@ -249,15 +307,23 @@ impl KittyMCServer {
                     Err(KittyMCError::Disconnected) => {
                         info!("[{}] Client disconnected", client.addr());
                     }
+                    Err(KittyMCError::IoError(e)) if e.kind() == ErrorKind::BrokenPipe => {
+                        info!("[{}] Client disconnected", client.addr());
+                    }
                     Err(e) => {
                         warn!("[{}] Disconnected client due to error: {e}", client.addr());
                     }
                 };
-                let name = self.get_name_from_uuid(&uuid).unwrap_or("UNNAMED");
-                self.send_to_all(
+                let Some(player) = self.players.remove(&uuid) else {
+                    error!("Player shouldn't have been removed yet!");
+                    continue;
+                };
+
+                let _ = self.remove_player_from_all_player_lists(&mut client, &player);
+                let _ = self.send_to_all(
                     &mut client,
-                    &ClientChatMessagePacket::new_quit_message(name),
-                )?;
+                    &ClientChatMessagePacket::new_quit_message(player.name()),
+                );
             }
         }
 
@@ -269,7 +335,15 @@ impl KittyMCServer {
         loop {
             // TODO: Monitor if this runs fine
             sleep(Duration::from_millis(1));
-            self.handle_clients()?;
+            if let Err(e) = self.handle_clients() {
+                error!("Client Loop exited early with error: {e}");
+            }
         }
+    }
+
+    fn get_next_entity_id(&mut self) -> u32 {
+        let id = self.next_entity_id;
+        self.next_entity_id = self.next_entity_id.wrapping_add(1);
+        id
     }
 }

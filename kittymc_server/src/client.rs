@@ -11,9 +11,13 @@ use uuid::Uuid;
 use tracing::{debug, info, instrument, trace, warn};
 
 use crate::chunk_manager::ChunkManager;
+use crate::player::Player;
 use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::client::play::keep_alive_1f::ServerKeepAlivePacket;
-use kittymc_lib::packets::client::play::{ChunkDataPacket, UnloadChunkPacket};
+use kittymc_lib::packets::client::play::player_list_item_2e::PlayerListItemAction;
+use kittymc_lib::packets::client::play::{
+    ChunkDataPacket, GameMode, PlayerListItemPacket, UnloadChunkPacket,
+};
 use kittymc_lib::packets::packet_serialization::compress_packet;
 use kittymc_lib::packets::{packet_serialization::SerializablePacket, CompressionInfo, Packet};
 use kittymc_lib::subtypes::state::State;
@@ -157,6 +161,21 @@ impl Client {
         // );
         self.send_packet_raw(&packet.serialize())?;
         Ok(())
+    }
+
+    pub fn add_player_to_player_list(&mut self, player: &Player) -> Result<(), KittyMCError> {
+        self.send_packet(&PlayerListItemPacket {
+            actions: vec![(
+                player.uuid().clone(),
+                PlayerListItemAction::AddPlayer {
+                    name: player.name().to_string(),
+                    properties: vec![],
+                    game_mode: GameMode::Survival,
+                    ping: 0, // fix ping
+                    display_name: None,
+                },
+            )],
+        })
     }
 
     pub fn do_heartbeat(&mut self) -> Result<bool, KittyMCError> {
