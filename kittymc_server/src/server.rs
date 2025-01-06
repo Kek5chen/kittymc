@@ -242,9 +242,9 @@ impl KittyMCServer {
                     Ok(keep_alive) => {
                         if keep_alive {
                             self.clients.write().unwrap().insert(uuid, client);
-                        } else {
-                            info!("[{}] Forced Client disconnect", client.addr());
+                            continue;
                         }
+                        info!("[{}] Forced Client disconnect", client.addr());
                     }
                     Err(KittyMCError::Disconnected) => {
                         info!("[{}] Client disconnected", client.addr());
@@ -252,7 +252,12 @@ impl KittyMCServer {
                     Err(e) => {
                         warn!("[{}] Disconnected client due to error: {e}", client.addr());
                     }
-                }
+                };
+                let name = self.get_name_from_uuid(&uuid).unwrap_or("UNNAMED");
+                self.send_to_all(
+                    &mut client,
+                    &ClientChatMessagePacket::new_quit_message(name),
+                )?;
             }
         }
 

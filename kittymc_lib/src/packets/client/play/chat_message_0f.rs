@@ -24,6 +24,13 @@ impl ClientChatMessagePacket {
         }
     }
 
+    pub fn new_quit_message(name: &str) -> Self {
+        ClientChatMessagePacket {
+            text: Component::default_quit(name),
+            position: ChatPosition::Chat,
+        }
+    }
+
     pub fn new_chat_message(name: &str, message: &str) -> Self {
         ClientChatMessagePacket {
             text: Component::default_chat(name, message),

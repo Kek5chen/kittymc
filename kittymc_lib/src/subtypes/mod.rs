@@ -210,6 +210,14 @@ impl Component {
     }
 
     pub fn default_join(player: &str) -> Self {
+        Self::default_state_message(player, "joined")
+    }
+
+    pub fn default_quit(player: &str) -> Self {
+        Self::default_state_message(player, "quit")
+    }
+
+    pub fn default_state_message(player: &str, verb: &str) -> Self {
         Component::Text(
             TextComponent::builder()
                 .text(player.to_string())
@@ -220,7 +228,7 @@ impl Component {
                         .color(Color::DarkPurple)
                         .extra(vec![Component::Text(
                             TextComponent::builder()
-                                .text(" joined the game".to_string())
+                                .text(format!(" {verb} the game"))
                                 .options(BaseComponent::builder().color(Color::Gray).build())
                                 .build(),
                         )])
