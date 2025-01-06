@@ -16,7 +16,7 @@ use std::fmt::Debug;
 use std::net::TcpListener;
 use std::sync::RwLock;
 use std::thread::sleep;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tracing::{info, instrument, warn};
 use uuid::Uuid;
 
@@ -253,6 +253,8 @@ impl KittyMCServer {
     #[instrument(skip(self))]
     pub fn run(&mut self) -> Result<(), KittyMCError> {
         loop {
+            // TODO: Monitor if this runs fine
+            sleep(Duration::from_millis(1));
             self.handle_clients()?;
         }
     }
