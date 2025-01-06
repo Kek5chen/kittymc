@@ -89,7 +89,15 @@ impl Packet {
                 compressed_packet_len = size;
             }
         } else {
-            b_packet = data_part[..uncompressed_packet_data_len].to_vec();
+            b_packet = match data_part.get(..uncompressed_packet_data_len) {
+                None => {
+                    return Err(KittyMCError::NotEnoughData(
+                        data_part.len(),
+                        uncompressed_packet_data_len,
+                    ))
+                }
+                Some(packet) => packet.to_vec(),
+            };
             write_varint_u32_splice(&mut b_packet, uncompressed_packet_data_len as u32, ..0);
         }
 
