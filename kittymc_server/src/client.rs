@@ -238,19 +238,22 @@ impl Client {
         Ok(packet)
     }
 
+    /// Returns if all of its chunks could be loaded
     pub fn load_chunks<'a, I>(
         &mut self,
         positions: I,
         chunk_manager: &mut ChunkManager,
-    ) -> Result<(), KittyMCError>
+    ) -> Result<bool, KittyMCError>
     where
         I: Iterator<Item = &'a ChunkPosition>,
     {
+        let mut all_loaded = true;
         for pos in positions {
             if self.loaded_chunks.contains(pos) {
                 continue;
             }
             let Some(chunk) = chunk_manager.request_chunk(pos) else {
+                all_loaded = false;
                 continue;
             };
 
@@ -266,7 +269,7 @@ impl Client {
             self.loaded_chunks.insert(pos.clone());
         }
 
-        Ok(())
+        Ok(all_loaded)
     }
 
     pub fn unload_chunks<'a, I>(&mut self, positions: I)
@@ -284,12 +287,13 @@ impl Client {
         }
     }
 
+    /// Returns if all its chunks could be loaded
     #[instrument(skip(self, pos, chunk_manager))]
     pub fn update_chunks(
         &mut self,
         pos: &Location,
         chunk_manager: &mut ChunkManager,
-    ) -> Result<(), KittyMCError> {
+    ) -> Result<bool, KittyMCError> {
         let new: Vec<_> =
             ChunkPosition::iter_xz_circle_in_range(pos, self.view_distance as f32 * 16.).collect();
         let unloadable = self
@@ -299,9 +303,9 @@ impl Client {
             .cloned()
             .collect::<Vec<_>>();
 
-        self.load_chunks(new.iter(), chunk_manager)?;
+        let all_loaded = self.load_chunks(new.iter(), chunk_manager)?;
         self.unload_chunks(unloadable.iter());
 
-        Ok(())
+        Ok(all_loaded)
     }
 }

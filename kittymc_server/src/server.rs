@@ -172,10 +172,11 @@ impl KittyMCServer {
 
                     // after client answers send chunks
 
+                    // FIXME: This is blocking right now. It's GOING TO stall the whole server if chunks
+                    //   get harder to generate. This should definitely become an asynchronous stated thing.
                     let mut chunk_manager = self.chunk_manager.write().unwrap();
-                    for _ in 0..10 {
-                        client.update_chunks(&Location::new(0., 5., 0.), &mut chunk_manager)?;
-                        sleep(Duration::from_millis(100));
+                    while !client.update_chunks(&Location::new(0., 5., 0.), &mut chunk_manager)? {
+                        sleep(Duration::from_millis(5))
                     }
 
                     return Ok(Some(uuid));
