@@ -209,7 +209,7 @@ impl KittyMCServer {
         client.set_state(State::Play);
 
         client.send_packet(&JoinGamePacket::new(player.id()))?;
-        self.spawn_player_to_all(&player)?;
+        //self.spawn_player_to_all(&player)?;
         let _ = self.add_player_to_all_player_lists(client, &player);
         self.players.insert(uuid.clone(), player);
 
