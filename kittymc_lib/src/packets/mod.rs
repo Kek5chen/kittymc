@@ -44,6 +44,7 @@ pub enum Packet {
     PlayerLook(PlayerLookPacket),
     ClientAnimation(ClientAnimationPacket),
     ChatMessage(ServerChatMessagePacket),
+    PlayerDigging(PlayerDiggingPacket),
 }
 
 impl Packet {
@@ -184,6 +185,7 @@ impl Packet {
                 0xD => PlayerPositionPacket::deserialize(data)?,
                 0xE => ClientPlayerPositionAndLookPacket::deserialize(data)?,
                 0xF => PlayerLookPacket::deserialize(data)?,
+                0x14 => PlayerDiggingPacket::deserialize(data)?,
                 0x1A => ClientHeldItemChangePacket::deserialize(data)?,
                 0x1D => ClientAnimationPacket::deserialize(data)?,
                 _ => return Err(KittyMCError::NotImplemented(packet_id, full_packet_len)),

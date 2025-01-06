@@ -1,4 +1,6 @@
 pub mod animation_06;
+pub mod block_break_animation_08;
+pub mod block_change_0b;
 pub mod chat_message_0f;
 pub mod chunk_data_20;
 pub mod entity_head_look_36;
@@ -21,6 +23,8 @@ pub mod unload_chunk_1d;
 pub mod unlock_recipes_31;
 pub mod window_items_14;
 
+pub use block_break_animation_08::BlockBreakAnimationPacket;
+pub use block_change_0b::BlockChangePacket;
 pub use chat_message_0f::ClientChatMessagePacket;
 pub use chunk_data_20::ChunkDataPacket;
 pub use entity_head_look_36::EntityHeadLookPacket;

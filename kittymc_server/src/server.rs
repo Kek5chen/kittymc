@@ -13,12 +13,14 @@ use kittymc_lib::packets::packet_serialization::NamedPacket;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use kittymc_lib::packets::server::login::LoginStartPacket;
 use kittymc_lib::packets::server::play::client_settings_04::Hand;
+use kittymc_lib::packets::server::play::player_digging_14::PlayerDiggingStatus;
 use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::metadata::EntityMetadata;
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::{Direction, Location, Location2};
 use kittymc_lib::utils::rainbowize_cool_people_textcomp;
 use log::{debug, error};
+use rand::random;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::io::ErrorKind;
@@ -165,6 +167,33 @@ impl KittyMCServer {
                         )?,
                         Hand::Right => {}
                         _ => (),
+                    }
+                }
+                Packet::PlayerDigging(digging) => {
+                    let game_mode;
+                    let position;
+                    {
+                        let player = self.players.get(uuid).unwrap();
+                        game_mode = player.game_mode();
+                        position = player.position();
+                    }
+
+                    // TODO: Range Check
+
+                    if digging.status == PlayerDiggingStatus::StartedDigging
+                        && game_mode == GameMode::Creative
+                        || (digging.status == PlayerDiggingStatus::StartedDigging
+                            && game_mode != GameMode::Adventure)
+                    {
+                        println!("Started digging");
+                        self.send_to_all(
+                            None,
+                            &BlockChangePacket::new_empty(digging.location.clone()),
+                        )?;
+                        self.send_to_all(
+                            None,
+                            &BlockBreakAnimationPacket::new(random(), digging.location, 0x7F),
+                        )?;
                     }
                 }
                 _ => (),
@@ -314,6 +343,7 @@ impl KittyMCServer {
             self.get_next_entity_id(),
             &Location2::new(0., 5., 0.),
             &Direction::zeros(),
+            GameMode::Creative,
         );
         let uuid = player.uuid().clone();
 

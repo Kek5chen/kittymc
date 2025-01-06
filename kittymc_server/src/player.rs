@@ -1,4 +1,5 @@
 use crate::client::ClientInfo;
+use kittymc_lib::packets::client::play::GameMode;
 use kittymc_lib::subtypes::{Direction, Location2};
 use uuid::Uuid;
 
@@ -11,6 +12,7 @@ pub struct Player {
     direction: Direction,
     last_position: Location2,
     last_direction: Direction,
+    game_mode: GameMode,
 }
 
 impl Player {
@@ -19,6 +21,7 @@ impl Player {
         id: u32,
         position: &Location2,
         direction: &Direction,
+        game_mode: GameMode,
     ) -> Self {
         Self::new(
             client_info.uuid,
@@ -26,6 +29,7 @@ impl Player {
             id,
             position,
             direction,
+            game_mode,
         )
     }
 
@@ -35,6 +39,7 @@ impl Player {
         id: u32,
         position: &Location2,
         direction: &Direction,
+        game_mode: GameMode,
     ) -> Self {
         Self {
             uuid,
@@ -44,6 +49,7 @@ impl Player {
             direction: *direction,
             last_position: *position,
             last_direction: *direction,
+            game_mode,
         }
     }
 
@@ -83,5 +89,13 @@ impl Player {
 
     pub fn last_direction(&self) -> &Direction {
         &self.last_direction
+    }
+
+    pub fn game_mode(&self) -> GameMode {
+        self.game_mode
+    }
+
+    pub fn set_game_mode(&mut self, game_mode: GameMode) {
+        self.game_mode = game_mode;
     }
 }

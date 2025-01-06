@@ -254,6 +254,59 @@ pub fn read_location2(data: &mut &[u8], total_size: &mut usize) -> Result<Locati
     Ok(Location2::new(x, y, z))
 }
 
+// Position
+pub fn read_block_location(
+    data: &mut &[u8],
+    total_size: &mut usize,
+) -> Result<Location, KittyMCError> {
+    // Ensure there are at least 8 bytes to read
+    if data.len() < 8 {
+        return Err(KittyMCError::NotEnoughBytesToDeserialize(
+            "Position",
+            8,
+            data.len(),
+        ));
+    }
+
+    // Read the first 8 bytes as a u64 in big-endian order
+    let encoded = u64::from_be_bytes(
+        data[..8]
+            .try_into()
+            .map_err(|_| KittyMCError::DeserializationError)?,
+    );
+
+    // Update the data slice and total_size
+    *data = &data[8..];
+    *total_size += 8;
+
+    // Extract bits for x, y, z
+    let x_bits = (encoded >> 38) & 0x3FFFFFF; // 26 bits for x
+    let y_bits = (encoded >> 26) & 0xFFF; // 12 bits for y
+    let z_bits = encoded & 0x3FFFFFF; // 26 bits for z
+
+    // Convert the extracted bits to signed integers using two's complement
+    let x = if x_bits & (1 << 25) != 0 {
+        (x_bits as i32) - (1 << 26)
+    } else {
+        x_bits as i32
+    };
+
+    let y = if y_bits & (1 << 11) != 0 {
+        (y_bits as i32) - (1 << 12)
+    } else {
+        y_bits as i32
+    };
+
+    let z = if z_bits & (1 << 25) != 0 {
+        (z_bits as i32) - (1 << 26)
+    } else {
+        z_bits as i32
+    };
+
+    // Create and return the Location instance
+    Ok(Location::new(x as f32, y as f32, z as f32))
+}
+
 pub fn read_direction(data: &mut &[u8], total_size: &mut usize) -> Result<Direction, KittyMCError> {
     let yaw = read_f32(data, total_size)?;
     let pitch = read_f32(data, total_size)?;
@@ -353,29 +406,16 @@ pub fn write_block_location(buffer: &mut Vec<u8>, loc: &Location) {
     let y = loc.y.floor() as i64;
     let z = loc.z.floor() as i64;
 
-    // 1) Mask down to their signed bit ranges:
-    //    x and z must fit in 26 bits  => range: -33_554_432..33_554_431
-    //    y must fit in 12 bits       => range:      -2048..2047
-    //
-    //    & 0x3FFFFFF captures 26 bits (for x and z).
-    //    & 0xFFF      captures 12 bits (for y).
-    //
-    //    Because Rust negative numbers in two's complement will still
-    //    produce the correct lower bits, masking is enough here.
-
+    // Mask to signed bit ranges
+    // x, z in 26 bits: -33_554_432..=33_554_431
+    // y in 12 bits:        -2048..=2047
     let x_masked = (x & 0x3FFFFFF) as u64; // 26 bits
-    let z_masked = (z & 0x3FFFFFF) as u64; // 26 bits
     let y_masked = (y & 0xFFF) as u64; // 12 bits
+    let z_masked = (z & 0x3FFFFFF) as u64; // 26 bits
 
-    // 2) Pack them into 64 bits.
-    // Bit layout (most significant on the left):
-    //  [ x: 26 bits ][ z: 26 bits ][ y: 12 bits ]
-    //
-    //  x occupies bits 38..63 (the top 26 bits),
-    //  z occupies bits 12..37 (the middle 26 bits),
-    //  y occupies bits 0..11  (the lowest 12 bits).
-
-    let packed = (x_masked << 38) | (z_masked << 12) | y_masked;
+    // Bit layout: [ x: 26 bits ][ y: 12 bits ][ z: 26 bits ]
+    // x -> bits 38..63, y -> bits 26..37, z -> bits 0..25
+    let packed = (x_masked << 38) | (y_masked << 26) | z_masked;
 
     buffer.extend_from_slice(&packed.to_be_bytes());
 }
