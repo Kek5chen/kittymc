@@ -4,12 +4,16 @@ mod player;
 mod server;
 
 use crate::server::KittyMCServer;
-use tracing_subscriber::filter::LevelFilter;
+use tracing::metadata::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
 fn main() {
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env().add_directive(LevelFilter::INFO.into()))
+        .with_env_filter(
+            EnvFilter::builder()
+                .with_default_directive(LevelFilter::INFO.into())
+                .from_env_lossy(),
+        )
         .pretty()
         .compact()
         .with_target(false)
