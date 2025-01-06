@@ -1,6 +1,7 @@
 use crate::error::KittyMCError;
 use crate::packets::Packet;
 use crate::subtypes::{Direction, Location, Location2, Rotation};
+use crate::utils::axis_to_angle;
 use integer_encoding::VarInt;
 use log::warn;
 use miniz_oxide::deflate::compress_to_vec_zlib;
@@ -391,13 +392,14 @@ pub fn write_direction(buffer: &mut Vec<u8>, loc: &Direction) {
 }
 
 pub fn write_rotation(buffer: &mut Vec<u8>, loc: &Rotation) {
-    write_f32(buffer, loc.x);
-    write_f32(buffer, loc.y);
-    write_f32(buffer, loc.z);
+    let eulers = loc.euler_angles();
+    write_f32(buffer, eulers.0);
+    write_f32(buffer, eulers.1);
+    write_f32(buffer, eulers.2);
 }
 
 pub fn write_angle(buffer: &mut Vec<u8>, angle: f32) {
-    write_u8(buffer, (angle / 360.0 * 256.0) as u8);
+    write_i8(buffer, axis_to_angle(angle));
 }
 
 pub fn write_direction_as_angles(buffer: &mut Vec<u8>, loc: &Direction) {

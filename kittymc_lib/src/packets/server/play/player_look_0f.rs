@@ -6,8 +6,8 @@ use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct PlayerLookPacket {
-    direction: Direction,
-    on_ground: bool,
+    pub direction: Direction,
+    pub on_ground: bool,
 }
 
 impl SerializablePacket for PlayerLookPacket {

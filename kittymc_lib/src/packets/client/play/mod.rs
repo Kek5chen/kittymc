@@ -1,5 +1,8 @@
 pub mod chat_message_0f;
 pub mod chunk_data_20;
+pub mod entity_head_look_36;
+pub mod entity_look_28;
+pub mod entity_relative_move_26;
 pub mod entity_status_1b;
 pub mod join_game_23;
 pub mod keep_alive_1f;
@@ -19,6 +22,9 @@ pub mod window_items_14;
 
 pub use chat_message_0f::ClientChatMessagePacket;
 pub use chunk_data_20::ChunkDataPacket;
+pub use entity_head_look_36::EntityHeadLookPacket;
+pub use entity_look_28::EntityLookPacket;
+pub use entity_relative_move_26::EntityRelativeMovePacket;
 pub use entity_status_1b::EntityStatusPacket;
 pub use join_game_23::JoinGamePacket;
 pub use keep_alive_1f::ServerKeepAlivePacket;

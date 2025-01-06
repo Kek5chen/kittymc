@@ -3,6 +3,8 @@ use crate::client::{Client, ClientInfo};
 use crate::player::Player;
 use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::client::login::*;
+use kittymc_lib::packets::client::play::entity_look_28::EntityLookPacket;
+use kittymc_lib::packets::client::play::entity_relative_move_26::EntityRelativeMovePacket;
 use kittymc_lib::packets::client::play::player_list_item_2e::PlayerListItemAction;
 use kittymc_lib::packets::client::play::*;
 use kittymc_lib::packets::client::status::*;
@@ -113,6 +115,13 @@ impl KittyMCServer {
                         packet.location.y as f32,
                         packet.location.z as f32,
                     );
+                    {
+                        let player = self.players.get_mut(&uuid).unwrap();
+                        player.set_position(&packet.location);
+                        player.set_direction(&packet.direction);
+                    }
+                    self.update_global_position(uuid)?;
+                    self.update_global_rotation(uuid)?;
                     let mut chunk_manager = self.chunk_manager.write().unwrap();
                     client.update_chunks(&location, &mut chunk_manager)?;
                 }
@@ -122,8 +131,20 @@ impl KittyMCServer {
                         packet.location.y as f32,
                         packet.location.z as f32,
                     );
+                    {
+                        let player = self.players.get_mut(&uuid).unwrap();
+                        player.set_position(&packet.location);
+                    }
+                    self.update_global_position(uuid)?;
                     let mut chunk_manager = self.chunk_manager.write().unwrap();
                     client.update_chunks(&location, &mut chunk_manager)?;
+                }
+                Packet::PlayerLook(packet) => {
+                    {
+                        let player = self.players.get_mut(&uuid).unwrap();
+                        player.set_direction(&packet.direction);
+                    }
+                    self.update_global_rotation(uuid)?;
                 }
                 Packet::ChatMessage(chat) => {
                     let name = self.get_name_from_uuid(uuid).unwrap_or_else(|| "UNNAMED");
@@ -133,6 +154,83 @@ impl KittyMCServer {
                 _ => (),
             }
         }
+    }
+
+    pub fn update_global_position(&mut self, uuid: &Uuid) -> Result<(), KittyMCError> {
+        let current_pos;
+        let last_pos;
+        let entity_id;
+        {
+            let Some(player) = self.players.get(uuid) else {
+                return Ok(());
+            };
+
+            current_pos = player.position();
+            last_pos = player.last_position();
+            entity_id = player.id();
+        };
+        let relative = current_pos - last_pos;
+
+        if relative.magnitude() > 4.0 {
+            // self.send_to_all(
+            //     None,
+            //     &EntityTeleportPacket {
+            //         entity_id,
+            //         location: current_pos,
+            //         on_ground: false,
+            //     },
+            // )
+            Ok(())
+        } else {
+            let delta_x = ((current_pos.x * 32. - last_pos.x * 32.) * 128.0).round() as i16;
+            let delta_y = ((current_pos.y * 32. - last_pos.y * 32.) * 128.0).round() as i16;
+            let delta_z = ((current_pos.z * 32. - last_pos.z * 32.) * 128.0).round() as i16;
+
+            self.send_to_all(
+                None,
+                &EntityRelativeMovePacket {
+                    entity_id,
+                    delta_x,
+                    delta_y,
+                    delta_z,
+                    on_ground: false,
+                },
+            )
+        }
+    }
+
+    pub fn update_global_rotation(&mut self, uuid: &Uuid) -> Result<(), KittyMCError> {
+        let current_rot;
+        let last_rot;
+        let entity_id;
+        {
+            let Some(player) = self.players.get(uuid) else {
+                return Ok(());
+            };
+
+            current_rot = player.direction().clone();
+            last_rot = player.last_direction().clone();
+            entity_id = player.id();
+        };
+
+        if (current_rot.x - last_rot.x).abs() > f32::EPSILON {
+            let _ = self.send_to_all(
+                None,
+                &EntityHeadLookPacket {
+                    entity_id,
+                    yaw: current_rot.x,
+                },
+            );
+        }
+
+        self.send_to_all(
+            None,
+            &EntityLookPacket {
+                entity_id,
+                direction: current_rot,
+                on_ground: false,
+            },
+        )
     }
 
     fn add_player_to_all_player_lists(

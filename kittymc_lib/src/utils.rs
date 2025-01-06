@@ -54,6 +54,10 @@ pub fn to_mc_rainbow(text: &str, bold: bool) -> String {
     result
 }
 
+pub fn axis_to_angle(angle: f32) -> i8 {
+    (angle / 360. * 256.) as i8
+}
+
 #[test]
 fn test_cracked_uuid() {
     use std::str::FromStr;

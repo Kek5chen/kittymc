@@ -1,4 +1,4 @@
-use nalgebra::{Vector2, Vector3};
+use nalgebra::{Rotation3, Vector2, Vector3};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::ops::{Add, AddAssign};
@@ -344,4 +344,4 @@ impl From<&Location> for ChunkPosition {
 pub type Location = Vector3<f32>;
 pub type Location2 = Vector3<f64>;
 pub type Direction = Vector2<f32>;
-pub type Rotation = Vector3<f32>;
+pub type Rotation = Rotation3<f32>;

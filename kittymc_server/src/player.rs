@@ -9,6 +9,8 @@ pub struct Player {
     entity_id: u32,
     position: Location2,
     direction: Direction,
+    last_position: Location2,
+    last_direction: Direction,
 }
 
 impl Player {
@@ -40,6 +42,8 @@ impl Player {
             entity_id: id,
             position: *position,
             direction: *direction,
+            last_position: *position,
+            last_direction: *direction,
         }
     }
 
@@ -59,7 +63,25 @@ impl Player {
         &self.position
     }
 
+    pub fn set_position(&mut self, position: &Location2) {
+        self.last_position = self.position;
+        self.position = *position;
+    }
+
     pub fn direction(&self) -> &Direction {
         &self.direction
+    }
+
+    pub fn set_direction(&mut self, direction: &Direction) {
+        self.last_direction = self.direction;
+        self.direction = *direction;
+    }
+
+    pub fn last_position(&self) -> &Location2 {
+        &self.last_position
+    }
+
+    pub fn last_direction(&self) -> &Direction {
+        &self.last_direction
     }
 }
