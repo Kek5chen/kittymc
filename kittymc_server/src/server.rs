@@ -203,6 +203,8 @@ impl KittyMCServer {
         );
         let uuid = player.uuid().clone();
 
+        client.set_uuid(uuid.clone());
+
         let compression = SetCompressionPacket::default();
         client.send_packet(&compression)?;
         client.set_compression(true, compression.threshold);
@@ -223,6 +225,7 @@ impl KittyMCServer {
         client.send_packet(&UnlockRecipesPacket::default())?;
         for player in &self.players {
             client.add_player_to_player_list(player.1)?; // TODO: Add all players in one packet
+            client.spawn_player(player.1)?;
         }
 
         // Another Player List Item

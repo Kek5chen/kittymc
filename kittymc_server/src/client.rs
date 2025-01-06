@@ -16,10 +16,11 @@ use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::client::play::keep_alive_1f::ServerKeepAlivePacket;
 use kittymc_lib::packets::client::play::player_list_item_2e::PlayerListItemAction;
 use kittymc_lib::packets::client::play::{
-    ChunkDataPacket, GameMode, PlayerListItemPacket, UnloadChunkPacket,
+    ChunkDataPacket, GameMode, PlayerListItemPacket, SpawnPlayerPacket, UnloadChunkPacket,
 };
 use kittymc_lib::packets::packet_serialization::compress_packet;
 use kittymc_lib::packets::{packet_serialization::SerializablePacket, CompressionInfo, Packet};
+use kittymc_lib::subtypes::metadata::EntityMetadata;
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::{ChunkPosition, Location};
 use kittymc_lib::utils::rainbowize_cool_people_textcomp;
@@ -39,6 +40,7 @@ pub struct Client {
     socket: TcpStream,
     addr: SocketAddr,
     current_state: State,
+    uuid: Uuid,
     last_heartbeat: Instant,
     last_heartbeat_id: u64,
     last_backbeat: Instant,
@@ -77,6 +79,7 @@ impl Client {
             socket,
             addr,
             current_state: State::Handshake,
+            uuid: Uuid::default(),
             last_heartbeat: Instant::now(),
             last_heartbeat_id: 0,
             last_backbeat: Instant::now(),
@@ -96,6 +99,7 @@ impl Client {
             socket: self.socket.try_clone()?,
             addr: self.addr,
             current_state: self.current_state,
+            uuid: Uuid::default(),
             last_heartbeat: self.last_heartbeat,
             last_heartbeat_id: self.last_heartbeat_id,
             last_backbeat: self.last_backbeat,
@@ -120,6 +124,10 @@ impl Client {
         }
 
         self.current_state = state;
+    }
+
+    pub fn set_uuid(&mut self, uuid: Uuid) {
+        self.uuid = uuid;
     }
 
     pub fn set_compression(&mut self, compress: bool, threshold: u32) {
@@ -179,6 +187,19 @@ impl Client {
                     display_name,
                 },
             )],
+        })
+    }
+
+    pub fn spawn_player(&mut self, player: &Player) -> Result<(), KittyMCError> {
+        if &self.uuid == player.uuid() {
+            return Ok(());
+        }
+        self.send_packet(&SpawnPlayerPacket {
+            entity_id: player.id(),
+            player_uuid: player.uuid().clone(),
+            location: *player.position(),
+            direction: *player.direction(),
+            metadata: EntityMetadata::default(),
         })
     }
 
