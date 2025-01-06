@@ -13,6 +13,7 @@ use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::metadata::PlayerMetadata;
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::{Direction, Location, Location2};
+use kittymc_lib::utils::rainbowize_cool_people_textcomp;
 use log::{debug, error};
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
@@ -139,6 +140,7 @@ impl KittyMCServer {
         client: &mut Client,
         player: &Player,
     ) -> Result<(), KittyMCError> {
+        let display_name = rainbowize_cool_people_textcomp(player.name(), true);
         self.send_to_all(
             Some(client),
             &PlayerListItemPacket {
@@ -149,7 +151,7 @@ impl KittyMCServer {
                         properties: vec![],
                         game_mode: GameMode::Survival,
                         ping: 0, // fix ping
-                        display_name: None,
+                        display_name,
                     },
                 )],
             },
