@@ -10,13 +10,13 @@ use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::Location;
-use log::{debug, error};
+use log::debug;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::net::TcpListener;
 use std::sync::RwLock;
 use std::thread::sleep;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use tracing::{info, instrument, warn};
 use uuid::Uuid;
 
