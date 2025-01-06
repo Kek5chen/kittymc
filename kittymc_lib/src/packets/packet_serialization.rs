@@ -2,6 +2,7 @@ use crate::error::KittyMCError;
 use crate::packets::Packet;
 use crate::subtypes::{Direction, Location, Location2};
 use integer_encoding::VarInt;
+use log::warn;
 use miniz_oxide::deflate::compress_to_vec_zlib;
 use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;
 use std::mem::size_of;
@@ -377,6 +378,7 @@ pub fn write_block_location(buffer: &mut Vec<u8>, loc: &Location) {
 
     buffer.extend_from_slice(&packed.to_be_bytes());
 }
+
 pub fn write_location2(buffer: &mut Vec<u8>, loc: &Location2) {
     write_f64(buffer, loc.x);
     write_f64(buffer, loc.y);
@@ -386,6 +388,26 @@ pub fn write_location2(buffer: &mut Vec<u8>, loc: &Location2) {
 pub fn write_direction(buffer: &mut Vec<u8>, loc: &Direction) {
     write_f32(buffer, loc.x);
     write_f32(buffer, loc.y);
+}
+
+pub fn write_angle(buffer: &mut Vec<u8>, angle: f32) {
+    write_u8(buffer, (angle / 360.0 * 256.0) as u8);
+}
+
+pub fn write_direction_as_angles(buffer: &mut Vec<u8>, loc: &Direction) {
+    write_angle(buffer, loc.x);
+    write_angle(buffer, loc.y);
+}
+
+pub fn write_nbt(buffer: &mut Vec<u8>, value: &fastnbt::Value) {
+    let bytes = match fastnbt::to_bytes(value) {
+        Ok(data) => data,
+        Err(e) => {
+            warn!("Failed to serialize NBT data: {}", e);
+            return;
+        }
+    };
+    buffer.extend_from_slice(&bytes);
 }
 
 pub fn compress_packet(mut packet: &[u8], threshold: u32) -> Result<Vec<u8>, KittyMCError> {

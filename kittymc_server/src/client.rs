@@ -153,13 +153,15 @@ impl Client {
         &mut self,
         packet: &P,
     ) -> Result<(), KittyMCError> {
-        // debug!(
-        //     "[{}] OUT >>> {}(0x{:x?})({})",
-        //     self.addr,
-        //     P::name(),
-        //     P::id(),
-        //     P::id()
-        // );
+        if !matches!(P::name(), "ChunkDataPacket" | "UnloadChunkPacket") {
+            debug!(
+                "[{}] OUT >>> {}(0x{:x?})({})",
+                self.addr,
+                P::name(),
+                P::id(),
+                P::id()
+            );
+        }
         self.send_packet_raw(&packet.serialize())?;
         Ok(())
     }
@@ -173,7 +175,7 @@ impl Client {
                     name: player.name().to_string(),
                     properties: vec![],
                     game_mode: GameMode::Survival,
-                    ping: 0, // fix ping
+                    ping: 0, // TODO: fix ping
                     display_name,
                 },
             )],
@@ -279,7 +281,7 @@ impl Client {
         Ok(packet)
     }
 
-    /// Returns if all of its chunks could be loaded
+    /// Returns true if all of its chunks could be loaded
     pub fn load_chunks<'a, I>(
         &mut self,
         positions: I,

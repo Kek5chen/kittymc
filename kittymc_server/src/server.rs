@@ -10,7 +10,7 @@ use kittymc_lib::packets::packet_serialization::NamedPacket;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use kittymc_lib::packets::server::login::LoginStartPacket;
 use kittymc_lib::packets::Packet;
-use kittymc_lib::subtypes::metadata::PlayerMetadata;
+use kittymc_lib::subtypes::metadata::{EntityMetadata, PlayerMetadata};
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::{Direction, Location, Location2};
 use kittymc_lib::utils::rainbowize_cool_people_textcomp;
@@ -179,7 +179,7 @@ impl KittyMCServer {
                 player_uuid: player.uuid().clone(),
                 location: *player.position(),
                 direction: *player.direction(),
-                metadata: PlayerMetadata::default(),
+                metadata: EntityMetadata::default(),
             },
         )
     }
@@ -211,8 +211,8 @@ impl KittyMCServer {
         client.set_state(State::Play);
 
         client.send_packet(&JoinGamePacket::new(player.id()))?;
-        //self.spawn_player_to_all(&player)?;
         let _ = self.add_player_to_all_player_lists(client, &player);
+        self.spawn_player_to_all(&player)?;
         self.players.insert(uuid.clone(), player);
 
         client.send_packet(&ServerPluginMessagePacket::default_brand())?;

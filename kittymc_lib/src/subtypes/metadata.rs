@@ -1,8 +1,9 @@
 use crate::packets::packet_serialization::{
-    write_bool, write_f32, write_length_prefixed_string, write_u8, write_varint_u32,
+    write_bool, write_f32, write_length_prefixed_string, write_nbt, write_u8, write_varint_u32,
 };
 use crate::packets::server::play::client_settings_04::DisplayedSkinParts;
 use bitflags::bitflags;
+use std::collections::HashMap;
 
 bitflags! {
     #[derive(PartialEq, Eq, Debug, Copy, Clone)]
@@ -111,8 +112,8 @@ pub struct PlayerMetadata {
     pub score: u32,
     pub displayed_skin_parts: DisplayedSkinParts,
     pub main_hand: u8,
-    pub left_shoulder_entity_data: (), // for occupying parrot // TODO: NBT
-    pub right_shoulder_entity_data: (), // for occupying parrot // TODO: NBT
+    pub left_shoulder_entity_data: fastnbt::Value, // for occupying parrot // TODO: NBT
+    pub right_shoulder_entity_data: fastnbt::Value, // for occupying parrot // TODO: NBT
 }
 
 impl Default for PlayerMetadata {
@@ -123,8 +124,8 @@ impl Default for PlayerMetadata {
             score: 0,
             displayed_skin_parts: DisplayedSkinParts::empty(),
             main_hand: 1,
-            left_shoulder_entity_data: (),
-            right_shoulder_entity_data: (),
+            left_shoulder_entity_data: fastnbt::Value::Compound(HashMap::new()),
+            right_shoulder_entity_data: fastnbt::Value::Compound(HashMap::new()),
         }
     }
 }
@@ -136,6 +137,7 @@ impl PlayerMetadata {
         write_varint_u32(buffer, self.score);
         self.displayed_skin_parts.write(buffer);
         write_u8(buffer, self.main_hand);
-        // TODO: NBT
+        write_nbt(buffer, &self.left_shoulder_entity_data);
+        write_nbt(buffer, &self.right_shoulder_entity_data);
     }
 }
