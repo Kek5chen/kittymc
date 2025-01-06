@@ -1,4 +1,4 @@
 pub mod error;
 pub mod packets;
 pub mod subtypes;
-mod utils;
+pub mod utils;

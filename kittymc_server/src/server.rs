@@ -10,8 +10,9 @@ use kittymc_lib::packets::packet_serialization::NamedPacket;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use kittymc_lib::packets::server::login::LoginStartPacket;
 use kittymc_lib::packets::Packet;
+use kittymc_lib::subtypes::metadata::PlayerMetadata;
 use kittymc_lib::subtypes::state::State;
-use kittymc_lib::subtypes::Location;
+use kittymc_lib::subtypes::{Direction, Location, Location2};
 use log::{debug, error};
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
@@ -59,12 +60,15 @@ impl KittyMCServer {
 
     fn send_to_all<P: SerializablePacket + Debug + NamedPacket>(
         &mut self,
-        sender: &mut Client,
+        sender: Option<&mut Client>,
         packet: &P,
     ) -> Result<(), KittyMCError> {
         let mut error = Ok(());
 
-        if let Err(e) = sender.send_packet(packet) {
+        if let Err(e) = match sender {
+            Some(sender) => sender.send_packet(packet),
+            None => Ok(()),
+        } {
             error = Err(e);
         }
         for client in self.clients.write().unwrap().iter_mut() {
@@ -123,7 +127,7 @@ impl KittyMCServer {
                 Packet::ChatMessage(chat) => {
                     let name = self.get_name_from_uuid(uuid).unwrap_or_else(|| "UNNAMED");
                     let broadcast = ClientChatMessagePacket::new_chat_message(name, &chat.message);
-                    self.send_to_all(client, &broadcast)?;
+                    self.send_to_all(Some(client), &broadcast)?;
                 }
                 _ => (),
             }
@@ -136,7 +140,7 @@ impl KittyMCServer {
         player: &Player,
     ) -> Result<(), KittyMCError> {
         self.send_to_all(
-            client,
+            Some(client),
             &PlayerListItemPacket {
                 actions: vec![(
                     player.uuid().clone(),
@@ -158,9 +162,22 @@ impl KittyMCServer {
         player: &Player,
     ) -> Result<(), KittyMCError> {
         self.send_to_all(
-            client,
+            Some(client),
             &PlayerListItemPacket {
                 actions: vec![(player.uuid().clone(), PlayerListItemAction::RemovePlayer)],
+            },
+        )
+    }
+
+    fn spawn_player_to_all(&mut self, player: &Player) -> Result<(), KittyMCError> {
+        self.send_to_all(
+            None,
+            &SpawnPlayerPacket {
+                entity_id: player.id(),
+                player_uuid: player.uuid().clone(),
+                location: *player.position(),
+                direction: *player.direction(),
+                metadata: PlayerMetadata::default(),
             },
         )
     }
@@ -176,7 +193,12 @@ impl KittyMCServer {
             uuid: success.uuid.clone(),
         };
 
-        let player = Player::from_client_info(client_info, self.get_next_entity_id());
+        let player = Player::from_client_info(
+            client_info,
+            self.get_next_entity_id(),
+            &Location2::new(0., 5., 0.),
+            &Direction::zeros(),
+        );
         let uuid = player.uuid().clone();
 
         let compression = SetCompressionPacket::default();
@@ -187,6 +209,7 @@ impl KittyMCServer {
         client.set_state(State::Play);
 
         client.send_packet(&JoinGamePacket::new(player.id()))?;
+        self.spawn_player_to_all(&player)?;
         let _ = self.add_player_to_all_player_lists(client, &player);
         self.players.insert(uuid.clone(), player);
 
@@ -197,8 +220,9 @@ impl KittyMCServer {
         client.send_packet(&EntityStatusPacket::default())?;
         client.send_packet(&UnlockRecipesPacket::default())?;
         for player in &self.players {
-            client.add_player_to_player_list(player.1)?;
+            client.add_player_to_player_list(player.1)?; // TODO: Add all players in one packet
         }
+
         // Another Player List Item
         client.send_packet(&ServerPlayerPositionAndLookPacket::default())?;
         // World Border
@@ -271,7 +295,7 @@ impl KittyMCServer {
                         debug!("[{}] Client successfully registered", client.addr());
 
                         self.send_to_all(
-                            &mut client,
+                            Some(&mut client),
                             &ClientChatMessagePacket::new_join_message(
                                 self.get_name_from_uuid(&uuid).unwrap(),
                             ),
@@ -321,7 +345,7 @@ impl KittyMCServer {
 
                 let _ = self.remove_player_from_all_player_lists(&mut client, &player);
                 let _ = self.send_to_all(
-                    &mut client,
+                    Some(&mut client),
                     &ClientChatMessagePacket::new_quit_message(player.name()),
                 );
             }

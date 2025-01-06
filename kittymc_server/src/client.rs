@@ -22,6 +22,7 @@ use kittymc_lib::packets::packet_serialization::compress_packet;
 use kittymc_lib::packets::{packet_serialization::SerializablePacket, CompressionInfo, Packet};
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::{ChunkPosition, Location};
+use kittymc_lib::utils::rainbowize_cool_people_textcomp;
 
 const DEFAULT_CHUNK_LOAD_RADIUS: u32 = 4;
 
@@ -164,6 +165,7 @@ impl Client {
     }
 
     pub fn add_player_to_player_list(&mut self, player: &Player) -> Result<(), KittyMCError> {
+        let display_name = rainbowize_cool_people_textcomp(player.name(), true);
         self.send_packet(&PlayerListItemPacket {
             actions: vec![(
                 player.uuid().clone(),
@@ -172,7 +174,7 @@ impl Client {
                     properties: vec![],
                     game_mode: GameMode::Survival,
                     ping: 0, // fix ping
-                    display_name: None,
+                    display_name,
                 },
             )],
         })

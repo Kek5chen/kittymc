@@ -1,6 +1,6 @@
 use crate::error::KittyMCError;
 use crate::packets::packet_serialization::{
-    read_bool, read_length_prefixed_string, read_u8, read_varint_u32, SerializablePacket,
+    read_bool, read_length_prefixed_string, read_u8, read_varint_u32, write_u8, SerializablePacket,
 };
 use crate::packets::Packet;
 use bitflags::bitflags;
@@ -30,13 +30,19 @@ bitflags! {
     #[repr(transparent)]
     #[derive(PartialEq, Debug, Clone, Packet)]
     pub struct DisplayedSkinParts : u8 {
-        const cape = 0b0000_0001;
-        const jacket = 0b0000_0010;
-        const left_sleeve = 0b0000_0100;
-        const right_sleeve = 0b0000_1000;
-        const left_pants_leg = 0b0001_0000;
-        const right_pants_leg = 0b0010_0000;
-        const hat = 0b0100_0000;
+        const cape            = 0x01;
+        const jacket          = 0x02;
+        const left_sleeve     = 0x04;
+        const right_sleeve    = 0x08;
+        const left_pants_leg  = 0x10;
+        const right_pants_leg = 0x20;
+        const hat             = 0x40;
+    }
+}
+
+impl DisplayedSkinParts {
+    pub fn write(&self, buffer: &mut Vec<u8>) {
+        write_u8(buffer, self.bits());
     }
 }
 

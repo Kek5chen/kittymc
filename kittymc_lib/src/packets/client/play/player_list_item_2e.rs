@@ -3,7 +3,7 @@ use crate::packets::packet_serialization::{
     write_bool, write_length_prefixed_string, write_uuid, write_varint_u32, SerializablePacket,
 };
 use crate::packets::wrap_packet;
-use crate::subtypes::TextComponent;
+use crate::subtypes::components::TextComponent;
 use kittymc_macros::Packet;
 use log::warn;
 use uuid::Uuid;

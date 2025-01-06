@@ -1,6 +1,6 @@
 use crate::packets::packet_serialization::{write_i8, SerializablePacket};
 use crate::packets::wrap_packet;
-use crate::subtypes::Component;
+use crate::subtypes::components::Component;
 use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Copy)]

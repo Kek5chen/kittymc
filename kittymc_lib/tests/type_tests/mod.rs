@@ -1,6 +1,7 @@
-use kittymc_lib::subtypes::{
-    BaseComponent, ClickEvent, Color, Component, HoverEvent, TextComponent, TranslationComponent,
+use kittymc_lib::subtypes::components::{
+    BaseComponent, ClickEvent, Component, HoverEvent, TextComponent, TranslationComponent,
 };
+use kittymc_lib::subtypes::Color;
 use serde_json::Value;
 
 #[test]
