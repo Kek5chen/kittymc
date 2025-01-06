@@ -2,6 +2,7 @@ use kittymc_lib::packets::packet_serialization::NamedPacket;
 use log::error;
 use std::collections::HashSet;
 use std::fmt::Debug;
+use std::io;
 use std::io::{ErrorKind, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::time::{Duration, Instant};
@@ -81,6 +82,25 @@ impl Client {
             brand: None,
             loaded_chunks: HashSet::new(),
             view_distance: DEFAULT_CHUNK_LOAD_RADIUS,
+        })
+    }
+
+    pub fn try_clone(&self) -> io::Result<Client> {
+        Ok(Client {
+            connected_at: self.connected_at,
+            socket: self.socket.try_clone()?,
+            addr: self.addr,
+            current_state: self.current_state,
+            last_heartbeat: self.last_heartbeat,
+            last_heartbeat_id: self.last_heartbeat_id,
+            last_backbeat: self.last_backbeat,
+            buffer: vec![],
+            buffer_size: 0,
+            fragmented: false,
+            compression: self.compression.clone(),
+            brand: self.brand.clone(),
+            loaded_chunks: self.loaded_chunks.clone(),
+            view_distance: self.view_distance,
         })
     }
 

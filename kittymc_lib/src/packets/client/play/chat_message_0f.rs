@@ -23,6 +23,13 @@ impl ClientChatMessagePacket {
             position: ChatPosition::Chat,
         }
     }
+
+    pub fn new_chat_message(name: &str, message: &str) -> Self {
+        ClientChatMessagePacket {
+            text: Component::default_chat(name, message),
+            position: ChatPosition::Chat,
+        }
+    }
 }
 
 impl SerializablePacket for ClientChatMessagePacket {

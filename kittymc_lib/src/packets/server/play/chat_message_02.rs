@@ -5,7 +5,7 @@ use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct ServerChatMessagePacket {
-    message: String,
+    pub message: String,
 }
 
 impl SerializablePacket for ServerChatMessagePacket {

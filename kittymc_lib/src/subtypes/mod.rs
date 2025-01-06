@@ -174,7 +174,7 @@ impl TextComponent {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, TypedBuilder)]
 pub struct TranslationComponent {
     pub translate: String,
     pub with: Vec<Component>,
@@ -198,6 +198,8 @@ pub enum Component {
     Score,    // TODO
     Selector, // TODO
 }
+
+const CHAT_TRANSLATION_TAG: &'static str = "chat.type.text";
 
 impl Component {
     pub fn write(&self, buffer: &mut Vec<u8>) {
@@ -224,6 +226,34 @@ impl Component {
                         )])
                         .build(),
                 )
+                .build(),
+        )
+    }
+
+    pub fn default_chat(player: &str, message: &str) -> Self {
+        Component::Translation(
+            TranslationComponent::builder()
+                .translate(CHAT_TRANSLATION_TAG.to_string())
+                .with(vec![
+                    Component::Text(
+                        TextComponent::builder()
+                            .text(player)
+                            .options(
+                                BaseComponent::builder()
+                                    .bold(true)
+                                    .italic(true)
+                                    .color(Color::DarkPurple)
+                                    .build(),
+                            )
+                            .build(),
+                    ),
+                    Component::Text(
+                        TextComponent::builder()
+                            .text(message)
+                            .options(BaseComponent::builder().color(Color::Gray).build())
+                            .build(),
+                    ),
+                ])
                 .build(),
         )
     }

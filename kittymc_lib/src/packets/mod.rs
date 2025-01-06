@@ -18,7 +18,7 @@ pub mod client;
 pub mod packet_serialization;
 pub mod server;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct CompressionInfo {
     pub enabled: bool,
     pub compression_threshold: u32,

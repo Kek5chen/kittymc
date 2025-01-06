@@ -10,7 +10,7 @@ use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::Location;
-use log::debug;
+use log::{debug, error};
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::net::TcpListener;
@@ -54,8 +54,10 @@ impl KittyMCServer {
 
     fn send_to_all<P: SerializablePacket + Debug + NamedPacket>(
         &mut self,
+        sender: &mut Client,
         packet: &P,
     ) -> Result<(), KittyMCError> {
+        sender.send_packet(packet)?;
         for client in self.clients.write().unwrap().iter_mut() {
             client.1.send_packet(packet)?;
         }
@@ -63,7 +65,7 @@ impl KittyMCServer {
         Ok(())
     }
 
-    fn handle_client(&self, client: &mut Client) -> Result<bool, KittyMCError> {
+    fn handle_client(&mut self, uuid: &Uuid, client: &mut Client) -> Result<bool, KittyMCError> {
         if !client.do_heartbeat()? {
             debug!(
                 "[{}] Client didn't respond to heartbeats for too long",
@@ -106,6 +108,11 @@ impl KittyMCServer {
                     );
                     let mut chunk_manager = self.chunk_manager.write().unwrap();
                     client.update_chunks(&location, &mut chunk_manager)?;
+                }
+                Packet::ChatMessage(chat) => {
+                    let name = self.get_name_from_uuid(uuid).unwrap_or_else(|| "UNNAMED");
+                    let broadcast = ClientChatMessagePacket::new_chat_message(name, &chat.message);
+                    self.send_to_all(client, &broadcast)?;
                 }
                 _ => (),
             }
@@ -204,47 +211,49 @@ impl KittyMCServer {
                 Ok(opt_uuid) => match opt_uuid {
                     Some(uuid) => {
                         debug!("[{}] Client successfully registered", client.addr());
-                        self.clients.write().unwrap().insert(uuid.clone(), client);
 
-                        self.send_to_all(&ClientChatMessagePacket::new_join_message(
-                            self.get_name_from_uuid(&uuid).unwrap(),
-                        ))?;
+                        self.send_to_all(
+                            &mut client,
+                            &ClientChatMessagePacket::new_join_message(
+                                self.get_name_from_uuid(&uuid).unwrap(),
+                            ),
+                        )?;
+
+                        self.clients.write().unwrap().insert(uuid.clone(), client);
                     }
                     None => self.registering_clients.push_back(client),
                 },
             }
         }
 
-        let mut disconnect_uuids = vec![];
-
         {
-            let mut clients = self.clients.write().unwrap();
-            for client in clients.iter_mut() {
-                match self.handle_client(client.1) {
+            let uuids: Vec<_> = self
+                .clients
+                .write()
+                .unwrap()
+                .iter()
+                .map(|c| c.0.clone())
+                .collect();
+            for uuid in uuids {
+                let Some(mut client) = self.clients.write().unwrap().remove(&uuid) else {
+                    continue;
+                };
+                match self.handle_client(&uuid, &mut client) {
                     Ok(keep_alive) => {
-                        if !keep_alive {
-                            info!("[{}] Forced Client disconnect", client.1.addr());
-                            disconnect_uuids.push(client.0.clone());
+                        if keep_alive {
+                            self.clients.write().unwrap().insert(uuid, client);
+                        } else {
+                            info!("[{}] Forced Client disconnect", client.addr());
                         }
                     }
                     Err(KittyMCError::Disconnected) => {
-                        info!("[{}] Client disconnected", client.1.addr());
-                        disconnect_uuids.push(client.0.clone())
+                        info!("[{}] Client disconnected", client.addr());
                     }
                     Err(e) => {
-                        warn!(
-                            "[{}] Disconnected client due to error: {e}",
-                            client.1.addr()
-                        );
-                        disconnect_uuids.push(client.0.clone())
+                        warn!("[{}] Disconnected client due to error: {e}", client.addr());
                     }
                 }
             }
-        }
-
-        let mut clients = self.clients.write().unwrap();
-        for uuid in disconnect_uuids {
-            clients.remove(&uuid);
         }
 
         Ok(())

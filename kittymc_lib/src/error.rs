@@ -51,4 +51,6 @@ pub enum KittyMCError {
     InvalidDecompressedPacketLength(usize, usize), // Announced, Actual
     #[error("Thread exited unexpectedly: {0:?}")]
     ThreadError(Box<dyn Any + Send>),
+    #[error("The requested client was not found")]
+    ClientNotFound,
 }
