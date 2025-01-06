@@ -98,8 +98,8 @@ bitflags! {
         const on_fire        = 0x01;
         const crouched       = 0x02;
         const unused         = 0x04; // previously riding
-        const sprinting      = 0x08; // previously riding
-        const unused_2       = 0x10; // previously eating/drinking/blocking (use hand state now)
+        const sprinting      = 0x08;
+        const unused_2       = 0x10;
         const invisible      = 0x20; // previously eating/drinking/blocking (use hand state now)
         const glowing_effect = 0x40;
         const elytra_flying  = 0x80;

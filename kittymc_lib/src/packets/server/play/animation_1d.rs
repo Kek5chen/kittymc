@@ -6,7 +6,7 @@ use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct ClientAnimationPacket {
-    hand: Hand,
+    pub hand: Hand,
 }
 
 impl SerializablePacket for ClientAnimationPacket {

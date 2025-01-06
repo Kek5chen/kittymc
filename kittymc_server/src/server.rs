@@ -3,6 +3,7 @@ use crate::client::{Client, ClientInfo};
 use crate::player::Player;
 use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::client::login::*;
+use kittymc_lib::packets::client::play::animation_06::{AnimationType, ServerAnimationPacket};
 use kittymc_lib::packets::client::play::entity_look_28::EntityLookPacket;
 use kittymc_lib::packets::client::play::entity_relative_move_26::EntityRelativeMovePacket;
 use kittymc_lib::packets::client::play::player_list_item_2e::PlayerListItemAction;
@@ -11,6 +12,7 @@ use kittymc_lib::packets::client::status::*;
 use kittymc_lib::packets::packet_serialization::NamedPacket;
 use kittymc_lib::packets::packet_serialization::SerializablePacket;
 use kittymc_lib::packets::server::login::LoginStartPacket;
+use kittymc_lib::packets::server::play::client_settings_04::Hand;
 use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::metadata::EntityMetadata;
 use kittymc_lib::subtypes::state::State;
@@ -150,6 +152,20 @@ impl KittyMCServer {
                     let name = self.get_name_from_uuid(uuid).unwrap_or_else(|| "UNNAMED");
                     let broadcast = ClientChatMessagePacket::new_chat_message(name, &chat.message);
                     self.send_to_all(Some(client), &broadcast)?;
+                }
+                Packet::ClientAnimation(animation) => {
+                    let entity_id = self.players.get(uuid).unwrap().id();
+                    match animation.hand {
+                        Hand::Left => self.send_to_all(
+                            None,
+                            &ServerAnimationPacket {
+                                entity_id,
+                                animation: AnimationType::SwingMainArm,
+                            },
+                        )?,
+                        Hand::Right => {}
+                        _ => (),
+                    }
                 }
                 _ => (),
             }

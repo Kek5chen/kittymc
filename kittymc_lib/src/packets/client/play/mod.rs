@@ -1,3 +1,4 @@
+pub mod animation_06;
 pub mod chat_message_0f;
 pub mod chunk_data_20;
 pub mod entity_head_look_36;
