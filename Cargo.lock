@@ -250,6 +250,7 @@ dependencies = [
  "miniz_oxide",
  "nalgebra",
  "num-traits",
+ "paste",
  "proc-macro2",
  "rand",
  "serde",
