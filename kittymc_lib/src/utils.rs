@@ -2,6 +2,8 @@ use crate::error::KittyMCError;
 use crate::subtypes::components::TextComponent;
 use uuid::{Builder, Uuid};
 
+pub const KITTYMC_TAG: &str = "§4[§5K§6I§eT§aT§bY §dMC§4]§r";
+
 pub fn generate_cracked_uuid(name: &str) -> Result<Uuid, KittyMCError> {
     if name.len() > 16 {
         return Err(KittyMCError::TooMuchData(name.len(), 16));

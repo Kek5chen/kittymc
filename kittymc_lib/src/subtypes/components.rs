@@ -1,6 +1,6 @@
 use crate::packets::packet_serialization::write_length_prefixed_string;
 use crate::subtypes::Color;
-use crate::utils::rainbowize_cool_people;
+use crate::utils::{rainbowize_cool_people, to_mc_rainbow, KITTYMC_TAG};
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
@@ -144,6 +144,18 @@ impl Component {
 
     pub fn default_quit(player: &str) -> Self {
         Self::default_state_message(player, "quit")
+    }
+
+    pub fn default_restart_disconnect() -> Self {
+        Component::Text(
+            TextComponent::builder()
+                .text(format!(
+                    "{KITTYMC_TAG}\n\n§7The server is restarting.\n\n{}",
+                    to_mc_rainbow("Please wait :3", true)
+                ))
+                .options(BaseComponent::builder().color(Color::Gray).build())
+                .build(),
+        )
     }
 
     pub fn default_state_message(player_name: &str, verb: &str) -> Self {

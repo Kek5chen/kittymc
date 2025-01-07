@@ -10,3 +10,4 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 log = "0.4.22"
 rand = "0.9.0-beta.1"
+ctrlc = "3.4.5"

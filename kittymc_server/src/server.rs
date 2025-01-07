@@ -4,6 +4,7 @@ use crate::player::Player;
 use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::client::login::*;
 use kittymc_lib::packets::client::play::animation_06::{AnimationType, ServerAnimationPacket};
+use kittymc_lib::packets::client::play::disconnect_1a::DisconnectPlayPacket;
 use kittymc_lib::packets::client::play::entity_look_28::EntityLookPacket;
 use kittymc_lib::packets::client::play::entity_relative_move_26::EntityRelativeMovePacket;
 use kittymc_lib::packets::client::play::player_list_item_2e::PlayerListItemAction;
@@ -25,7 +26,7 @@ use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::io::ErrorKind;
 use std::net::TcpListener;
-use std::sync::RwLock;
+use std::sync::{Arc, Mutex, RwLock};
 use std::thread::sleep;
 use std::time::Duration;
 use tracing::{info, instrument, warn};
@@ -39,6 +40,7 @@ pub struct KittyMCServer {
     registering_clients: VecDeque<Client>,
     chunk_manager: RwLock<ChunkManager>,
     next_entity_id: u32,
+    shutdown_signal: Arc<Mutex<bool>>,
 }
 
 #[allow(dead_code)]
@@ -58,6 +60,7 @@ impl KittyMCServer {
             registering_clients: VecDeque::new(),
             chunk_manager: RwLock::new(ChunkManager::new()),
             next_entity_id: 0,
+            shutdown_signal: Arc::new(Mutex::new(false)),
         })
     }
 
@@ -503,9 +506,39 @@ impl KittyMCServer {
         Ok(())
     }
 
+    pub fn setup_shutdown_signal_handler(&self) {
+        let mut signal_sender = self.shutdown_signal.clone();
+        ctrlc::set_handler(move || {
+            if *signal_sender.lock().unwrap() {
+                std::process::exit(1);
+            }
+            warn!("Received shutdown signal. Shutting down...");
+            *signal_sender.lock().unwrap() = true;
+        })
+        .expect("Error setting Ctrl-C shutdown handler");
+    }
+
+    #[instrument(skip(self))]
+    pub fn shutdown(&mut self) {
+        for (uuid, client) in self.clients.write().unwrap().iter_mut() {
+            client
+                .send_packet(&DisconnectPlayPacket::default_restart())
+                .unwrap()
+        }
+    }
+
     #[instrument(skip(self))]
     pub fn run(&mut self) -> Result<(), KittyMCError> {
+        self.setup_shutdown_signal_handler();
         loop {
+            if *self.shutdown_signal.lock().unwrap() {
+                info!("Acknowledged shutdown signal. Initiating shut down...");
+
+                self.shutdown();
+
+                info!("Shut down complete. Bye bye!");
+                return Ok(());
+            }
             // TODO: Monitor if this runs fine
             sleep(Duration::from_millis(1));
             if let Err(e) = self.handle_clients() {

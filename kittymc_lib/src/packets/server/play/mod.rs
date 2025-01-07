@@ -5,6 +5,7 @@ pub mod client_keep_alive_0b;
 pub mod client_player_position_and_look_0e;
 pub mod client_plugin_message_09;
 pub mod client_settings_04;
+pub mod entity_action_15;
 pub mod player_digging_14;
 pub mod player_look_0f;
 pub mod player_position_0d;

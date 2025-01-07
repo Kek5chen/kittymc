@@ -7,6 +7,7 @@ use crate::packets::packet_serialization::{
 };
 use crate::packets::server::handshake::*;
 use crate::packets::server::login::*;
+use crate::packets::server::play::entity_action_15::EntityActionPacket;
 use crate::packets::server::play::*;
 use crate::packets::server::status::*;
 use crate::subtypes::state::State;
@@ -45,6 +46,7 @@ pub enum Packet {
     ClientAnimation(ClientAnimationPacket),
     ChatMessage(ServerChatMessagePacket),
     PlayerDigging(PlayerDiggingPacket),
+    EntityAction(EntityActionPacket),
 }
 
 impl Packet {
@@ -186,6 +188,7 @@ impl Packet {
                 0xE => ClientPlayerPositionAndLookPacket::deserialize(data)?,
                 0xF => PlayerLookPacket::deserialize(data)?,
                 0x14 => PlayerDiggingPacket::deserialize(data)?,
+                0x15 => EntityActionPacket::deserialize(data)?,
                 0x1A => ClientHeldItemChangePacket::deserialize(data)?,
                 0x1D => ClientAnimationPacket::deserialize(data)?,
                 _ => return Err(KittyMCError::NotImplemented(packet_id, full_packet_len)),

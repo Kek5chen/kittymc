@@ -3,6 +3,7 @@ pub mod block_break_animation_08;
 pub mod block_change_0b;
 pub mod chat_message_0f;
 pub mod chunk_data_20;
+pub mod disconnect_1a;
 pub mod entity_head_look_36;
 pub mod entity_look_28;
 pub mod entity_relative_move_26;
