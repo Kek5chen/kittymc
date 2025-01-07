@@ -51,6 +51,7 @@ pub struct Client {
     brand: Option<String>,
     loaded_chunks: HashSet<ChunkPosition>,
     view_distance: u32,
+    pub(crate) load_initial_chunks: bool,
 }
 
 #[allow(dead_code)]
@@ -90,6 +91,7 @@ impl Client {
             brand: None,
             loaded_chunks: HashSet::new(),
             view_distance: DEFAULT_CHUNK_LOAD_RADIUS,
+            load_initial_chunks: true,
         })
     }
 
@@ -110,6 +112,7 @@ impl Client {
             brand: self.brand.clone(),
             loaded_chunks: self.loaded_chunks.clone(),
             view_distance: self.view_distance,
+            load_initial_chunks: self.load_initial_chunks,
         })
     }
 

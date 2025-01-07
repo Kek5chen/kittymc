@@ -90,6 +90,16 @@ impl KittyMCServer {
         error
     }
 
+    fn send_initial_chunks(&mut self, client: &mut Client) -> Result<(), KittyMCError> {
+        if client.load_initial_chunks {
+            let mut chunk_manager = self.chunk_manager.write().unwrap();
+            if client.update_chunks(&Location::new(0., 5., 0.), &mut chunk_manager)? {
+                client.load_initial_chunks = false;
+            }
+        }
+        Ok(())
+    }
+
     fn handle_client(&mut self, uuid: &Uuid, client: &mut Client) -> Result<bool, KittyMCError> {
         if !client.do_heartbeat()? {
             debug!(
@@ -98,6 +108,8 @@ impl KittyMCServer {
             );
             return Ok(false);
         }
+
+        self.send_initial_chunks(client)?;
 
         loop {
             let Some(packet) = client.fetch_packet()? else {
@@ -383,15 +395,6 @@ impl KittyMCServer {
         client.send_packet(&SpawnPositionPacket::default())?;
         // Player Digging ???
         // Steer Vehicle ???
-
-        // after client answers send chunks
-
-        // FIXME: This is blocking right now. It's GOING TO stall the whole server if chunks
-        //   get harder to generate. This should definitely become an asynchronous stated thing.
-        let mut chunk_manager = self.chunk_manager.write().unwrap();
-        while !client.update_chunks(&Location::new(0., 5., 0.), &mut chunk_manager)? {
-            sleep(Duration::from_millis(5))
-        }
 
         Ok(uuid)
     }
