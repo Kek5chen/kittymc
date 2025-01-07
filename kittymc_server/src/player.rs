@@ -95,6 +95,7 @@ impl Player {
         self.game_mode
     }
 
+    #[allow(dead_code)]
     pub fn set_game_mode(&mut self, game_mode: GameMode) {
         self.game_mode = game_mode;
     }

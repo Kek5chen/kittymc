@@ -156,6 +156,7 @@ impl KittyMCServer {
                 Packet::ChatMessage(chat) => {
                     let name = self.get_name_from_uuid(uuid).unwrap_or_else(|| "UNNAMED");
                     let broadcast = ClientChatMessagePacket::new_chat_message(name, &chat.message);
+                    info!("<{}> {}", name, chat.message);
                     self.send_to_all(Some(client), &broadcast)?;
                 }
                 Packet::ClientAnimation(animation) => {
@@ -174,11 +175,11 @@ impl KittyMCServer {
                 }
                 Packet::PlayerDigging(digging) => {
                     let game_mode;
-                    let position;
+                    let _position;
                     {
                         let player = self.players.get(uuid).unwrap();
                         game_mode = player.game_mode();
-                        position = player.position();
+                        _position = player.position();
                     }
 
                     // TODO: Range Check
@@ -446,11 +447,11 @@ impl KittyMCServer {
                     Some(uuid) => {
                         debug!("[{}] Client successfully registered", client.addr());
 
+                        let name = self.get_name_from_uuid(&uuid).unwrap();
+                        info!("{name} joined the game");
                         self.send_to_all(
                             Some(&mut client),
-                            &ClientChatMessagePacket::new_join_message(
-                                self.get_name_from_uuid(&uuid).unwrap(),
-                            ),
+                            &ClientChatMessagePacket::new_join_message(name),
                         )?;
 
                         self.clients.write().unwrap().insert(uuid.clone(), client);
@@ -494,6 +495,7 @@ impl KittyMCServer {
                     error!("Player shouldn't have been removed yet!");
                     continue;
                 };
+                info!("{} left the game", player.name());
 
                 let _ = self.remove_player_from_all_player_lists(&mut client, &player);
                 let _ = self.send_to_all(
@@ -507,7 +509,7 @@ impl KittyMCServer {
     }
 
     pub fn setup_shutdown_signal_handler(&self) {
-        let mut signal_sender = self.shutdown_signal.clone();
+        let signal_sender = self.shutdown_signal.clone();
         ctrlc::set_handler(move || {
             if *signal_sender.lock().unwrap() {
                 std::process::exit(1);
@@ -520,7 +522,7 @@ impl KittyMCServer {
 
     #[instrument(skip(self))]
     pub fn shutdown(&mut self) {
-        for (uuid, client) in self.clients.write().unwrap().iter_mut() {
+        for (_, client) in self.clients.write().unwrap().iter_mut() {
             client
                 .send_packet(&DisconnectPlayPacket::default_restart())
                 .unwrap()
