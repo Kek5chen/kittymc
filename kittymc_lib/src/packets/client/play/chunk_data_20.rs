@@ -1,3 +1,4 @@
+use crate::subtypes::Location;
 use crate::packets::packet_serialization::{
     write_bool, write_i32, write_u64, write_u8, write_varint_u32, write_varint_u32_splice,
     SerializablePacket,
@@ -6,6 +7,7 @@ use crate::packets::wrap_packet;
 use kittymc_macros::Packet;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use crate::error::KittyMCError;
 
 const NUM_SECTIONS_PER_CHUNK_COLUMN: usize = 16;
 
@@ -125,13 +127,18 @@ impl Default for Chunk {
 
 impl Chunk {
     /// Get block ID at (x, y, z).
-    pub fn get_block(&self, x: usize, y: usize, z: usize) -> BlockStateId {
-        self.blocks[y * 16 * 16 + z * 16 + x]
+    pub fn get_block(&self, x: usize, y: usize, z: usize) -> Option<BlockStateId> {
+        self.blocks.get(y * 16 * 16 + z * 16 + x).cloned()
     }
 
     /// Set block ID at (x, y, z).
-    pub fn set_block(&mut self, x: usize, y: usize, z: usize, state: BlockStateId) {
-        self.blocks[y * 16 * 16 + z * 16 + x] = state;
+    pub fn set_block(&mut self, x: usize, y: usize, z: usize, state: BlockStateId) -> Result<(), KittyMCError> {
+        let Some(block) = self.blocks.get_mut(y * 16 * 16 + z * 16 + x) else {
+            return Err(KittyMCError::InvalidBlock(Location::new(x as f32, y as f32, z as f32)));
+        };
+
+        *block = state;
+        Ok(())
     }
 
     /// Check if a given section index (0..16) is entirely air (i.e., block == 0).
@@ -141,7 +148,7 @@ impl Chunk {
         for y in start_y..end_y {
             for z in 0..SECTION_WIDTH {
                 for x in 0..SECTION_WIDTH {
-                    if self.get_block(x, y, z) != 0 {
+                    if self.get_block(x, y, z).is_some_and(|b| b != 0) {
                         return false;
                     }
                 }
@@ -178,7 +185,7 @@ impl Chunk {
                 for z in 0..SECTION_WIDTH {
                     for x in 0..SECTION_WIDTH {
                         let global_y = base_y + y;
-                        block_states.push(self.get_block(x, global_y, z));
+                        block_states.push(self.get_block(x, global_y, z).unwrap());
                     }
                 }
             }

@@ -3,6 +3,7 @@ use std::array::TryFromSliceError;
 use std::io;
 use std::string::FromUtf8Error;
 use thiserror::Error;
+use crate::subtypes::Location;
 
 #[derive(Error, Debug)]
 pub enum KittyMCError {
@@ -53,4 +54,10 @@ pub enum KittyMCError {
     ThreadError(Box<dyn Any + Send>),
     #[error("The requested client was not found")]
     ClientNotFound,
+    #[error("The lock couldn't be locked")]
+    LockPoisonError,
+    #[error("The requested chunk position at {0} is invalid.")]
+    InvalidChunk(Location),
+    #[error("The requested block position at {0} is invalid.")]
+    InvalidBlock(Location),
 }

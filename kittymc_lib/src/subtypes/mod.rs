@@ -85,8 +85,8 @@ impl Color {
     }
 }
 
-const CHUNK_WIDTH: isize = 16;
-const HALF_CHUNK_WIDTH: f32 = (CHUNK_WIDTH / 2) as f32;
+pub const CHUNK_WIDTH: isize = 16;
+pub const HALF_CHUNK_WIDTH: f32 = (CHUNK_WIDTH / 2) as f32;
 
 pub struct ChunkPositionIterator {
     positions: Vec<ChunkPosition>,
@@ -329,13 +329,13 @@ impl From<Location> for ChunkPosition {
 
 impl From<&Location> for ChunkPosition {
     fn from(loc: &Location) -> ChunkPosition {
-        let bx = loc.x.floor() as isize;
-        let by = loc.y.floor() as isize;
-        let bz = loc.z.floor() as isize;
+        let bx = (loc.x / CHUNK_WIDTH as f32).floor();
+        let by = (loc.y / CHUNK_WIDTH as f32).floor();
+        let bz = (loc.z / CHUNK_WIDTH as f32).floor();
 
-        let cx = bx / CHUNK_WIDTH;
-        let cy = by / CHUNK_WIDTH;
-        let cz = bz / CHUNK_WIDTH;
+        let cx = bx as isize;
+        let cy = by as isize;
+        let cz = bz as isize;
 
         ChunkPosition(Vector3::new(cx, cy, cz))
     }

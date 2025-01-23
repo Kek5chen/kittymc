@@ -31,6 +31,7 @@ use std::thread::sleep;
 use std::time::Duration;
 use tracing::{info, instrument, warn};
 use uuid::Uuid;
+use kittymc_lib::packets::client::play::chunk_data_20::BlockStateId;
 
 #[derive(Debug)]
 pub struct KittyMCServer {
@@ -201,20 +202,31 @@ impl KittyMCServer {
                         || (digging.status == PlayerDiggingStatus::StartedDigging
                             && game_mode != GameMode::Adventure)
                     {
-                        println!("Started digging");
+                        println!("dig");
+
+                        let loc = digging.location.clone();
+                        self.set_block(&loc, 0);
+
                         self.send_to_all(
                             None,
-                            &BlockChangePacket::new_empty(digging.location.clone()),
+                            &BlockChangePacket::new_empty(loc.clone()),
                         )?;
                         self.send_to_all(
                             None,
-                            &BlockBreakAnimationPacket::new(random(), digging.location, 0x7F),
+                            &BlockBreakAnimationPacket::new(random(), loc, 0x7F),
                         )?;
                     }
                 }
                 _ => (),
             }
         }
+    }
+
+    pub fn set_block(&mut self, location: &Location, block_state: BlockStateId) -> Result<(), KittyMCError> {
+        let mut chunk_manager = self.chunk_manager
+            .write()
+            .map_err(|_| KittyMCError::LockPoisonError)?;
+        chunk_manager.set_block(location, block_state)
     }
 
     pub fn update_global_position(&mut self, uuid: &Uuid) -> Result<(), KittyMCError> {

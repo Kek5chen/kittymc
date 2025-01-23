@@ -1,6 +1,6 @@
 use kittymc_lib::error::KittyMCError;
-use kittymc_lib::packets::client::play::chunk_data_20::{Chunk, DEFAULT_FLAT_CHUNK};
-use kittymc_lib::subtypes::{ChunkPosition, Location};
+use kittymc_lib::packets::client::play::chunk_data_20::{BlockStateId, Chunk, DEFAULT_FLAT_CHUNK};
+use kittymc_lib::subtypes::{ChunkPosition, Location, CHUNK_WIDTH};
 use log::error;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -24,9 +24,7 @@ impl ChunkManager {
             actively_loading_threads: HashMap::new(),
         }
     }
-}
 
-impl ChunkManager {
     fn collect_finished_threads(&mut self) -> Result<(), KittyMCError> {
         let mut new_arr = HashMap::new();
 
@@ -60,7 +58,8 @@ impl ChunkManager {
     }
 
     #[allow(dead_code)]
-    pub fn get_chunk_containing(&mut self, loc: &Location) -> Option<SharedChunk> {
+    pub fn get_chunk_containing_block(&mut self, loc: &Location) -> Option<SharedChunk> {
+        println!("chunk containing block {:?} is {:?}", loc, ChunkPosition::from(loc));
         self.loaded_chunks.read().unwrap().get(&loc.into()).cloned()
     }
 
@@ -157,5 +156,20 @@ impl ChunkManager {
 
     pub fn load_chunk_thread(_requested_chunk: ChunkPosition) -> Box<Chunk> {
         DEFAULT_FLAT_CHUNK.clone()
+    }
+
+    pub fn set_block(&mut self, loc: &Location, block_id: BlockStateId) -> Result<(), KittyMCError> {
+        let chunk = self.get_chunk_containing_block(loc)
+            .ok_or_else(|| KittyMCError::InvalidChunk(loc.clone()))?;
+        let mut chunk_lock = chunk.write()
+            .map_err(|_| KittyMCError::LockPoisonError)?;
+
+        let chunk_pos = ChunkPosition::from(loc);
+
+        let x = (loc.x - chunk_pos.block_x() as f32).floor() as usize;
+        let y = (loc.y - chunk_pos.block_y() as f32).floor() as usize;
+        let z = (loc.z - chunk_pos.block_z() as f32).floor() as usize;
+
+        chunk_lock.set_block(x, y, z, block_id)
     }
 }
