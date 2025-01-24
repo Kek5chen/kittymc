@@ -27,18 +27,14 @@ impl SerializablePacket for PlayerBlockPlacementPacket {
         let cursor_y = read_f32(&mut data, &mut size)?;
         let cursor_z = read_f32(&mut data, &mut size)?;
 
-        let meow = Ok((size, Packet::PlayerBlockPlacement(Self {
+        Ok((size, Packet::PlayerBlockPlacement(Self {
             location,
             face,
             hand,
             cursor_pos_x: cursor_x,
             cursor_pos_y: cursor_y,
             cursor_pos_z: cursor_z,
-        })));
-
-        println!("{meow:?}");
-
-        meow
+        })))
     }
 
     fn id() -> u32 {

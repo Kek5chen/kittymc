@@ -1,6 +1,6 @@
 use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::client::play::chunk_data_20::{BlockStateId, Chunk, DEFAULT_FLAT_CHUNK};
-use kittymc_lib::subtypes::{ChunkPosition, Location, CHUNK_WIDTH};
+use kittymc_lib::subtypes::{ChunkPosition, Location};
 use log::error;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -59,7 +59,6 @@ impl ChunkManager {
 
     #[allow(dead_code)]
     pub fn get_chunk_containing_block(&mut self, loc: &Location) -> Option<SharedChunk> {
-        println!("chunk containing block {:?} is {:?}", loc, ChunkPosition::from(loc));
         self.loaded_chunks.read().unwrap().get(&loc.into()).cloned()
     }
 

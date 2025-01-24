@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::mem::offset_of;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ItemStack {
@@ -7,17 +6,12 @@ pub struct ItemStack {
     pub count: u8,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum InventoryError {
-    InvalidSlot,
-    InvalidCount,
-}
-
 #[derive(Debug)]
 pub struct Inventory {
     slots: HashMap<i16, ItemStack>,
 }
 
+#[allow(dead_code)]
 impl Inventory {
     pub fn new() -> Self {
         Inventory {

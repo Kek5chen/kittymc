@@ -4,6 +4,7 @@ mod player;
 mod server;
 mod inventory;
 
+use log::error;
 use crate::server::KittyMCServer;
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::EnvFilter;
@@ -26,14 +27,14 @@ fn main() {
     let mut server = match KittyMCServer::new(25565) {
         Ok(server) => server,
         Err(e) => {
-            eprintln!("Error while trying to start the server: {e}");
+            error!("Error while trying to start the server: {e}");
             return;
         }
     };
 
     match server.run() {
         Err(e) => {
-            eprintln!("Error occurred while server was running: {e}");
+            error!("Error occurred while server was running: {e}");
             return;
         }
         _ => (),
