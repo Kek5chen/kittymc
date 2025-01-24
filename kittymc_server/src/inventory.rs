@@ -160,16 +160,16 @@ mod tests {
     #[test]
     fn slot_management() {
         let mut inv = Inventory::new();
-        inv.set_slot(0, Some(ItemStack { item_id: 1, count: 10 }));
-        inv.set_slot(255, Some(ItemStack { item_id: 2, count: 20 }));
+        inv.set_slot(0, Some(ItemStack { item_id: 1, damage: 0, count: 10 }));
+        inv.set_slot(255, Some(ItemStack { item_id: 2, damage: 0, count: 20 }));
 
         assert_eq!(
             inv.get_slot(0),
-            Some(ItemStack { item_id: 1, count: 10 })
+            Some(ItemStack { item_id: 1, damage: 0, count: 10 })
         );
         assert_eq!(
             inv.get_slot(255),
-            Some(ItemStack { item_id: 2, count: 20 })
+            Some(ItemStack { item_id: 2, damage: 0, count: 20 })
         );
     }
 
@@ -177,7 +177,7 @@ mod tests {
     fn inventory_capacity() {
         let mut inv = Inventory::new();
         for i in 0..=35 {
-            inv.set_slot(i, Some(ItemStack { item_id: 1, count: 64 }));
+            inv.set_slot(i, Some(ItemStack { item_id: 1, damage: 0, count: 64 }));
         }
         assert!(inv.is_full());
         assert_eq!(inv.add_item(1, 1), 1);
