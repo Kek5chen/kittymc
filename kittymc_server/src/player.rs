@@ -2,6 +2,7 @@ use crate::client::ClientInfo;
 use kittymc_lib::packets::client::play::GameMode;
 use kittymc_lib::subtypes::{Direction, Location2};
 use uuid::Uuid;
+use crate::inventory::Inventory;
 
 #[derive(Debug)]
 pub struct Player {
@@ -13,6 +14,8 @@ pub struct Player {
     last_position: Location2,
     last_direction: Direction,
     game_mode: GameMode,
+    pub inventory: Inventory,
+    current_slot: i16,
 }
 
 impl Player {
@@ -50,6 +53,8 @@ impl Player {
             last_position: *position,
             last_direction: *direction,
             game_mode,
+            inventory: Inventory::new(),
+            current_slot: 0,
         }
     }
 
@@ -98,5 +103,13 @@ impl Player {
     #[allow(dead_code)]
     pub fn set_game_mode(&mut self, game_mode: GameMode) {
         self.game_mode = game_mode;
+    }
+
+    pub fn set_current_slot(&mut self, slot: i16) {
+        self.current_slot = slot;
+    }
+
+    pub fn current_slot(&self) -> i16 {
+        self.current_slot
     }
 }

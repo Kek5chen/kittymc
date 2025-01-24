@@ -60,4 +60,10 @@ pub enum KittyMCError {
     InvalidChunk(Location),
     #[error("The requested block position at {0} is invalid.")]
     InvalidBlock(Location),
+    #[error("Couldn't parse NBT data")]
+    NBTError(#[from] fastnbt::error::Error),
+    #[error("The requested player could not be found")]
+    PlayerNotFound,
+    #[error("There was an error with the inventory")]
+    InventoryError,
 }

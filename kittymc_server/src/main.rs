@@ -2,6 +2,7 @@ mod chunk_manager;
 mod client;
 mod player;
 mod server;
+mod inventory;
 
 use crate::server::KittyMCServer;
 use tracing::metadata::LevelFilter;

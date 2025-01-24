@@ -1,19 +1,20 @@
-use crate::packets::packet_serialization::{write_i16, write_u16, write_u8, SerializablePacket};
+use crate::packets::packet_serialization::{read_nbt, read_u16, read_u8, write_i16, write_u16, write_u8, SerializablePacket};
 use crate::packets::wrap_packet;
 use kittymc_macros::Packet;
+use crate::error::KittyMCError;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct SlotData {
-    block_id: u16, // 0xffff is empty
-    item_count: u8,
-    item_damage: u16,
-    nbt: Option<()>, // TODO: NBT STUFF
+    pub id: u16, // 0xffff is empty
+    pub item_count: u8,
+    pub item_damage: u16,
+    pub nbt: Option<fastnbt::Value>,
 }
 
 impl Default for SlotData {
     fn default() -> Self {
         SlotData {
-            block_id: u16::MAX,
+            id: u16::MAX,
             item_count: 0,
             item_damage: 0,
             nbt: None,
@@ -23,11 +24,29 @@ impl Default for SlotData {
 
 impl SlotData {
     pub fn write(&self, data: &mut Vec<u8>) {
-        write_u16(data, self.block_id);
-        if self.block_id != u16::MAX {
+        write_u16(data, self.id);
+        if self.id != u16::MAX {
             write_u8(data, self.item_count);
             write_u16(data, self.item_damage);
         }
+    }
+
+    pub fn read(data: &mut &[u8], size: &mut usize) -> Result<Self, KittyMCError> {
+        let block_id = read_u16(data, size)?;
+        let mut item_count: u8 = 0;
+        let mut item_damage: u16 = 0;
+        if block_id != u16::MAX {
+            item_count = read_u8(data, size)?;
+            item_damage = read_u16(data, size)?;
+        }
+        let nbt = read_nbt(data, size).ok();
+
+        Ok(Self {
+            id: block_id,
+            item_count,
+            item_damage,
+            nbt,
+        })
     }
 }
 

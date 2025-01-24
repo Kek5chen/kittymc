@@ -47,6 +47,8 @@ pub enum Packet {
     ChatMessage(ServerChatMessagePacket),
     PlayerDigging(PlayerDiggingPacket),
     EntityAction(EntityActionPacket),
+    CreativeInventoryAction(CreativeInventoryActionPacket),
+    PlayerBlockPlacement(PlayerBlockPlacementPacket),
 }
 
 impl Packet {
@@ -190,7 +192,9 @@ impl Packet {
                 0x14 => PlayerDiggingPacket::deserialize(data)?,
                 0x15 => EntityActionPacket::deserialize(data)?,
                 0x1A => ClientHeldItemChangePacket::deserialize(data)?,
+                0x1B => CreativeInventoryActionPacket::deserialize(data)?,
                 0x1D => ClientAnimationPacket::deserialize(data)?,
+                0x1F => PlayerBlockPlacementPacket::deserialize(data)?,
                 _ => return Err(KittyMCError::NotImplemented(packet_id, full_packet_len)),
             },
             _ => return Err(KittyMCError::NotImplemented(packet_id, full_packet_len)),

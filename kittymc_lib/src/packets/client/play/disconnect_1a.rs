@@ -1,3 +1,4 @@
+use std::error::Error;
 use crate::packets::packet_serialization::SerializablePacket;
 use crate::packets::wrap_packet;
 use crate::subtypes::components::Component;
@@ -12,6 +13,12 @@ impl DisconnectPlayPacket {
     pub fn default_restart() -> DisconnectPlayPacket {
         DisconnectPlayPacket {
             reason: Component::default_restart_disconnect(),
+        }
+    }
+
+    pub fn default_error<E: Error>(e: &E) -> DisconnectPlayPacket {
+        DisconnectPlayPacket {
+            reason: Component::default_error(e),
         }
     }
 }

@@ -32,6 +32,7 @@ use std::time::Duration;
 use tracing::{info, instrument, warn};
 use uuid::Uuid;
 use kittymc_lib::packets::client::play::chunk_data_20::BlockStateId;
+use crate::inventory::ItemStack;
 
 #[derive(Debug)]
 pub struct KittyMCServer {
@@ -202,10 +203,8 @@ impl KittyMCServer {
                         || (digging.status == PlayerDiggingStatus::StartedDigging
                             && game_mode != GameMode::Adventure)
                     {
-                        println!("dig");
-
                         let loc = digging.location.clone();
-                        self.set_block(&loc, 0);
+                        self.set_block(&loc, 0)?;
 
                         self.send_to_all(
                             None,
@@ -214,6 +213,51 @@ impl KittyMCServer {
                         self.send_to_all(
                             None,
                             &BlockBreakAnimationPacket::new(random(), loc, 0x7F),
+                        )?;
+                    }
+                }
+                Packet::CreativeInventoryAction(action) => {
+                    let player = self.players.get_mut(uuid)
+                        .ok_or(KittyMCError::PlayerNotFound)?;
+
+                    let item = if action.clicked_item.id == u16::MAX {
+                        None
+                    } else {
+                        Some(ItemStack {
+                            count: action.clicked_item.item_count,
+                            item_id: action.clicked_item.id,
+                        })
+                    };
+
+                    player.inventory.set_slot(action.slot, item);
+
+                    println!("player inventory: {:?}", player.inventory);
+                }
+                Packet::ClientHeldItemChange(change) => {
+                    let player = self.players.get_mut(uuid)
+                    .ok_or(KittyMCError::PlayerNotFound)?;
+
+                    player.set_current_slot(change.slot);
+                }
+                Packet::PlayerBlockPlacement(place) => {
+                    let game_mode;
+                    let _position;
+                    let block;
+                    {
+                        let player = self.players.get(uuid).unwrap();
+                        game_mode = player.game_mode();
+                        block = player.inventory.get_slot(player.current_slot() + 36)
+                            .ok_or(KittyMCError::InventoryError)?;
+                        _position = player.position();
+                    }
+
+                    if game_mode == GameMode::Creative {
+                        let loc = place.location - place.face.as_offset();
+                        self.set_block(&loc, (block.item_id << 4) as BlockStateId)?;
+
+                        self.send_to_all(
+                            None,
+                            &BlockChangePacket::new(loc, block.item_id as u32),
                         )?;
                     }
                 }
@@ -503,6 +547,7 @@ impl KittyMCServer {
                         info!("[{}] Client disconnected", client.addr());
                     }
                     Err(e) => {
+                        client.send_packet(&DisconnectPlayPacket::default_error(&e))?;
                         warn!("[{}] Disconnected client due to error: {e}", client.addr());
                     }
                 };

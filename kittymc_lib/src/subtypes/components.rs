@@ -1,3 +1,4 @@
+use std::error::Error;
 use crate::packets::packet_serialization::write_length_prefixed_string;
 use crate::subtypes::Color;
 use crate::utils::{rainbowize_cool_people, to_mc_rainbow, KITTYMC_TAG};
@@ -152,6 +153,18 @@ impl Component {
                 .text(format!(
                     "{KITTYMC_TAG}\n\n§7The server is restarting.\n\n{}",
                     to_mc_rainbow("Please wait :3", true)
+                ))
+                .options(BaseComponent::builder().color(Color::Gray).build())
+                .build(),
+        )
+    }
+
+    pub fn default_error<E: Error>(e: &E) -> Self {
+        Component::Text(
+            TextComponent::builder()
+                .text(format!(
+                    "{KITTYMC_TAG}\n\n§7An error occurred during your connection.\n\n{e}\n\n{}\n\n",
+                    to_mc_rainbow("oofies...", true)
                 ))
                 .options(BaseComponent::builder().color(Color::Gray).build())
                 .build(),

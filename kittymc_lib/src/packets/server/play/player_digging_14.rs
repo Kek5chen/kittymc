@@ -45,8 +45,28 @@ pub enum BlockFace {
     Unknown,
 }
 
+impl BlockFace {
+    pub fn as_offset(&self) -> Location {
+        match self {
+            BlockFace::Top => Location::new(0., 1., 0.),
+            BlockFace::Bottom => Location::new(0., -1., 0.),
+            BlockFace::North => Location::new(0., 0., 1.),
+            BlockFace::South => Location::new(0., 0., -1.),
+            BlockFace::West => Location::new(1., 0., 0.),
+            BlockFace::East => Location::new(-1., 0., 0.),
+            BlockFace::Unknown => Location::new(0., 0., 0.),
+        }
+    }
+}
+
 impl From<u8> for BlockFace {
     fn from(value: u8) -> Self {
+        Self::from(value as u32)
+    }
+}
+
+impl From<u32> for BlockFace {
+    fn from(value: u32) -> Self {
         match value {
             0 => BlockFace::Top,
             1 => BlockFace::Bottom,

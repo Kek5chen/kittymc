@@ -215,6 +215,15 @@ pub fn read_direction(data: &mut &[u8], total_size: &mut usize) -> Result<Direct
     Ok(Direction::new(yaw, pitch))
 }
 
+pub fn read_nbt(buffer: &mut &[u8], total_size: &mut usize) -> Result<fastnbt::Value, KittyMCError> {
+    let len_before = buffer.len();
+    let nbt = fastnbt::from_reader(&mut *buffer);
+
+    *total_size += len_before - buffer.len();
+
+    Ok(nbt?)
+}
+
 pub fn write_bool(buffer: &mut Vec<u8>, value: bool) {
     let value = if value { 1 } else { 0 };
     write_u8(buffer, value);
