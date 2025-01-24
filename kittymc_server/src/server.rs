@@ -224,14 +224,13 @@ impl KittyMCServer {
                         None
                     } else {
                         Some(ItemStack {
-                            count: action.clicked_item.item_count,
                             item_id: action.clicked_item.id,
+                            damage: action.clicked_item.item_damage,
+                            count: action.clicked_item.item_count,
                         })
                     };
 
                     player.inventory.set_slot(action.slot, item);
-
-                    println!("player inventory: {:?}", player.inventory);
                 }
                 Packet::ClientHeldItemChange(change) => {
                     let player = self.players.get_mut(uuid)
@@ -252,12 +251,13 @@ impl KittyMCServer {
                     }
 
                     if game_mode == GameMode::Creative {
+                        let block_state = ((block.item_id << 4) | (block.damage & 15)) as BlockStateId;
                         let loc = place.location - place.face.as_offset();
-                        self.set_block(&loc, (block.item_id << 4) as BlockStateId)?;
+                        self.set_block(&loc, block_state)?;
 
                         self.send_to_all(
                             None,
-                            &BlockChangePacket::new(loc, block.item_id as u32),
+                            &BlockChangePacket::new(loc, block_state),
                         )?;
                     }
                 }

@@ -3,6 +3,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ItemStack {
     pub item_id: u16,
+    pub damage: u16,
     pub count: u8,
 }
 
@@ -41,7 +42,7 @@ impl Inventory {
         for slot_num in 0..=35 {
             if !self.slots.contains_key(&slot_num) {
                 let add = count.min(64);
-                self.slots.insert(slot_num, ItemStack { item_id, count: add });
+                self.slots.insert(slot_num, ItemStack { item_id, count: add, damage: 0 });
                 count -= add;
                 if count == 0 {
                     return 0;

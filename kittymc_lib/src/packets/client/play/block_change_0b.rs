@@ -5,15 +5,16 @@ use crate::packets::wrap_packet;
 use crate::subtypes::Location;
 use kittymc_macros::Packet;
 use log::info;
+use crate::packets::client::play::chunk_data_20::BlockStateId;
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct BlockChangePacket {
     pub location: Location,
-    pub block_id: u32,
+    pub block_id: BlockStateId,
 }
 
 impl BlockChangePacket {
-    pub fn new(location: Location, block_id: u32) -> BlockChangePacket {
+    pub fn new(location: Location, block_id: BlockStateId) -> BlockChangePacket {
         BlockChangePacket { location, block_id }
     }
 
