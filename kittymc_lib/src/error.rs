@@ -2,6 +2,7 @@ use std::any::Any;
 use std::array::TryFromSliceError;
 use std::io;
 use std::string::FromUtf8Error;
+use savefile::SavefileError;
 use thiserror::Error;
 use crate::subtypes::Location;
 
@@ -66,4 +67,6 @@ pub enum KittyMCError {
     PlayerNotFound,
     #[error("There was an error with the inventory")]
     InventoryError,
+    #[error("{0}")]
+    SaveFileError(#[from] SavefileError),
 }

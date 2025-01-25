@@ -1,4 +1,3 @@
-use crate::chunk_manager::ChunkManager;
 use crate::client::{Client, ClientInfo};
 use crate::player::Player;
 use kittymc_lib::error::KittyMCError;
@@ -32,6 +31,7 @@ use std::time::Duration;
 use tracing::{info, instrument, warn};
 use uuid::Uuid;
 use kittymc_lib::packets::client::play::chunk_data_20::BlockStateId;
+use crate::chunking::chunk_manager::ChunkManager;
 use crate::inventory::ItemStack;
 
 #[derive(Debug)]

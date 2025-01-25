@@ -1,8 +1,8 @@
-mod chunk_manager;
 mod client;
 mod player;
 mod server;
 mod inventory;
+mod chunking;
 
 use log::error;
 use crate::server::KittyMCServer;

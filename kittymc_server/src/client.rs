@@ -10,7 +10,6 @@ use uuid::Uuid;
 
 use tracing::{debug, info, instrument, trace, warn};
 
-use crate::chunk_manager::ChunkManager;
 use crate::player::Player;
 use kittymc_lib::error::KittyMCError;
 use kittymc_lib::packets::client::play::keep_alive_1f::ServerKeepAlivePacket;
@@ -24,6 +23,7 @@ use kittymc_lib::subtypes::metadata::EntityMetadata;
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::{ChunkPosition, Location};
 use kittymc_lib::utils::rainbowize_cool_people_textcomp;
+use crate::chunking::chunk_manager::ChunkManager;
 
 const DEFAULT_CHUNK_LOAD_RADIUS: u32 = 4;
 

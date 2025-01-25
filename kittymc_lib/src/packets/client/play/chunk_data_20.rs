@@ -7,6 +7,9 @@ use crate::packets::wrap_packet;
 use kittymc_macros::Packet;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use std::path::Path;
+use savefile::{load_file, save_file_compressed};
+use savefile_derive::Savefile;
 use crate::error::KittyMCError;
 
 const NUM_SECTIONS_PER_CHUNK_COLUMN: usize = 16;
@@ -80,17 +83,17 @@ impl ChunkSection {
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Savefile)]
 pub struct Chunk {
-    pub blocks: [BlockStateId; SECTION_SIZE * NUM_SECTIONS_PER_CHUNK_COLUMN],
-    pub biomes: [u8; 16 * 16],
+    pub blocks: Vec<BlockStateId>,
+    pub biomes: Vec<u8>,
 }
 
 impl Default for Chunk {
     fn default() -> Self {
         Chunk {
-            blocks: [0; SECTION_SIZE * NUM_SECTIONS_PER_CHUNK_COLUMN],
-            biomes: [0; 16 * 16],
+            blocks: vec![0; SECTION_SIZE * NUM_SECTIONS_PER_CHUNK_COLUMN],
+            biomes: vec![1; 16 * 16],
         }
     }
 }
@@ -237,11 +240,19 @@ impl Chunk {
         }
 
         if ground_up_continuous {
-            buf.extend_from_slice(&self.biomes);
+            buf.extend_from_slice(self.biomes.as_slice());
         }
 
         let full_size = (buf.len() - start_len) as u32;
         write_varint_u32_splice(buf, full_size, start_len..start_len);
+    }
+
+    pub fn save_to(&self, path: &Path) -> Result<(), KittyMCError> {
+        Ok(save_file_compressed(path, 0, self)?)
+    }
+
+    pub fn load_from(path: &Path) -> Result<Box<Self>, KittyMCError> {
+        Ok(load_file(path, 0)?)
     }
 }
 
@@ -256,10 +267,7 @@ pub struct ChunkDataPacket<'a> {
 
 lazy_static! {
     pub static ref DEFAULT_FLAT_CHUNK: Box<Chunk> = {
-        let mut chunk = Box::new(Chunk {
-            blocks: [0; SECTION_SIZE * NUM_SECTIONS_PER_CHUNK_COLUMN],
-            biomes: [1; 16 * 16],
-        });
+        let mut chunk = Chunk::default();
 
         for x in 0..SECTION_WIDTH {
             for z in 0..SECTION_WIDTH {
@@ -286,7 +294,7 @@ lazy_static! {
             }
         }
 
-        chunk
+        Box::new(chunk)
     };
 }
 
