@@ -268,6 +268,18 @@ impl ChunkPosition {
         self.0.z * CHUNK_WIDTH
     }
 
+    pub fn set_chunk_x(&mut self, x: isize) {
+        self.0.x = x;
+    }
+
+    pub fn set_chunk_y(&mut self, y: isize) {
+        self.0.y = y;
+    }
+
+    pub fn set_chunk_z(&mut self, z: isize) {
+        self.0.z = z;
+    }
+
     pub fn block_location(&self) -> Location {
         Location::new(
             self.block_x() as f32,

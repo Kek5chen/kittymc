@@ -48,36 +48,45 @@ impl ChunkManager {
     }
 
     #[allow(dead_code)]
-    pub fn is_chunk_loaded(&self, loc: &ChunkPosition) -> bool {
-        self.loaded_chunks.read().unwrap().contains_key(loc)
+    pub fn is_chunk_loaded(&self, pos: &ChunkPosition) -> bool {
+        let mut pos = pos.clone();
+        pos.set_chunk_y(0);
+        self.loaded_chunks.read().unwrap().contains_key(&pos)
     }
 
     pub fn get_chunk_at(&mut self, pos: &ChunkPosition) -> Option<SharedChunk> {
+        let mut pos = pos.clone();
+        pos.set_chunk_y(0);
         self.access_list.insert(pos.clone(), Instant::now());
-        self.loaded_chunks.read().unwrap().get(pos).cloned()
+        self.loaded_chunks.read().unwrap().get(&pos).cloned()
     }
 
     #[allow(dead_code)]
     pub fn get_chunk_containing_block(&mut self, loc: &Location) -> Option<SharedChunk> {
-        self.loaded_chunks.read().unwrap().get(&loc.into()).cloned()
+        let mut chunk: ChunkPosition = loc.into();
+        chunk.set_chunk_y(0);
+        self.loaded_chunks.read().unwrap().get(&chunk).cloned()
     }
 
     pub fn request_chunk(&mut self, chunk_pos: &ChunkPosition) -> Option<SharedChunk> {
+        let mut chunk_pos = chunk_pos.clone();
+        chunk_pos.set_chunk_y(0);
+
         if let Err(e) = self.collect_finished_threads() {
             error!("Ran into error when collecting from chunk thread {e}");
         }
-        match self.get_chunk_at(chunk_pos) {
+        match self.get_chunk_at(&chunk_pos) {
             Some(chunk) => return Some(chunk),
             _ => {}
         }
-        if self.actively_loading_threads.contains_key(chunk_pos) {
+        if self.actively_loading_threads.contains_key(&chunk_pos) {
             return None;
         }
 
         let chunk_pos_clone = chunk_pos.clone();
         let thread = std::thread::spawn(move || Self::load_chunk_thread(chunk_pos_clone));
         self.actively_loading_threads
-            .insert(chunk_pos.clone(), thread);
+            .insert(chunk_pos, thread);
 
         None
     }
@@ -166,7 +175,7 @@ impl ChunkManager {
         let chunk_pos = ChunkPosition::from(loc);
 
         let x = (loc.x - chunk_pos.block_x() as f32).floor() as usize;
-        let y = (loc.y - chunk_pos.block_y() as f32).floor() as usize;
+        let y = loc.y.floor() as usize;
         let z = (loc.z - chunk_pos.block_z() as f32).floor() as usize;
 
         chunk_lock.set_block(x, y, z, block_id)
