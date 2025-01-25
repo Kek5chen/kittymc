@@ -25,7 +25,7 @@ pub struct PlayerAbilitiesPacket {
 impl Default for PlayerAbilitiesPacket {
     fn default() -> Self {
         PlayerAbilitiesPacket {
-            flags: PlayerAbilitiesFlags::invulnerable | PlayerAbilitiesFlags::creative_mode,
+            flags: PlayerAbilitiesFlags::all() ^ PlayerAbilitiesFlags::flying,
             flying_speed: 0.1,
             field_of_view_modifier: 0.1,
         }
