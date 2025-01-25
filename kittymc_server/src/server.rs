@@ -190,18 +190,21 @@ impl KittyMCServer {
                 Packet::PlayerDigging(digging) => {
                     let game_mode;
                     let _position;
+                    let is_cool;
                     {
                         let player = self.players.get(uuid).unwrap();
+                        is_cool = player.is_cool();
                         game_mode = player.game_mode();
                         _position = player.position();
                     }
 
                     // TODO: Range Check
 
-                    if digging.status == PlayerDiggingStatus::StartedDigging
+                    if (digging.status == PlayerDiggingStatus::StartedDigging
                         && game_mode == GameMode::Creative
                         || (digging.status == PlayerDiggingStatus::StartedDigging
-                            && game_mode != GameMode::Adventure)
+                            && game_mode != GameMode::Adventure))
+                        && is_cool
                     {
                         let loc = digging.location.clone();
                         self.set_block(&loc, 0)?;

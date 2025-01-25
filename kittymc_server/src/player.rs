@@ -2,6 +2,7 @@ use crate::client::ClientInfo;
 use kittymc_lib::packets::client::play::GameMode;
 use kittymc_lib::subtypes::{Direction, Location2};
 use uuid::Uuid;
+use kittymc_lib::utils::is_cool;
 use crate::inventory::Inventory;
 
 #[derive(Debug)]
@@ -111,5 +112,9 @@ impl Player {
 
     pub fn current_slot(&self) -> i16 {
         self.current_slot
+    }
+
+    pub fn is_cool(&self) -> bool {
+        is_cool(&self.username)
     }
 }
