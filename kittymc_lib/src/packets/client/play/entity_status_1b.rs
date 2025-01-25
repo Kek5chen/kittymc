@@ -4,8 +4,8 @@ use kittymc_macros::Packet;
 
 #[derive(PartialEq, Debug, Clone, Default, Packet)]
 pub struct EntityStatusPacket {
-    entity_id: i32,
-    entity_status: u8,
+    pub entity_id: i32,
+    pub entity_status: u8,
 }
 
 impl SerializablePacket for EntityStatusPacket {

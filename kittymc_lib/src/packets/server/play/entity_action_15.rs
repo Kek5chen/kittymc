@@ -36,9 +36,9 @@ impl From<u32> for EntityAction {
 
 #[derive(PartialEq, Debug, Clone, Packet)]
 pub struct EntityActionPacket {
-    entity_id: u32,
-    action_id: EntityAction,
-    jump_boost_amount: u32,
+    pub entity_id: u32,
+    pub action: EntityAction,
+    pub jump_boost_amount: u32,
 }
 
 impl SerializablePacket for EntityActionPacket {
@@ -46,14 +46,14 @@ impl SerializablePacket for EntityActionPacket {
         let mut size = 0;
 
         let entity_id = read_varint_u32(&mut data, &mut size)?;
-        let action_id = read_varint_u32(&mut data, &mut size)?.into();
+        let action = read_varint_u32(&mut data, &mut size)?.into();
         let jump_boost_amount = read_varint_u32(&mut data, &mut size)?;
 
         Ok((
             size,
             Packet::EntityAction(EntityActionPacket {
                 entity_id,
-                action_id,
+                action,
                 jump_boost_amount,
             }),
         ))

@@ -3,7 +3,7 @@ use crate::chunking::chunk_manager::{
 };
 use crate::chunking::increasing_ticker::IncreasingTicker;
 use kittymc_lib::error::KittyMCError;
-use kittymc_lib::packets::client::play::chunk_data_20::{Chunk, DEFAULT_FLAT_CHUNK};
+use kittymc_lib::packets::client::play::chunk_data_20::{Chunk, DEFAULT_FLAT_CHUNK, DEFAULT_FLAT_CHUNK_2};
 use kittymc_lib::subtypes::ChunkPosition;
 use log::{debug, error};
 use std::path::Path;
@@ -101,7 +101,11 @@ impl ChunkGenerator {
         self.generate(chunk_pos)
     }
 
-    pub fn generate(&mut self, _chunk_pos: &ChunkPosition) -> Box<Chunk> {
-        DEFAULT_FLAT_CHUNK.clone()
+    pub fn generate(&mut self, chunk_pos: &ChunkPosition) -> Box<Chunk> {
+        if chunk_pos.chunk_z().abs() % 2 == 1 {
+            DEFAULT_FLAT_CHUNK.clone()
+        } else {
+            DEFAULT_FLAT_CHUNK_2.clone()
+        }
     }
 }

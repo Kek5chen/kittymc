@@ -296,6 +296,36 @@ lazy_static! {
 
         Box::new(chunk)
     };
+
+    pub static ref DEFAULT_FLAT_CHUNK_2: Box<Chunk> = {
+        let mut chunk = Chunk::default();
+
+        for x in 0..SECTION_WIDTH {
+            for z in 0..SECTION_WIDTH {
+                chunk.set_block(x, 0, z, 0b0111_0000).unwrap();
+                for y in 1..4 {
+                    chunk.set_block(x, y, z, 0b0001_0000).unwrap();
+                }
+                chunk.set_block(x, 4, z, 5 << 4).unwrap();
+            }
+        }
+
+        for x in 0..16 {
+            for z in 5..10 {
+                let block: u32 = (35 << 4)
+                    | match z {
+                        5 | 9 => 3,
+                        6 | 8 => 6,
+                        7 => 0,
+                        n => n as u32,
+                    };
+
+                chunk.set_block(x, 4, z, block).unwrap();
+            }
+        }
+
+        Box::new(chunk)
+    };
 }
 
 impl ChunkDataPacket<'_> {
