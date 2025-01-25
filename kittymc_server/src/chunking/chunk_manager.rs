@@ -78,21 +78,23 @@ impl ChunkManager {
     pub fn is_chunk_loaded(&self, pos: &ChunkPosition) -> bool {
         let mut pos = pos.clone();
         pos.set_chunk_y(0);
+        self.tap_chunk(&pos);
         self.loaded_chunks.read().unwrap().contains_key(&pos)
     }
 
     pub fn get_chunk_at(&mut self, pos: &ChunkPosition) -> Option<SharedChunk> {
         let mut pos = pos.clone();
         pos.set_chunk_y(0);
-        self.access_list.write().unwrap().insert(pos.clone(), Instant::now());
+        self.tap_chunk(&pos);
         self.loaded_chunks.read().unwrap().get(&pos).cloned()
     }
 
     #[allow(dead_code)]
     pub fn get_chunk_containing_block(&mut self, loc: &Location) -> Option<SharedChunk> {
-        let mut chunk: ChunkPosition = loc.into();
-        chunk.set_chunk_y(0);
-        self.loaded_chunks.read().unwrap().get(&chunk).cloned()
+        let mut pos: ChunkPosition = loc.into();
+        pos.set_chunk_y(0);
+        self.tap_chunk(&pos);
+        self.loaded_chunks.read().unwrap().get(&pos).cloned()
     }
 
     pub fn is_queued(&self, chunk_pos: &ChunkPosition) -> bool {
@@ -151,8 +153,6 @@ impl ChunkManager {
             ChunkPosition::iter_xz_circle_in_range(loc, radius as f32).collect();
         let requested_count = requested_chunks.len();
 
-        //debug!("Requested: {requested_chunks:?}");
-
         for chunk_pos in requested_chunks {
             let Some(chunk) = self.request_chunk(&chunk_pos) else {
                 continue;
@@ -186,6 +186,13 @@ impl ChunkManager {
         }
 
         loaded_chunks
+    }
+
+    // This function is to be called anywhere where a chunk should be tapped to keep it in memory.
+    // This will refresh the access list that is used by the unloader so that it does not unload it
+    // after a chunk might be cached for 30 seconds
+    pub fn tap_chunk(&self, pos: &ChunkPosition) {
+        self.access_list.write().unwrap().insert(pos.clone(), Instant::now());
     }
 
     pub fn set_block(&mut self, loc: &Location, block_id: BlockStateId) -> Result<(), KittyMCError> {

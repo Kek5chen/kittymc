@@ -317,6 +317,7 @@ impl Client {
         let mut all_loaded = true;
         for pos in positions {
             if self.loaded_chunks.contains(pos) {
+                chunk_manager.tap_chunk(pos);
                 continue;
             }
             let Some(chunk) = chunk_manager.request_chunk(pos) else {
@@ -363,7 +364,7 @@ impl Client {
     ) -> Result<bool, KittyMCError> {
         let new: Vec<_> =
             ChunkPosition::iter_xz_circle_in_range(pos, self.view_distance as f32 * 16.).collect();
-        let unloadable = self
+        let chunks_to_unload = self
             .loaded_chunks
             .iter()
             .filter(|c| !new.contains(c))
@@ -371,7 +372,7 @@ impl Client {
             .collect::<Vec<_>>();
 
         let all_loaded = self.load_chunks(new.iter(), chunk_manager)?;
-        self.unload_chunks(unloadable.iter());
+        self.unload_chunks(chunks_to_unload.iter());
 
         Ok(all_loaded)
     }
