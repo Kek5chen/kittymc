@@ -24,6 +24,7 @@ pub mod unload_chunk_1d;
 pub mod unlock_recipes_31;
 pub mod window_items_14;
 pub mod entity_metadata_3c;
+pub mod destroy_entities_32;
 
 pub use block_break_animation_08::BlockBreakAnimationPacket;
 pub use block_change_0b::BlockChangePacket;
@@ -49,6 +50,7 @@ pub use unload_chunk_1d::UnloadChunkPacket;
 pub use unlock_recipes_31::UnlockRecipesPacket;
 pub use window_items_14::WindowItemsPacket;
 pub use entity_metadata_3c::EntityMetadataPacket;
+pub use destroy_entities_32::DestroyEntitiesPacket;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum GameMode {

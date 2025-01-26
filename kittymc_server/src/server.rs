@@ -579,6 +579,7 @@ impl KittyMCServer {
                 info!("{} left the game", player.name());
 
                 let _ = self.remove_player_from_all_player_lists(&mut client, &player);
+                let _ = self.despawn_entity(None, player.id());
                 let _ = self.send_to_all(
                     Some(&mut client),
                     &ClientChatMessagePacket::new_quit_message(player.name()),
@@ -634,5 +635,9 @@ impl KittyMCServer {
         let id = self.next_entity_id;
         self.next_entity_id = self.next_entity_id.wrapping_add(1);
         id
+    }
+
+    fn despawn_entity(&mut self, client: Option<&mut Client>, entity_id: i32) -> Result<(), KittyMCError> {
+        self.send_to_all(client, &DestroyEntitiesPacket::new(vec![entity_id]))
     }
 }
