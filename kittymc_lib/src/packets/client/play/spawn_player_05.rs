@@ -2,7 +2,7 @@ use crate::packets::packet_serialization::{
     write_direction_as_angles, write_location2, write_uuid, write_varint_u32, SerializablePacket,
 };
 use crate::packets::wrap_packet;
-use crate::subtypes::metadata::EntityMetadata;
+use crate::subtypes::metadata::{EntityMetadata, MetadataObject};
 use crate::subtypes::{Direction, Location2};
 use kittymc_macros::Packet;
 use uuid::Uuid;

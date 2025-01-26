@@ -30,6 +30,7 @@ use std::time::Duration;
 use tracing::{info, instrument, warn};
 use uuid::Uuid;
 use kittymc_lib::packets::client::play::chunk_data_20::BlockStateId;
+use kittymc_lib::packets::server::play::entity_action_15::EntityAction;
 use crate::chunking::chunk_manager::ChunkManager;
 use crate::inventory::ItemStack;
 
@@ -262,6 +263,25 @@ impl KittyMCServer {
                             &BlockChangePacket::new(loc, block_state),
                         )?;
                     }
+                }
+                Packet::EntityAction(action) => {
+                    let player_eid;
+                    let state;
+
+                    {
+                        let player = self.players.get_mut(&uuid).unwrap();
+                        match action.action {
+                            EntityAction::StartSprinting => player.set_sprinting(true),
+                            EntityAction::StopSprinting => player.set_sprinting(false),
+                            EntityAction::StartSneaking => player.set_crouching(true),
+                            EntityAction::StopSneaking => player.set_crouching(false),
+                            _ => return Ok(true),
+                        };
+                        player_eid = player.id();
+                        state = player.get_state().living.entity.clone();
+                    }
+
+                    self.send_to_all(Some(client), &EntityMetadataPacket::new(player_eid as i32, state))?;
                 }
                 _ => (),
             }

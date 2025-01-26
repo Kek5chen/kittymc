@@ -2,6 +2,7 @@ use crate::client::ClientInfo;
 use kittymc_lib::packets::client::play::GameMode;
 use kittymc_lib::subtypes::{Direction, Location2};
 use uuid::Uuid;
+use kittymc_lib::subtypes::metadata::{EntityMetaState, PlayerMetadata};
 use kittymc_lib::utils::is_cool;
 use crate::inventory::Inventory;
 
@@ -17,6 +18,7 @@ pub struct Player {
     game_mode: GameMode,
     pub inventory: Inventory,
     current_slot: i16,
+    state: PlayerMetadata,
 }
 
 impl Player {
@@ -56,6 +58,7 @@ impl Player {
             game_mode,
             inventory: Inventory::new(),
             current_slot: 0,
+            state: Default::default(),
         }
     }
 
@@ -116,5 +119,17 @@ impl Player {
 
     pub fn is_cool(&self) -> bool {
         is_cool(&self.username)
+    }
+
+    pub fn get_state(&self) -> &PlayerMetadata {
+        &self.state
+    }
+
+    pub fn set_crouching(&mut self, is_crouching: bool) {
+        self.state.living.entity.meta_state.set(EntityMetaState::crouched, is_crouching);
+    }
+
+    pub fn set_sprinting(&mut self, is_sprinting: bool) {
+        self.state.living.entity.meta_state.set(EntityMetaState::sprinting, is_sprinting);
     }
 }

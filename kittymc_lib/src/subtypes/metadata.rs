@@ -124,6 +124,11 @@ impl LivingHandState {
     }
 }
 
+pub trait MetadataObject {
+    fn write_to_metadata(&self, meta_data: &mut BTreeMap<u8, MetaData>);
+    fn write_metadata(&self, buffer: &mut Vec<u8>);
+}
+
 #[derive(PartialEq, Debug, Clone, TypedBuilder)]
 pub struct EntityMetadata {
     pub meta_state: EntityMetaState,
@@ -147,8 +152,8 @@ impl Default for EntityMetadata {
     }
 }
 
-impl EntityMetadata {
-    pub fn write_to_metadata(&self, mut meta_data: &mut BTreeMap<u8, MetaData>) {
+impl MetadataObject for EntityMetadata {
+    fn write_to_metadata(&self, mut meta_data: &mut BTreeMap<u8, MetaData>) {
         self.meta_state.write_to_metadata(&mut meta_data, 0);
         meta_data.insert(1, MetaData::VarInt(self.air));
         meta_data.insert(2, MetaData::String(self.custom_name.clone()));
@@ -157,7 +162,7 @@ impl EntityMetadata {
         meta_data.insert(5, MetaData::Boolean(self.no_gravity));
     }
 
-    pub fn write_metadata(&self, buffer: &mut Vec<u8>) {
+    fn write_metadata(&self, buffer: &mut Vec<u8>) {
         let mut metadata = BTreeMap::new();
         self.write_to_metadata(&mut metadata);
         write_metadata(buffer, &metadata);
@@ -187,8 +192,8 @@ impl Default for LivingMetadata {
     }
 }
 
-impl LivingMetadata {
-    pub fn write_to_metadata(&self, mut meta_data: &mut BTreeMap<u8, MetaData>) {
+impl MetadataObject for LivingMetadata {
+    fn write_to_metadata(&self, mut meta_data: &mut BTreeMap<u8, MetaData>) {
         self.entity.write_to_metadata(&mut meta_data);
         self.hand_state.write_to_metadata(&mut meta_data, 6);
         meta_data.insert(6, MetaData::Float(self.health));
@@ -197,7 +202,7 @@ impl LivingMetadata {
         meta_data.insert(9, MetaData::VarInt(self.number_of_arrows_in_entity));
     }
 
-    pub fn write_metadata(&self, buffer: &mut Vec<u8>) {
+    fn write_metadata(&self, buffer: &mut Vec<u8>) {
         let mut metadata = BTreeMap::new();
         self.write_to_metadata(&mut metadata);
         write_metadata(buffer, &metadata);
@@ -229,8 +234,8 @@ impl Default for PlayerMetadata {
     }
 }
 
-impl PlayerMetadata {
-    pub fn write_to_metadata(&self, mut meta_data: &mut BTreeMap<u8, MetaData>) {
+impl MetadataObject for PlayerMetadata {
+    fn write_to_metadata(&self, mut meta_data: &mut BTreeMap<u8, MetaData>) {
         self.living.write_to_metadata(&mut meta_data);
         meta_data.insert(11, MetaData::Float(self.additional_hearts));
         meta_data.insert(12, MetaData::VarInt(self.score));
@@ -243,7 +248,7 @@ impl PlayerMetadata {
         );
     }
 
-    pub fn write_metadata(&self, buffer: &mut Vec<u8>) {
+    fn write_metadata(&self, buffer: &mut Vec<u8>) {
         let mut metadata = BTreeMap::new();
         self.write_to_metadata(&mut metadata);
         write_metadata(buffer, &metadata);
