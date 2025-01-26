@@ -65,8 +65,8 @@ pub enum KittyMCError {
     NBTError(#[from] fastnbt::error::Error),
     #[error("The requested player could not be found")]
     PlayerNotFound,
-    #[error("There was an error with the inventory")]
-    InventoryError,
+    #[error("The requested inventory slot {0} was empty")]
+    InventorySlotEmpty(i16),
     #[error("{0}")]
     SaveFileError(#[from] SavefileError),
 }

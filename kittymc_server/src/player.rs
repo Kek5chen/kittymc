@@ -117,6 +117,10 @@ impl Player {
         self.current_slot
     }
 
+    pub fn current_hotbar_slot(&self) -> i16 {
+        self.current_slot + 36
+    }
+
     pub fn is_cool(&self) -> bool {
         is_cool(&self.username)
     }

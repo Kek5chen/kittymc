@@ -248,8 +248,11 @@ impl KittyMCServer {
                     {
                         let player = self.players.get(uuid).unwrap();
                         game_mode = player.game_mode();
-                        block = player.inventory.get_slot(player.current_slot() + 36)
-                            .ok_or(KittyMCError::InventoryError)?;
+                        let hotbar_slot = player.current_hotbar_slot();
+                        block = match player.inventory.get_slot(hotbar_slot) {
+                            None => return Ok(true),
+                            Some(block) => block,
+                        };
                         _position = player.position();
                     }
 
