@@ -21,6 +21,7 @@ pub struct Player {
     state: PlayerMetadata,
 }
 
+#[allow(dead_code)]
 impl Player {
     pub fn from_client_info(
         client_info: ClientInfo,
@@ -104,7 +105,6 @@ impl Player {
         self.game_mode
     }
 
-    #[allow(dead_code)]
     pub fn set_game_mode(&mut self, game_mode: GameMode) {
         self.game_mode = game_mode;
     }
