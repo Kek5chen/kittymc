@@ -21,7 +21,6 @@ fn main() {
         .with_target(false)
         .with_line_number(false)
         .with_file(false)
-        .without_time()
         .init();
 
     let mut server = match KittyMCServer::new(25565) {
