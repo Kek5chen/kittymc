@@ -41,7 +41,7 @@ pub struct KittyMCServer {
     clients: RwLock<HashMap<Uuid, Client>>,
     registering_clients: VecDeque<Client>,
     chunk_manager: RwLock<ChunkManager>,
-    next_entity_id: u32,
+    next_entity_id: i32,
     shutdown_signal: Arc<Mutex<bool>>,
 }
 
@@ -630,7 +630,7 @@ impl KittyMCServer {
         }
     }
 
-    fn get_next_entity_id(&mut self) -> u32 {
+    fn get_next_entity_id(&mut self) -> i32 {
         let id = self.next_entity_id;
         self.next_entity_id = self.next_entity_id.wrapping_add(1);
         id

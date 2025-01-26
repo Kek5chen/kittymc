@@ -10,7 +10,7 @@ use crate::inventory::Inventory;
 pub struct Player {
     uuid: Uuid,
     username: String,
-    entity_id: u32,
+    entity_id: i32,
     position: Location2,
     direction: Direction,
     last_position: Location2,
@@ -25,7 +25,7 @@ pub struct Player {
 impl Player {
     pub fn from_client_info(
         client_info: ClientInfo,
-        id: u32,
+        id: i32,
         position: &Location2,
         direction: &Direction,
         game_mode: GameMode,
@@ -43,7 +43,7 @@ impl Player {
     pub fn new(
         uuid: Uuid,
         username: String,
-        id: u32,
+        id: i32,
         position: &Location2,
         direction: &Direction,
         game_mode: GameMode,
@@ -71,7 +71,7 @@ impl Player {
         &self.username
     }
 
-    pub fn id(&self) -> u32 {
+    pub fn id(&self) -> i32 {
         self.entity_id
     }
 

@@ -1,6 +1,6 @@
 use crate::packets::client::play::{Difficulty, Dimension, GameMode, LevelType};
 use crate::packets::packet_serialization::{
-    write_bool, write_i32, write_length_prefixed_string, write_u32, write_u8, SerializablePacket,
+    write_bool, write_i32, write_length_prefixed_string, write_u8, SerializablePacket,
 };
 use crate::packets::wrap_packet;
 use kittymc_macros::Packet;
@@ -8,7 +8,7 @@ use kittymc_macros::Packet;
 #[derive(Clone, Debug, Packet)]
 #[allow(dead_code)]
 pub struct JoinGamePacket {
-    entity_id: u32,
+    entity_id: i32,
     gamemode: GameMode,
     dimension: Dimension,
     difficulty: Difficulty,
@@ -18,7 +18,7 @@ pub struct JoinGamePacket {
 }
 
 impl JoinGamePacket {
-    pub fn new(id: u32) -> Self {
+    pub fn new(id: i32) -> Self {
         Self {
             entity_id: id,
             gamemode: GameMode::Creative,
@@ -35,7 +35,7 @@ impl SerializablePacket for JoinGamePacket {
     fn serialize(&self) -> Vec<u8> {
         let mut packet = vec![];
 
-        write_u32(&mut packet, self.entity_id);
+        write_i32(&mut packet, self.entity_id);
         write_u8(&mut packet, self.gamemode as u8);
         write_i32(&mut packet, self.dimension as i32);
         write_u8(&mut packet, self.difficulty as u8);
