@@ -20,11 +20,11 @@ pub enum EntityAction {
 impl From<u32> for EntityAction {
     fn from(value: u32) -> Self {
         match value {
-            0 => EntityAction::StartSprinting,
-            1 => EntityAction::StopSprinting,
+            0 => EntityAction::StartSneaking,
+            1 => EntityAction::StopSneaking,
             2 => EntityAction::LeaveBed,
-            3 => EntityAction::StartSneaking,
-            4 => EntityAction::StopSneaking,
+            3 => EntityAction::StartSprinting,
+            4 => EntityAction::StopSprinting,
             5 => EntityAction::StartJumpingWithHorse,
             6 => EntityAction::StopJumpingWithHorse,
             7 => EntityAction::OpenHorseInventory,
