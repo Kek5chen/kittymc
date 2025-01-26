@@ -18,7 +18,6 @@ use kittymc_lib::packets::Packet;
 use kittymc_lib::subtypes::metadata::EntityMetadata;
 use kittymc_lib::subtypes::state::State;
 use kittymc_lib::subtypes::{Direction, Location, Location2};
-use kittymc_lib::utils::rainbowize_cool_people_textcomp;
 use log::{debug, error};
 use rand::random;
 use std::collections::{HashMap, VecDeque};
@@ -83,8 +82,8 @@ impl KittyMCServer {
         } {
             error = Err(e);
         }
-        for client in self.clients.write().unwrap().iter_mut() {
-            if let Err(e) = client.1.send_packet(packet) {
+        for (_, client) in self.clients.write().unwrap().iter_mut() {
+            if let Err(e) = client.send_packet(packet) {
                 error = Err(e);
             }
         }
@@ -355,25 +354,21 @@ impl KittyMCServer {
 
     fn add_player_to_all_player_lists(
         &mut self,
-        client: &mut Client,
+        sender: &mut Client,
         player: &Player,
     ) -> Result<(), KittyMCError> {
-        let display_name = rainbowize_cool_people_textcomp(player.name(), true);
-        self.send_to_all(
-            Some(client),
-            &PlayerListItemPacket {
-                actions: vec![(
-                    player.uuid().clone(),
-                    PlayerListItemAction::AddPlayer {
-                        name: player.name().to_string(),
-                        properties: vec![],
-                        game_mode: GameMode::Survival,
-                        ping: 0, // fix ping
-                        display_name,
-                    },
-                )],
-            },
-        )
+        let mut error = Ok(());
+
+        if let Err(e) = sender.add_player_to_player_list(player) {
+            error = Err(e);
+        }
+        for (_, client) in self.clients.write().unwrap().iter_mut() {
+            if let Err(e) = client.add_player_to_player_list(player) {
+                error = Err(e);
+            }
+        }
+
+        error
     }
 
     fn remove_player_from_all_player_lists(
