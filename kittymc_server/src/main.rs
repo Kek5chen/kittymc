@@ -13,11 +13,8 @@ async fn main() {
         }
     };
 
-    match server.run().await {
-        Err(e) => {
-            eprintln!("Error occurred while server was running: {e}");
-            return;
-        }
-        _ => (),
-    };
+    if let Err(e) = server.run().await {
+        eprintln!("Error occurred while server was running: {e}");
+        return;
+    }
 }
