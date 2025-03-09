@@ -68,7 +68,7 @@ impl Client {
             .set_nonblocking(true)
             .expect("Couldn't set socket to nonblocking");
 
-        Client::new(socket, addr).map(|c| Some(c))
+        Client::new(socket, addr).map(Some)
     }
 
     #[instrument(skip(socket, addr))]
@@ -149,7 +149,7 @@ impl Client {
             let compressed = compress_packet(b_packet, self.compression.compression_threshold)?;
             self.socket.write_all(&compressed)?;
         } else {
-            self.socket.write_all(&b_packet)?;
+            self.socket.write_all(b_packet)?;
         }
 
         Ok(())
@@ -181,7 +181,7 @@ impl Client {
         let display_name = rainbowize_cool_people_textcomp(player.name(), true);
         self.send_packet(&PlayerListItemPacket {
             actions: vec![(
-                player.uuid().clone(),
+                *player.uuid(),
                 PlayerListItemAction::AddPlayer {
                     name: player.name().to_string(),
                     properties: vec![],
@@ -199,7 +199,7 @@ impl Client {
         }
         self.send_packet(&SpawnPlayerPacket {
             entity_id: player.id(),
-            player_uuid: player.uuid().clone(),
+            player_uuid: *player.uuid(),
             location: *player.position(),
             direction: *player.direction(),
             metadata: EntityMetadata::default(),
