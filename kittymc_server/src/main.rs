@@ -31,11 +31,7 @@ fn main() {
         }
     };
 
-    match server.run() {
-        Err(e) => {
-            error!("Error occurred while server was running: {e}");
-            return;
-        }
-        _ => (),
+    if let Err(e) = server.run() {
+        error!("Error occurred while server was running: {e}");
     };
-}
+} 
